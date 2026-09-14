@@ -411,3 +411,57 @@ class TestDispatchShapes:
         assert DISPATCH_IN[("SaveAs3", "method")] == (
             (7, (3, 4), ("IModelDocExtension",)),
         )
+
+
+class TestEnumReference:
+    """`docs/reference/enums.md`, built from the data already in the package.
+
+    Needs no SOLIDWORKS and no type libraries: a previous `generate` is the
+    only input.
+    """
+
+    @pytest.fixture
+    def text(self):
+        return generate.enum_reference()
+
+    def test_it_is_markdown_with_a_title(self, text):
+        assert text.startswith("# Enumerations")
+
+    def test_it_counts_what_is_there(self, text):
+        from swcomapi.generated._enum_data import ENUMS
+
+        assert f"{len(ENUMS):,} of them" in text
+
+    def test_every_enumeration_has_a_row(self, text):
+        from swcomapi.generated._enum_data import ENUMS
+
+        rows = [line for line in text.splitlines() if line.startswith("| `")]
+        assert len(rows) == len(ENUMS)
+
+    def test_a_row_carries_the_count_and_the_library(self, text):
+        assert "| `swDocumentTypes_e` | 8 | SwConst |" in text
+
+    def test_the_documented_libraries_get_a_link(self, text):
+        assert "help.solidworks.com" in text
+
+    def test_an_add_in_with_no_known_help_path_says_so_rather_than_guessing(self, text):
+        """Simulation's pages are published somewhere this package has not
+        verified, so the link is a dash rather than a 404."""
+        rows = [
+            line
+            for line in text.splitlines()
+            if line.startswith("| `") and "| CosmosWorksLib |" in line
+        ]
+        assert rows
+        assert all(row.rstrip().endswith("| - |") for row in rows)
+
+    def test_it_says_not_to_edit_it_by_hand(self, text):
+        assert "do not edit it by hand" in text
+
+    def test_writing_twice_produces_identical_bytes(self, tmp_path):
+        first = generate.write_enum_reference(str(tmp_path))
+        before = (tmp_path / "docs" / "reference" / "enums.md").read_bytes()
+        second = generate.write_enum_reference(str(tmp_path))
+        after = (tmp_path / "docs" / "reference" / "enums.md").read_bytes()
+        assert first == second
+        assert before == after

@@ -3,6 +3,7 @@
     python -m swcomapi.tools survey      # what is installed, and how big it is
     python -m swcomapi.tools survey -v   # plus the per-interface breakdown
     python -m swcomapi.tools generate    # rebuild swcomapi/generated
+    python -m swcomapi.tools enumdoc     # rebuild docs/reference/enums.md
 """
 
 import argparse
@@ -54,12 +55,26 @@ def main(argv=None):
         help="only sldworks.tlb and swconst.tlb, skipping the add-in libraries",
     )
 
+    sub.add_parser(
+        "enumdoc",
+        help="rebuild docs/reference/enums.md from the generated data",
+    )
+
     args = parser.parse_args(argv)
     if args.command == "survey":
         return _survey(args)
     if args.command == "generate":
         return _generate(args)
+    if args.command == "enumdoc":
+        return _enumdoc()
     return 1
+
+
+def _enumdoc():
+    """Needs no SOLIDWORKS: it reads what `generate` already wrote."""
+    path, size = generate_module.write_enum_reference()
+    print(f"{size / 1024:.0f} KB  {path}")
+    return 0
 
 
 def _generate(args):
