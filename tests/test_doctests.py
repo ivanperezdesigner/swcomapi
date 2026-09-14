@@ -10,8 +10,9 @@ import pytest
 
 from swcomapi import com, units
 from swcomapi.api import app
+from swcomapi.tools import tlb
 
-MODULES = [com, units, app]
+MODULES = [com, units, app, tlb]
 
 
 @pytest.mark.parametrize("module", MODULES, ids=lambda m: m.__name__)
