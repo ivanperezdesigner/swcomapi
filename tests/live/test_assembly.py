@@ -96,10 +96,14 @@ class TestReading:
         assert assembly.components[0].state == "resolved"
         assert assembly.components[0].suppressed is False
 
-    def test_the_first_component_is_fixed_and_the_rest_float(self, assembly):
-        """SOLIDWORKS fixes the first component and leaves the others free."""
-        assert assembly.components[0].fixed is True
-        assert assembly.components[1].fixed is False
+    def test_one_component_is_fixed_and_the_rest_float(self, assembly):
+        """SOLIDWORKS fixes the first one inserted and leaves the others free.
+
+        Counted rather than indexed: GetComponents does not answer in
+        insertion order, so components[0] is not necessarily that one.
+        """
+        fixed = [c.name for c in assembly.components if c.fixed]
+        assert len(fixed) == 1
 
     def test_the_select_id_carries_the_assembly_name(self, assembly):
         assert assembly.components[0].select_id.endswith(f"@{assembly.name}")

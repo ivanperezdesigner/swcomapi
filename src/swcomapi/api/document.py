@@ -160,6 +160,24 @@ class Document:
         return Dimensions(self.com, self)
 
     @property
+    def equations(self):
+        """The equations and global variables, as an `Equations`.
+
+        A sequence of the lines and a lookup by name::
+
+            part.equations.names()          # ['width', 'height']
+            part.equations["width"]         # 60.0   (document units)
+            part.equations["width"] = 80
+            part.equations.add('"depth" = 12')
+
+        In the document's own units, not in millimetres: an equation is a
+        string SOLIDWORKS parses. See `swcomapi.api.equations`.
+        """
+        from .equations import Equations
+
+        return Equations(self.com, self)
+
+    @property
     def sketches(self):
         """The sketches, as a `swcomapi.api.sketch.Sketches`.
 
@@ -544,18 +562,65 @@ class Part(Document):
 
     @property
     def material(self):
-        """The material name, as a str. Empty if none is applied.
+        """The active configuration's material, as a str. Empty if none.
 
-        ``GetMaterialPropertyName2`` returns the database and the name; this
-        gives you the name, which is the half anyone means.
+        Assign a name to apply one::
+
+            part.material                   # 'Stainless Steel (ferritic)'
+            part.material = "6061 Alloy"
+            part.material = ""              # no material
+
+        A material belongs to a configuration, not to a part - see
+        `material_of` and `set_material`, and `swcomapi.api.materials` for
+        which names are available.
         """
-        _, out = com.call_out(
-            self.com,
-            "GetMaterialPropertyName2",
-            self.configuration,
-            interface="IPartDoc",
-        )
-        return out.get("MaterialName", "") or ""
+        from .materials import material_of
+
+        return material_of(self)
+
+    @material.setter
+    def material(self, name):
+        from .materials import set_material
+
+        set_material(self, name)
+
+    @property
+    def material_database(self):
+        """Which library the applied material comes from, as a str.
+
+        Usually ``'SOLIDWORKS Materials'``. Empty when no material is applied.
+        """
+        from .materials import database_of
+
+        return database_of(self)
+
+    def material_of(self, configuration):
+        """The material of one configuration, as a str.
+
+        Example, a part that ships in two metals::
+
+            part.material_of("BRK-040")         # '6061 Alloy'
+            part.material_of("BRK-040-SS")      # 'AISI 304'
+        """
+        from .materials import material_of
+
+        return material_of(self, configuration)
+
+    def set_material(self, name, configuration=None, database=None):
+        """Apply a material. Returns the name applied, as a str.
+
+        configuration
+            which configuration; the active one if omitted, ``"*"`` for all
+        database
+            the ``.sldmat`` library; the SOLIDWORKS one if omitted
+
+        Raises `SwCallError` if the material does not end up applied - which
+        is what a misspelled name does, silently, through the raw call. See
+        `swcomapi.api.materials.set_material`.
+        """
+        from .materials import set_material
+
+        return set_material(self, name, configuration=configuration, database=database)
 
     # ----------------------------------------------------------- sheet metal
 

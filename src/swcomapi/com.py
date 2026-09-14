@@ -305,6 +305,58 @@ def set_property(obj, member, value):
     return value
 
 
+def set_property_at(obj, member, value, *index):
+    """Write to a property that takes an index. Returns ``value``.
+
+    obj
+        the COM object
+    member
+        the property name, as a str
+    value
+        what to write
+    index
+        the property's own arguments, in order
+
+    Some COM properties are indexed: ``IEquationMgr.Equation`` is read as
+    ``Equation(0)`` and written as ``Equation(0) = '"width" = 60'``. VBA
+    spells that naturally and Python cannot, because an attribute assignment
+    has nowhere to put the index::
+
+        set_property_at(manager, "Equation", '"width" = 60', 0)
+
+    `set_property` is for the ordinary kind. Trying to use it here gets
+    "Property 'Equation' can not be set", because a put with one argument does
+    not match a property that wants two.
+
+    Raises `SwMemberNotFoundError` when the property does not exist, and
+    `SwCallError` for anything else.
+    """
+    _require_pywin32()
+    try:
+        dispatch = obj._oleobj_
+    except AttributeError as exc:
+        raise SwCallError(
+            f"{_name_of(obj)} is not a COM object, so {member!r} cannot be "
+            f"written to by index",
+            member=member,
+        ) from exc
+
+    try:
+        memid = dispatch.GetIDsOfNames(0, member)
+    except pythoncom.com_error as exc:
+        raise SwMemberNotFoundError(
+            f"{_name_of(obj)} has no property {member!r}", member=member
+        ) from exc
+
+    try:
+        dispatch.Invoke(
+            memid, 0, pythoncom.DISPATCH_PROPERTYPUT, 0, *index, value
+        )
+    except pythoncom.com_error as exc:
+        raise _translate(exc, member) from exc
+    return value
+
+
 def nothing():
     """A null COM object, for an ``[in]`` parameter you have nothing to put in.
 
