@@ -9,7 +9,7 @@ import doctest
 import pytest
 
 from swcomapi import apidoc, com, const, doclinks, enums, signatures, units
-from swcomapi.api import app, components, document, export, sketch
+from swcomapi.api import app, components, document, drawing, export, sketch
 from swcomapi.api import dimensions as dimensions_module
 from swcomapi.tools import tlb
 
@@ -35,6 +35,7 @@ MODULES = [
     dimensions_module,
     components,
     sketch,
+    drawing,
 ]
 
 

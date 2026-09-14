@@ -658,12 +658,46 @@ class Assembly(Document):
 
 
 class Drawing(Document):
-    """A drawing document. Adds sheets and views."""
+    """A drawing document. Adds sheets and views.
+
+    The everyday job::
+
+        drawing = app.new_drawing()
+        drawing.views.add(path, "Front", at=(120, 200))
+        drawing.views.add(path, "Top", at=(120, 100))
+        drawing.export("bracket.pdf")
+
+    Positions in mm from the bottom-left corner of the sheet. See
+    `swcomapi.api.drawing` for the rest.
+    """
 
     @property
     def sheets(self):
-        """Every sheet name, in order. As a list of str."""
-        return com.to_list(com.call(self.com, "GetSheetNames"))
+        """The sheets, as a `swcomapi.api.drawing.Sheets`.
+
+        A sequence and a lookup by name::
+
+            drawing.sheets.names()          # ['Sheet1']
+            drawing.sheets.active.size      # (420.0, 297.0) in mm
+            drawing.sheets.add("Detail", paper="A3", scale=(1, 2))
+        """
+        from .drawing import Sheets
+
+        return Sheets(self)
+
+    @property
+    def views(self):
+        """The views on the active sheet, as a `swcomapi.api.drawing.Views`.
+
+        A sequence and a lookup by name::
+
+            drawing.views.names()
+            drawing.views["Drawing View1"].scale = (1, 2)
+            drawing.views.add(path, "Isometric", at=(300, 200))
+        """
+        from .drawing import Views
+
+        return Views(self)
 
     @property
     def sheet(self):
@@ -675,7 +709,7 @@ class Drawing(Document):
         if not com.call(self.com, "ActivateSheet", str(name)):
             raise SwDocumentError(
                 f"no sheet named {name!r}. This drawing has: "
-                f"{', '.join(self.sheets)}",
+                f"{', '.join(self.sheets.names())}",
                 path=self.path,
             )
 
@@ -685,41 +719,12 @@ class Drawing(Document):
 
         A 1:2 sheet reads ``(1.0, 2.0)``.
         """
-        properties = com.to_list(
-            com.call(com.call(self.com, "GetCurrentSheet"), "GetProperties2")
-        )
-        # GetProperties2 returns paper size, template, scale1, scale2, first
-        # angle, width, height, and a custom flag.
-        return (properties[2], properties[3]) if len(properties) > 3 else (1.0, 1.0)
+        return self.sheets.active.scale
 
     @scale.setter
     def scale(self, ratio):
-        numerator, denominator = ratio
-        sheet = com.call(self.com, "GetCurrentSheet")
-        com.call(sheet, "SetScale", float(numerator), float(denominator), True, False)
-
-    @property
-    def views(self):
-        """Every view on the active sheet, as a list of raw ``IView``.
-
-        Not wrapped yet: ``IView`` has 496 members, which is more than a
-        wrapper should guess at. ``view.GetName2()``, ``view.ScaleRatio`` and
-        ``view.Position`` are the usual ones, and
-        ``swcomapi.describe("IView")`` lists the rest.
-
-        The first entry SOLIDWORKS returns is the sheet itself rather than a
-        view, and it is dropped here.
-        """
-        sheet_view = com.call(self.com, "GetFirstView")
-        if sheet_view is None:
-            return []
-        found = []
-        view = com.call(sheet_view, "GetNextView")
-        while view is not None:
-            found.append(view)
-            view = com.call(view, "GetNextView")
-        return found
+        self.sheets.active.scale = ratio
 
     def view_names(self):
         """The name of every view on the active sheet, as a list of str."""
-        return [com.call(view, "GetName2") for view in self.views]
+        return self.views.names()
