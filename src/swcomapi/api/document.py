@@ -390,6 +390,36 @@ class Document:
 class Part(Document):
     """A part document. Adds modelling, mass properties and sheet metal."""
 
+    # ------------------------------------------------------------- geometry
+
+    @property
+    def bodies(self):
+        """The solid bodies, as a list of `swcomapi.api.geometry.Body`.
+
+        The geometry rather than the tree: faces, edges, vertices and the
+        bounding box::
+
+            part.bodies[0].size             # (60.0, 40.0, 10.0) in mm
+            part.bodies[0].faces_of("cylinder")
+
+        Surfaces and wires are left out; `bodies_of` takes a ``kind``.
+        """
+        from .geometry import bodies_of
+
+        return bodies_of(self)
+
+    def bodies_of(self, kind="solid", visible_only=False):
+        """The bodies of one sort, as a list of `swcomapi.api.geometry.Body`.
+
+        kind
+            ``'solid'``, ``'sheet'``, ``'wire'`` or ``'all'``
+        visible_only
+            True leaves out the hidden ones
+        """
+        from .geometry import bodies_of
+
+        return bodies_of(self, kind=kind, visible_only=visible_only)
+
     # ------------------------------------------------------------ modelling
 
     def extrude(self, depth, **options):

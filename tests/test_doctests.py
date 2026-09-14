@@ -13,9 +13,10 @@ from swcomapi.api import app, components, document, export, sketch
 from swcomapi.api import dimensions as dimensions_module
 from swcomapi.tools import tlb
 
-# swcomapi.api.modeling is absent on purpose too: every example in it makes
-# a feature, which needs a running SOLIDWORKS. Those are in
-# tests/live/test_modeling.py, where they are executed for real.
+# swcomapi.api.modeling and swcomapi.api.geometry are absent on purpose too:
+# every example in them needs a running SOLIDWORKS and a solid to measure.
+# Those are executed for real in tests/live/test_modeling.py and
+# tests/live/test_geometry.py.
 #
 # swcomapi.tools.generate is absent on purpose: what it documents is the
 # files it emits, and those are checked in tests/test_generate.py.
