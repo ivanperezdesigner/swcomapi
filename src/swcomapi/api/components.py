@@ -325,6 +325,10 @@ class Components(Sequence):
 
     Top level only, which is what the tree shows. `all` goes all the way
     down.
+
+    The order is ``GetComponents``' own and it is not the order the components
+    were inserted in, so index into it only when you do not care which one you
+    get. Look components up by name when you do.
     """
 
     def __init__(self, assembly):

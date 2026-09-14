@@ -160,6 +160,48 @@ class Document:
         return Dimensions(self.com, self)
 
     @property
+    def sketches(self):
+        """The sketches, as a `swcomapi.api.sketch.Sketches`.
+
+        A sequence and a lookup by name::
+
+            part.sketches.names()        # ['Sketch1', 'Sketch2']
+            part.sketches["Sketch1"].segments
+        """
+        from .sketch import Sketches
+
+        return Sketches(self)
+
+    def sketch_on(self, plane=None, add_to_db=False, three_d=False):
+        """Open a sketch for drawing. Returns a context manager.
+
+        plane
+            what to sketch on, by name: ``"Front Plane"``, ``"Top Plane"``,
+            ``"Right Plane"``, or a face. Whatever is already selected if
+            omitted
+        add_to_db
+            True puts the sketch manager into database mode, so geometry goes
+            in exactly as given, with no inferred relations and no snapping.
+            What a script usually wants; the cost is that nothing holds the
+            sketch together afterwards
+        three_d
+            True opens a 3D sketch
+
+        Use it in a ``with`` block, so the sketch is closed even if the block
+        raises - a session left in sketch mode makes everything after it
+        behave strangely::
+
+            with part.sketch_on("Front Plane") as sketch:
+                sketch.rectangle((0, 0), (60, 40))
+
+        Everything in mm. See `swcomapi.api.sketch.SketchSession` for what can
+        be drawn.
+        """
+        from .sketch import SketchSession
+
+        return SketchSession(self, plane=plane, add_to_db=add_to_db, three_d=three_d)
+
+    @property
     def properties(self):
         """The file-level custom properties, as a `Properties`.
 
@@ -346,7 +388,51 @@ class Document:
 
 
 class Part(Document):
-    """A part document. Adds mass properties and sheet metal."""
+    """A part document. Adds modelling, mass properties and sheet metal."""
+
+    # ------------------------------------------------------------ modelling
+
+    def extrude(self, depth, **options):
+        """Extrude a sketch into a boss. Returns the new `Feature`.
+
+        Takes the sketch that was just closed, or one named with
+        ``sketch="Sketch1"``. Depth in mm.
+
+        Example, a 60 by 40 plate 10 mm thick::
+
+            with part.sketch_on("Front Plane") as sketch:
+                sketch.rectangle((0, 0), (60, 40))
+            part.extrude(10)
+
+        Every argument is described in `swcomapi.api.modeling.extrude`.
+        """
+        from .modeling import extrude
+
+        return extrude(self, depth, **options)
+
+    def cut(self, depth=None, **options):
+        """Cut a sketch out of the body. Returns the new `Feature`.
+
+        Example, a 12 mm hole all the way through::
+
+            with part.sketch_on("Front Plane") as sketch:
+                sketch.circle((30, 20), radius=6)
+            part.cut(through_all=True)
+
+        See `swcomapi.api.modeling.cut`.
+        """
+        from .modeling import cut
+
+        return cut(self, depth, **options)
+
+    def revolve(self, angle=360.0, **options):
+        """Revolve a sketch into a boss. Returns the new `Feature`.
+
+        Angle in degrees. See `swcomapi.api.modeling.revolve`.
+        """
+        from .modeling import revolve
+
+        return revolve(self, angle, **options)
 
     # ------------------------------------------------------ mass properties
 

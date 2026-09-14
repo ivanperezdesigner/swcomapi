@@ -269,10 +269,24 @@ class Features:
     def __getitem__(self, key):
         """By name, or by position in tree order.
 
+        Negative positions count from the end, so ``features[-1]`` is the last
+        entry in the tree - which is the feature you just made.
+
         Raises KeyError for a name that is not there, IndexError for a
         position that is out of range.
         """
         if isinstance(key, int):
+            if key < 0:
+                # The tree is a linked list, so there is no length without
+                # walking it. Walk once and index the list.
+                entries = list(self)
+                try:
+                    return entries[key]
+                except IndexError:
+                    raise IndexError(
+                        f"the feature tree has {len(entries)} entries, "
+                        f"so {key} is past the start"
+                    ) from None
             for position, feature in enumerate(self):
                 if position == key:
                     return feature

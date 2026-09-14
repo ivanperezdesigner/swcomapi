@@ -9,10 +9,14 @@ import doctest
 import pytest
 
 from swcomapi import apidoc, com, const, doclinks, enums, signatures, units
-from swcomapi.api import app, components, document, export
+from swcomapi.api import app, components, document, export, sketch
 from swcomapi.api import dimensions as dimensions_module
 from swcomapi.tools import tlb
 
+# swcomapi.api.modeling is absent on purpose too: every example in it makes
+# a feature, which needs a running SOLIDWORKS. Those are in
+# tests/live/test_modeling.py, where they are executed for real.
+#
 # swcomapi.tools.generate is absent on purpose: what it documents is the
 # files it emits, and those are checked in tests/test_generate.py.
 MODULES = [
@@ -29,6 +33,7 @@ MODULES = [
     export,
     dimensions_module,
     components,
+    sketch,
 ]
 
 

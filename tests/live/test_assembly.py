@@ -68,7 +68,8 @@ class TestInserting:
         assert assembly.component_count == 3
 
     def test_the_instances_are_numbered_from_one(self, assembly):
-        names = assembly.components.names()
+        """Sorted, because GetComponents does not answer in insertion order."""
+        names = sorted(assembly.components.names())
         assert names == ["swcomapi_rail-1", "swcomapi_rail-2", "swcomapi_rail-3"]
 
     def test_they_all_come_from_the_same_file(self, assembly, part_file):
@@ -104,10 +105,15 @@ class TestReading:
         assert assembly.components[0].select_id.endswith(f"@{assembly.name}")
 
     def test_position_comes_back_in_mm(self, assembly):
-        """Inserted 80 mm apart, so they are 80 mm apart."""
+        """Inserted 80 mm apart, so the three sit 80 mm apart.
+
+        By value rather than by index: GetComponents does not answer in
+        insertion order.
+        """
         positions = [component.position for component in assembly.components]
         assert all(len(p) == 3 for p in positions)
-        assert round(positions[1][1] - positions[0][1], 6) == 80.0
+        heights = sorted(round(p[1], 6) for p in positions)
+        assert [round(h - heights[0], 6) for h in heights] == [0.0, 80.0, 160.0]
 
     def test_the_document_behind_an_instance_is_a_part(self, assembly):
         document = assembly.components[0].document
