@@ -70,6 +70,7 @@ _LAZY = {
     "describe": "swcomapi.apidoc",
     "find": "swcomapi.apidoc",
     "find_interface": "swcomapi.apidoc",
+    "summary": "swcomapi.apidoc",
     "doclink": "swcomapi.doclinks",
 }
 
@@ -124,6 +125,7 @@ __all__ = [
     "describe",
     "find",
     "find_interface",
+    "summary",
     "doclink",
     # submodules
     "api",

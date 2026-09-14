@@ -105,7 +105,7 @@ def save_as(document, path, silent=True, copy=False, save_references=False):
     parent = os.path.dirname(target)
     if parent and not os.path.isdir(parent):
         raise SwDocumentError(
-            f"cannot save to {target!r}: the folder {parent!r} does not exist",
+            f"cannot save to {target}: the folder {parent} does not exist",
             path=target,
         )
 
@@ -133,7 +133,7 @@ def save_as(document, path, silent=True, copy=False, save_references=False):
 
     if errors:
         raise SwDocumentError(
-            f"saving {target!r} failed: {', '.join(save_error_names(errors))}",
+            f"saving {target} failed: {', '.join(save_error_names(errors))}",
             path=target,
             errors=errors,
             warnings=warnings,
@@ -141,7 +141,7 @@ def save_as(document, path, silent=True, copy=False, save_references=False):
         )
     if not ok and not errors:
         raise SwDocumentError(
-            f"saving {target!r} failed, and SOLIDWORKS gave no reason. "
+            f"saving {target} failed, and SOLIDWORKS gave no reason. "
             f"The usual cause is an extension it cannot write"
             + (f" ({os.path.splitext(target)[1]})" if os.path.splitext(target)[1] else "")
             + ".",
@@ -151,7 +151,7 @@ def save_as(document, path, silent=True, copy=False, save_references=False):
         import warnings as warnings_module
 
         warnings_module.warn(
-            f"saved {target!r} with warnings: {', '.join(save_warning_names(warnings))}",
+            f"saved {target} with warnings: {', '.join(save_warning_names(warnings))}",
             SwWarning,
             stacklevel=3,
         )

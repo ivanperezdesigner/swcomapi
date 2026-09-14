@@ -675,7 +675,7 @@ class Part(Document):
         target = os.path.abspath(path)
         if os.path.splitext(target)[1].lower() not in (".dxf", ".dwg"):
             raise SwDocumentError(
-                f"a flat pattern goes to .dxf or .dwg, not {target!r}",
+                f"a flat pattern goes to .dxf or .dwg, not {target}",
                 path=target,
             )
         if not self.is_sheet_metal:
@@ -702,7 +702,7 @@ class Part(Document):
         )
         if not ok:
             raise SwDocumentError(
-                f"SOLIDWORKS declined to write the flat pattern to {target!r}",
+                f"SOLIDWORKS declined to write the flat pattern to {target}",
                 path=target,
             )
         return target

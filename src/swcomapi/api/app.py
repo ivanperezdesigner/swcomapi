@@ -231,7 +231,7 @@ class SolidWorks:
         if errors or model is None:
             names = load_error_names(errors)
             raise SwDocumentError(
-                f"could not open {target!r}"
+                f"could not open {target}"
                 + (f": {', '.join(names)}" if names else ""),
                 path=target,
                 errors=errors,
@@ -240,7 +240,7 @@ class SolidWorks:
             )
         if warning_code:
             warnings.warn(
-                f"opened {target!r} with warnings: "
+                f"opened {target} with warnings: "
                 f"{', '.join(load_warning_names(warning_code))}",
                 SwWarning,
                 stacklevel=2,

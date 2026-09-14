@@ -87,14 +87,29 @@ class Dimensions(MutableMapping):
         return _from_system(dimension, com.call(dimension, "SystemValue"))
 
     def __setitem__(self, name, value):
-        """Set the value, in millimetres or degrees.
+        """Set the value **in the active configuration**, in mm or degrees.
 
         The model is not rebuilt: call ``document.rebuild()`` when you have
         finished changing things, so a run of edits costs one rebuild instead
         of one each.
+
+        The active configuration only, which is what a person changing a
+        number in the tree gets. ``IDimension.SystemValue`` - the obvious
+        route, and the one this package took first - writes the value into
+        *every* configuration, so a loop that activates each one in turn and
+        assigns leaves them all at the last value, silently. Use
+        `set_everywhere` when that really is what you want.
         """
+        from ..const import swThisConfiguration
+
         dimension = self.raw(name)
-        dimension.SystemValue = _to_system(dimension, value)
+        com.call(
+            dimension,
+            "SetSystemValue3",
+            _to_system(dimension, value),
+            swThisConfiguration,
+            None,
+        )
 
     def __delitem__(self, name):
         raise TypeError(
@@ -153,9 +168,12 @@ class Dimensions(MutableMapping):
 
         In millimetres or degrees, as a float.
 
-        ``swSpecifyConfiguration`` is the option that makes the name list
-        count; ``swThisConfiguration`` reads the active one and ignores the
-        names entirely, which looks like it works and does not.
+        Two things have to be right at once here. ``swSpecifyConfiguration``
+        is the option that makes the name list count - ``swThisConfiguration``
+        reads the active one and ignores the names entirely. And the names
+        have to arrive as a SafeArray: handed a Python list,
+        ``GetSystemValue3`` answers None and ``SetSystemValue3`` writes
+        nothing, neither of them complaining.
 
         Example::
 
@@ -168,7 +186,7 @@ class Dimensions(MutableMapping):
             dimension,
             "GetSystemValue3",
             swSpecifyConfiguration,
-            [str(configuration)],
+            _names_array([configuration]),
         )
         values = com.to_list(result)
         if not values:
@@ -176,7 +194,20 @@ class Dimensions(MutableMapping):
                 f"{name!r} has no value in configuration {configuration!r}",
                 member="GetSystemValue3",
             )
-        return _from_system(dimension, values[0])
+        if values[0]:
+            return _from_system(dimension, values[0])
+
+        # Zero means the dimension is not configured in that configuration -
+        # it has no value of its own and uses the one the whole part shares.
+        # SOLIDWORKS reports that as 0.0 rather than as the shared value, and
+        # a dimension that is genuinely zero is not a thing a model can hold,
+        # so the shared value is what the caller meant.
+        from ..const import swThisConfiguration
+
+        shared = com.to_list(
+            com.call(dimension, "GetSystemValue3", swThisConfiguration, None)
+        )
+        return _from_system(dimension, shared[0] if shared else 0.0)
 
     def set_in(self, name, configuration, value):
         """Set the value in one configuration, without switching to it.
@@ -191,7 +222,29 @@ class Dimensions(MutableMapping):
             "SetSystemValue3",
             _to_system(dimension, value),
             swSpecifyConfiguration,
-            [str(configuration)],
+            _names_array([configuration]),
+        )
+
+    def set_everywhere(self, name, value):
+        """Set the value in every configuration, in millimetres or degrees.
+
+        One number for the whole part, which is what a dimension that is not
+        configured means. A dimension that *was* configured stops being so:
+        the per-configuration values are dropped, not overwritten one by one.
+
+        Example::
+
+            part.dimensions.set_everywhere("Thickness@Boss-Extrude1", 3)
+        """
+        from ..const import swAllConfiguration
+
+        dimension = self.raw(name)
+        com.call(
+            dimension,
+            "SetSystemValue3",
+            _to_system(dimension, value),
+            swAllConfiguration,
+            None,
         )
 
     # ------------------------------------------------------------ niceties
@@ -230,6 +283,17 @@ def _is_angular(dimension):
         # be a length than an angle, and treating an angle as a length is a
         # visible error while the reverse is a silent one.
         return False
+
+
+def _names_array(names):
+    """Configuration names as the SafeArray of strings the API insists on.
+
+    A Python list looks like it should work and does not: the call returns
+    None, or writes nothing, and says nothing either way.
+    """
+    import pythoncom
+
+    return com.from_list([str(name) for name in names], pythoncom.VT_BSTR)
 
 
 def _from_system(dimension, value):

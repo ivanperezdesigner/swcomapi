@@ -124,22 +124,27 @@ class Properties(MutableMapping):
     def _get(self, name):
         """``(evaluated, expression)``, or ``(None, None)`` if absent.
 
-        ``Get6`` is the version that reports whether the property was there
-        at all - the older ones return an empty string either way, which is
-        indistinguishable from a property that is genuinely empty.
+        ``Get6``'s **return value** is what says whether the property exists:
+        ``swCustomInfoGetResult_NotPresent`` (1) or
+        ``swCustomInfoGetResult_ResolvedValue`` (2). Its ``[out]`` parameters
+        do not - ``WasResolved`` comes back True for a property that is not
+        there at all, with an empty value beside it, which is
+        indistinguishable from a property that is present and empty.
+
+        Measured on 2026 SP3: asking for a name that does not exist returns 1
+        with ``{'ValOut': '', 'ResolvedValOut': '', 'WasResolved': True}``.
         """
-        _, out = com.call_out(
+        from ..const import swCustomInfoGetResult_NotPresent
+
+        result, out = com.call_out(
             self.com,
             "Get6",
             str(name),
             False,
             interface="ICustomPropertyManager",
         )
-        if not out.get("WasResolved") and not out.get("ValOut"):
-            # Not resolved and no value: either absent, or present and empty.
-            # GetNames is the only reliable way to tell those apart.
-            if str(name) not in self.names():
-                return None, None
+        if result == swCustomInfoGetResult_NotPresent:
+            return None, None
         return out.get("ResolvedValOut", ""), out.get("ValOut", "")
 
     # ----------------------------------------------------------- navigation

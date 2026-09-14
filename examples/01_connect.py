@@ -25,7 +25,7 @@ Nothing here opens or changes a document, so it is safe to run against a
 session you are working in.
 """
 
-import swcomapi as sw
+import swcomapi as swc
 
 
 def main():
@@ -33,8 +33,8 @@ def main():
     # connect() would start one instead. visible=None leaves the window state
     # exactly as it was found, which is what you want when a human is using it.
     try:
-        app = sw.attach(visible=None)
-    except sw.SwNotRunningError as exc:
+        app = swc.attach(visible=None)
+    except swc.SwNotRunningError as exc:
         print(exc)
         print("\nStart SOLIDWORKS, or swap attach() for connect() to have one started.")
         return 1
