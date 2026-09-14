@@ -24,7 +24,18 @@ solving once:
    are really three vectors. ``to_list()`` and ``to_tuples()`` unpack them, and
    ``to_list()`` also turns the ``None`` that means "empty" into ``[]``.
 
-3. **Unreadable errors.** A failing call raises ``pywintypes.com_error``, which
+3. **The object you do not have.** SOLIDWORKS declares plenty of parameters as
+   ``IDispatch*`` and then documents them as unused. ``SaveAs3`` has two.
+   VBA passes ``Nothing``; Python's ``None`` reaches SOLIDWORKS as
+   ``VT_EMPTY`` and the call fails with "Type mismatch" naming no parameter.
+   ``call()`` converts a ``None`` in one of those positions into the null
+   ``VT_DISPATCH`` that works, from the same generated table, so this::
+
+       call_out(ext, "SaveAs3", path, 0, options, None, None)
+
+   is all you write. ``nothing()`` is there for a call made by hand.
+
+4. **Unreadable errors.** A failing call raises ``pywintypes.com_error``, which
    prints as a nest of HRESULTs. ``call()`` translates it into the classes in
    ``swcomapi.errors`` and keeps the original in ``__cause__``.
 
@@ -187,7 +198,7 @@ def is_byref(value):
 # ------------------------------------------------------------------ the call
 
 
-def call(obj, member, *args):
+def call(obj, member, *args, interface=None, kind="method"):
     """Call a method, or read a property, and translate any COM failure.
 
     obj
@@ -197,6 +208,13 @@ def call(obj, member, *args):
     args
         the arguments in declaration order; use `byref` for ``[out]`` ones, or
         let `call_out` build them
+    interface
+        the interface name, for the few member names whose shape is ambiguous
+    kind
+        ``"method"``, ``"get"`` or ``"put"``
+
+    A ``None`` in a position the generated table says wants a COM object
+    becomes `nothing`; everywhere else it is passed through untouched.
 
     Returns whatever the member returns.
 
@@ -242,10 +260,37 @@ def call(obj, member, *args):
             )
         return attr
 
+    if any(value is None for value in args):
+        args = _objects(args, member, interface, kind)
+
     try:
         return attr(*args)
     except pythoncom.com_error as exc:
         raise _translate(exc, member) from exc
+
+
+def nothing():
+    """A null COM object, for an ``[in]`` parameter you have nothing to put in.
+
+    This is VBA's ``Nothing``. It comes up constantly, because SOLIDWORKS
+    declares plenty of parameters as ``IDispatch*`` and then documents them as
+    "not used"::
+
+        ext.SaveAs3(path, 0, options, nothing(), nothing(), errors, warnings)
+
+    Python's ``None`` is not the same thing. pywin32 marshals it as
+    ``VT_EMPTY``, and SOLIDWORKS rejects that with "Type mismatch" without
+    saying which parameter it meant.
+
+    `call_out` inserts this for you wherever the generated table says a
+    parameter wants an object, so a plain ``None`` works there::
+
+        _, out = call_out(ext, "SaveAs3", path, 0, options, None, None)
+
+    Use it directly only when calling the COM object by hand.
+    """
+    _require_pywin32()
+    return VARIANT(VT_DISPATCH, None)
 
 
 def needs_calling(attr):
@@ -308,7 +353,7 @@ def call_out(obj, member, *args, interface=None, kind="method"):
         member, len(args), interface=interface, kind=kind
     )
     if not outputs:
-        return call(obj, member, *args), {}
+        return call(obj, member, *args, interface=interface, kind=kind), {}
 
     # Walk the real parameter list and fill each position from the right
     # place: a pure [out] gets a fresh holder inserted, an [in,out] gets one
@@ -331,8 +376,27 @@ def call_out(obj, member, *args, interface=None, kind="method"):
         holders[name] = holder
         full.append(holder)
 
-    result = call(obj, member, *full)
+    result = call(obj, member, *full, interface=interface, kind=kind)
     return result, {name: holder.value for name, holder in holders.items()}
+
+
+def _objects(args, member, interface, kind):
+    """``args`` with a ``None`` in a COM-object position replaced by `nothing`.
+
+    The table is consulted only when there is a ``None`` to translate, so a
+    normal call pays nothing for this.
+    """
+    from . import signatures
+
+    wants_object = signatures.dispatch_ins_for_args(
+        member, len(args), interface=interface, kind=kind
+    )
+    if not wants_object:
+        return args
+    return tuple(
+        nothing() if value is None and index in wants_object else value
+        for index, value in enumerate(args)
+    )
 
 
 def _name_of(obj):

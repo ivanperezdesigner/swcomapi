@@ -2995,3 +2995,2975 @@ OUT_PARAMS = {
         (2, ((0, 'nextPageId', 2, 'out'), (1, 'retval', 11, 'out'),), ('IPtnrPMPageHandler', 'IPtnrPMPageHandler2', 'IPtnrPMPageHandler3',)),
     ),
 }
+
+# 977 member names take an [in] parameter that wants a COM
+# object. Pass None for one you have nothing to put in, and
+# `swcomapi.com.call_out` turns it into the null VT_DISPATCH that VBA
+# spells Nothing. A bare None reaches SOLIDWORKS as VT_EMPTY and the
+# call fails with "Type mismatch", naming no parameter.
+#
+# Each entry: (member_name, kind) -> [ (arity, positions, interfaces) ].
+
+DISPATCH_IN = {
+    ('AccessSelections', 'method'): (
+        (2, (0, 1,), ('IAdvancedHoleFeatureData', 'IBaseFlangeFeatureData', 'IBeltChainFeatureData', 'IBendsFeatureData', 'IBoundaryBossFeatureData', 'IBoundingBoxFeatureData', 'IBreakCornerFeatureData', 'IBrokenOutSectionFeatureData', 'ICavityFeatureData', 'IChainPatternFeatureData', 'IChamferFeatureData2', 'ICircularPatternFeatureData', 'IClosedCornerFeatureData', 'ICombineBodiesFeatureData', 'ICompositeCurveFeatureData', 'IConnectionPointFeatureData', 'IConvertSolidFeatureData', 'ICoordinateSystemFeatureData', 'ICoreFeatureData', 'ICornerReliefFeatureData', 'ICornerTreatmentFeatureData', 'ICosmeticThreadFeatureData', 'ICosmeticWeldBeadFeatureData', 'ICrossBreakFeatureData', 'ICurveDrivenPatternFeatureData', 'IDeleteBodyFeatureData', 'IDeleteFaceFeatureData', 'IDerivedPartFeatureData', 'IDerivedPatternFeatureData', 'IDimPatternFeatureData', 'IDomeFeatureData', 'IDomeFeatureData2', 'IDraftFeatureData2', 'IEdgeFlangeFeatureData', 'IEndCapFeatureData', 'IExtrudeFeatureData', 'IExtrudeFeatureData2', 'IFillPatternFeatureData', 'IFillSurfaceFeatureData', 'IFlatPatternFeatureData', 'IFoldsFeatureData', 'IGroundPlaneFeatureData', 'IGussetFeatureData', 'IHealEdgesFeatureData', 'IHemFeatureData', 'IHoleSeriesFeatureData', 'IHoleSeriesFeatureData2', 'IIndentFeatureData', 'IIntersectFeatureData', 'IJogFeatureData', 'IJoinFeatureData', 'ILibraryFeatureData', 'ILibraryFormToolFeatureData', 'ILinearPatternFeatureData', 'ILocalCircularPatternFeatureData', 'ILocalCurvePatternFeatureData', 'ILocalLinearPatternFeatureData', 'ILocalSketchPatternFeatureData', 'ILoftFeatureData', 'ILoftedBendsFeatureData', 'IMacroFeatureData', 'IMateControllerFeatureData', 'IMirrorComponentFeatureData', 'IMirrorPartFeatureData', 'IMirrorPatternFeatureData', 'IMirrorSolidFeatureData', 'IMiterFlangeFeatureData', 'IMoveCopyBodyFeatureData', 'IMoveFaceFeatureData', 'IOneBendFeatureData', 'IPartingLineFeatureData', 'IPartingSurfaceFeatureData', 'IProjectionCurveFeatureData', 'IRefAxisFeatureData', 'IRefPlaneFeatureData', 'IRefPointFeatureData', 'IReferencePointCurveFeatureData', 'IReplaceFaceFeatureData', 'IRevolveFeatureData2', 'IRibFeatureData2', 'IRipFeatureData', 'IRuledSurfaceFeatureData', 'ISMGussetFeatureData', 'ISMNormalCutFeatureData', 'ISMNormalCutFeatureData2', 'ISaveBodyFeatureData', 'IScaleFeatureData', 'ISheetMetalFeatureData', 'IShellFeatureData', 'IShutOffSurfaceFeatureData', 'ISimpleFilletFeatureData', 'ISimpleFilletFeatureData2', 'ISimpleHoleFeatureData', 'ISimpleHoleFeatureData2', 'ISketchPatternFeatureData', 'ISketchedBendFeatureData', 'ISplitBodyFeatureData', 'ISplitLineFeatureData', 'IStructuralMemberFeatureData', 'IStructureSystemMemberFeatureData', 'ISurfExtrudeFeatureData', 'ISurfRevolveFeatureData', 'ISurfaceCutFeatureData', 'ISurfaceExtendFeatureData', 'ISurfaceFlattenFeatureData', 'ISurfaceKnitFeatureData', 'ISurfaceOffsetFeatureData', 'ISurfacePlanarFeatureData', 'ISurfaceRadiateFeatureData', 'ISurfaceTrimFeatureData', 'ISweepFeatureData', 'ISweptFlangeFeatureData', 'ITabAndSlotFeatureData', 'ITablePatternFeatureData', 'IThickenFeatureData', 'IThreadFeatureData', 'IToolingSplitFeatureData', 'IVariableFilletFeatureData', 'IVariableFilletFeatureData2', 'IWeldmentBeadFeatureData', 'IWeldmentTrimExtendFeatureData', 'IWizardHoleFeatureData', 'IWizardHoleFeatureData2', 'IWrapSketchFeatureData',)),
+    ),
+    ('ActionDirection', 'put'): (
+        (1, (0,), ('ISimulationForceFeatureData',)),
+    ),
+    ('ActionLocation', 'put'): (
+        (1, (0,), ('ISimulationForceFeatureData',)),
+    ),
+    ('ActiveView', 'put'): (
+        (1, (0,), ('IModelDoc', 'IModelDoc2',)),
+    ),
+    ('Add', 'method'): (
+        (1, (0,), ('IMathVector',)),
+    ),
+    ('AddBearingConnector', 'method'): (
+        (3, (0, 1,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddBearingLoad', 'method'): (
+        (3, (0,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddCentrifugalForce', 'method'): (
+        (2, (0,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddComponent', 'method'): (
+        (2, (0,), ('IDragOperator',)),
+    ),
+    ('AddCovering', 'method'): (
+        (1, (0,), ('IRouteProperty',)),
+    ),
+    ('AddCyclicSymmetryRestraint', 'method'): (
+        (4, (0, 1, 2,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddDecal', 'method'): (
+        (2, (0,), ('IModelDocExtension',)),
+    ),
+    ('AddDefaultRenderMaterial', 'method'): (
+        (2, (0,), ('IModelDocExtension',)),
+    ),
+    ('AddDisplayStateSpecificRenderMaterial', 'method'): (
+        (5, (0,), ('IModelDocExtension',)),
+    ),
+    ('AddDisplayText', 'method'): (
+        (5, (2,), ('IDisplayDimension',)),
+    ),
+    ('AddDropTestSetup', 'method'): (
+        (2, (0,), ('ICWStudy',)),
+    ),
+    ('AddDvePagePreNotify', 'method'): (
+        (2, (1,), ('DAssemblyDocEvents', 'DDrawingDocEvents', 'DPartDocEvents',)),
+    ),
+    ('AddDynamicClearance', 'method'): (
+        (5, (0, 1,), ('IDragOperator',)),
+    ),
+    ('AddEdgeWeldConnector', 'method'): (
+        (5, (0, 1,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddEntity', 'method'): (
+        (1, (0,), ('IRenderMaterial',)),
+    ),
+    ('AddForce', 'method'): (
+        (4, (2,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddForce2', 'method'): (
+        (5, (3,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddForce3', 'method'): (
+        (21, (18,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddGeneralSpringConnector', 'method'): (
+        (3, (0, 1,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddGravity', 'method'): (
+        (2, (0,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddInitialConditionForDynamicStudy', 'method'): (
+        (12, (3,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddInitialConditionForDynamicStudy2', 'method'): (
+        (12, (3,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddLinkConnector', 'method'): (
+        (3, (0, 1,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddNewCorner', 'method'): (
+        (5, (0, 1, 2,), ('ICornerReliefFeatureData',)),
+    ),
+    ('AddNote', 'method'): (
+        (2, (0,), ('IMagneticLine',)),
+    ),
+    ('AddOrEditFloorAppearance', 'method'): (
+        (1, (0,), ('ISwScene',)),
+    ),
+    ('AddPrescribedDisplacement', 'method'): (
+        (5, (3,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddPressure', 'method'): (
+        (4, (2,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddRefGeometry', 'method'): (
+        (2, (1,), ('ICWPlot',)),
+    ),
+    ('AddRenderMaterial', 'method'): (
+        (2, (0,), ('IModelDocExtension',)),
+    ),
+    ('AddRestraint', 'method'): (
+        (4, (2,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddSelectionListObject', 'method'): (
+        (2, (0, 1,), ('ISelectionMgr',)),
+    ),
+    ('AddSelectionListObjects', 'method'): (
+        (2, (1,), ('ISelectionMgr',)),
+    ),
+    ('AddSeparator', 'method'): (
+        (2, (0,), ('ICommandTab',)),
+    ),
+    ('AddSpotWeldConnector', 'method'): (
+        (4, (0, 1,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddUniformBaseExcitation', 'method'): (
+        (10, (1,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddUniformBaseExcitation2', 'method'): (
+        (10, (1,), ('ICWLoadsAndRestraintsManager',)),
+    ),
+    ('AddVector', 'method'): (
+        (1, (0,), ('IMathPoint',)),
+    ),
+    ('AddYAxis', 'method'): (
+        (1, (0,), ('IMotionPlotFeatureData',)),
+    ),
+    ('AlignToEdge', 'method'): (
+        (1, (0,), ('IDisplayDimension',)),
+    ),
+    ('AlignWithView', 'method'): (
+        (2, (1,), ('IView',)),
+    ),
+    ('AlignmentVector', 'put'): (
+        (1, (0,), ('IStructuralMemberGroup',)),
+    ),
+    ('AngleReference', 'put'): (
+        (1, (0,), ('IEdgeFlangeFeatureData',)),
+    ),
+    ('ApplySavedSortScheme', 'method'): (
+        (1, (0,), ('IBomTableAnnotation',)),
+    ),
+    ('ApplyTransform', 'method'): (
+        (1, (0,), ('IBody2', 'ICurve',)),
+    ),
+    ('AttachSurface', 'method'): (
+        (2, (0,), ('IFace2',)),
+    ),
+    ('AutoAngleAxis', 'method'): (
+        (1, (0,), ('IAssemblyDoc',)),
+    ),
+    ('AutoBalloon5', 'method'): (
+        (1, (0,), ('IDrawingDoc',)),
+    ),
+    ('AutoDimensionScheme', 'method'): (
+        (1, (0,), ('IDimXpertPart',)),
+    ),
+    ('Axis', 'put'): (
+        (1, (0,), ('ICircularPatternFeatureData', 'ILocalCircularPatternFeatureData', 'IRevolveFeatureData2',)),
+    ),
+    ('BaseComponent', 'put'): (
+        (1, (0,), ('ISimulationDamperFeatureData', 'ISimulationSpringFeatureData',)),
+    ),
+    ('BaseProfile', 'put'): (
+        (1, (0,), ('ISpring',)),
+    ),
+    ('BeginInContextEditNotify', 'method'): (
+        (2, (0,), ('DAssemblyDocEvents',)),
+    ),
+    ('BeltLocationPlane', 'put'): (
+        (1, (0,), ('IBeltChainFeatureData',)),
+    ),
+    ('Body', 'put'): (
+        (1, (0,), ('IRibFeatureData2',)),
+    ),
+    ('BoundingSketch', 'put'): (
+        (1, (0,), ('ICoreFeatureData',)),
+    ),
+    ('Callout', 'put'): (
+        (1, (0,), ('IPropertyManagerPageSelectionbox', 'ISelectData',)),
+    ),
+    ('Camera', 'put'): (
+        (1, (0,), ('IModelView',)),
+    ),
+    ('Centerline', 'put'): (
+        (1, (0,), ('ILoftFeatureData',)),
+    ),
+    ('CheckInterference', 'method'): (
+        (6, (0, 1,), ('IModeler',)),
+    ),
+    ('CheckInterferenceBetweenTwoBodies', 'method'): (
+        (6, (0, 1,), ('IModeler',)),
+    ),
+    ('CloseAndReopen', 'method'): (
+        (3, (0,), ('ISldWorks',)),
+    ),
+    ('CloseAndReopen2', 'method'): (
+        (3, (0,), ('ISldWorks',)),
+    ),
+    ('CloseDesignTableNotify', 'method'): (
+        (1, (0,), ('DAssemblyDocEvents', 'DPartDocEvents',)),
+    ),
+    ('CloseMessageBar', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('CloseUserNotification', 'method'): (
+        (1, (0,), ('IModelDocExtension', 'ISldWorks',)),
+    ),
+    ('ClosestDistance', 'method'): (
+        (4, (0, 1,), ('IModelDoc2',)),
+    ),
+    ('ComponentDisplayModeChangePostNotify', 'method'): (
+        (1, (0,), ('DAssemblyDocEvents',)),
+    ),
+    ('ComponentDisplayModeChangePreNotify', 'method'): (
+        (1, (0,), ('DAssemblyDocEvents',)),
+    ),
+    ('ComponentDisplayStateChangeNotify', 'method'): (
+        (1, (0,), ('DAssemblyDocEvents',)),
+    ),
+    ('ComponentReferredDisplayStateChangeNotify', 'method'): (
+        (6, (0,), ('DAssemblyDocEvents',)),
+    ),
+    ('ComponentReload2', 'method'): (
+        (3, (0,), ('IAssemblyDoc',)),
+    ),
+    ('ComponentStateChangeNotify', 'method'): (
+        (3, (0,), ('DAssemblyDocEvents',)),
+    ),
+    ('ComponentStateChangeNotify2', 'method'): (
+        (4, (0,), ('DAssemblyDocEvents',)),
+    ),
+    ('ComponentStateChangeNotify3', 'method'): (
+        (4, (0,), ('DAssemblyDocEvents',)),
+    ),
+    ('ComponentVisualPropertiesChangeNotify', 'method'): (
+        (1, (0,), ('DAssemblyDocEvents',)),
+    ),
+    ('ComposeTransform', 'method'): (
+        (5, (0, 1, 2, 3,), ('IMathUtility',)),
+    ),
+    ('ConfigurationChangeNotify', 'method'): (
+        (4, (1,), ('DAssemblyDocEvents', 'DPartDocEvents',)),
+    ),
+    ('ConnectToSW', 'method'): (
+        (3, (0,), ('ISwAddin',)),
+    ),
+    ('ConnectionType', 'get'): (
+        (1, (0,), ('IStructuralMemberFeatureData',)),
+    ),
+    ('ConnectionType', 'put'): (
+        (2, (0,), ('IStructuralMemberFeatureData',)),
+    ),
+    ('ConstraintPointOrSketch', 'put'): (
+        (1, (0,), ('IDomeFeatureData2',)),
+    ),
+    ('CoordinateSystem', 'put'): (
+        (1, (0,), ('IBoundingBoxFeatureData', 'IScaleFeatureData', 'ITablePatternFeatureData',)),
+    ),
+    ('CopyAppearance', 'method'): (
+        (1, (0,), ('ISldWorks',)),
+    ),
+    ('CopyDisplayStateFromConfiguration', 'method'): (
+        (2, (0,), ('IConfiguration',)),
+    ),
+    ('CopyWizardHole', 'method'): (
+        (3, (0, 1,), ('IModeler',)),
+    ),
+    ('CreateAngularRotationPlot', 'method'): (
+        (3, (1,), ('ICWResults',)),
+    ),
+    ('CreateBaseFeature', 'method'): (
+        (1, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('CreateBlendSurface', 'method'): (
+        (10, (0, 2,), ('IBody', 'IBody2',)),
+    ),
+    ('CreateCallout', 'method'): (
+        (2, (1,), ('IModelDocExtension', 'IModelView',)),
+    ),
+    ('CreateCallout2', 'method'): (
+        (2, (1,), ('ISelectionMgr',)),
+    ),
+    ('CreateContactComponent', 'method'): (
+        (4, (2,), ('ICWContactManager',)),
+    ),
+    ('CreateControlNotify', 'method'): (
+        (2, (1,), ('DSWPropertySheetEvents',)),
+    ),
+    ('CreateCoonsBSurface', 'method'): (
+        (5, (0, 1, 2, 3,), ('IModeler',)),
+    ),
+    ('CreateCoordinateSystem', 'method'): (
+        (4, (0,), ('IFeatureManager',)),
+    ),
+    ('CreateExtrudedBody', 'method'): (
+        (3, (0, 1,), ('IModeler',)),
+    ),
+    ('CreateExtrusionSurface', 'method'): (
+        (2, (0,), ('IBody', 'IBody2', 'IModeler',)),
+    ),
+    ('CreateFeature', 'method'): (
+        (1, (0,), ('IFeatureManager', 'IMotionStudy',)),
+    ),
+    ('CreateFeatureFromBody', 'method'): (
+        (1, (0,), ('IPartDoc',)),
+    ),
+    ('CreateFeatureFromBody2', 'method'): (
+        (2, (0,), ('IPartDoc',)),
+    ),
+    ('CreateFeatureFromBody3', 'method'): (
+        (3, (0,), ('IPartDoc',)),
+    ),
+    ('CreateFeatureMgrControl', 'method'): (
+        (5, (0,), ('IModelViewManager',)),
+    ),
+    ('CreateFeatureMgrView', 'method'): (
+        (3, (0,), ('IModelViewManager',)),
+    ),
+    ('CreateInstance', 'method'): (
+        (3, (0, 1,), ('IAttributeDef',)),
+    ),
+    ('CreateInstance2', 'method'): (
+        (4, (0, 1,), ('IAttributeDef',)),
+    ),
+    ('CreateInstance3', 'method'): (
+        (6, (0, 1, 2,), ('IAttributeDef',)),
+    ),
+    ('CreateInstance4', 'method'): (
+        (5, (0, 1,), ('IAttributeDef',)),
+    ),
+    ('CreateInstance5', 'method'): (
+        (5, (0, 1,), ('IAttributeDef',)),
+    ),
+    ('CreateLoftBody', 'method'): (
+        (8, (0,), ('IModeler',)),
+    ),
+    ('CreateLoftBody2', 'method'): (
+        (21, (0, 3,), ('IModeler',)),
+    ),
+    ('CreateLoftSurface', 'method'): (
+        (18, (6, 7, 12, 13,), ('IModeler',)),
+    ),
+    ('CreateManipulator', 'method'): (
+        (2, (1,), ('IModelViewManager',)),
+    ),
+    ('CreateMate', 'method'): (
+        (1, (0,), ('IAssemblyDoc',)),
+    ),
+    ('CreateOffsetSurface', 'method'): (
+        (2, (0,), ('IBody', 'IBody2', 'IModeler',)),
+    ),
+    ('CreatePCurve', 'method'): (
+        (4, (0,), ('IModeler',)),
+    ),
+    ('CreatePMPage', 'method'): (
+        (3, (2,), ('ISldWorks',)),
+    ),
+    ('CreatePropertyManagerPage', 'method'): (
+        (4, (2,), ('ISldWorks',)),
+    ),
+    ('CreateRevolutionSurface', 'method'): (
+        (4, (0,), ('IBody', 'IBody2', 'IModeler',)),
+    ),
+    ('CreateRuledSurface', 'method'): (
+        (3, (0, 1,), ('IBody2', 'IModeler',)),
+    ),
+    ('CreateRuledSurfaceFromEdge', 'method'): (
+        (14, (0,), ('IModeler',)),
+    ),
+    ('CreateSectionView', 'method'): (
+        (1, (0,), ('IModelViewManager',)),
+    ),
+    ('CreateSheetFromSurface', 'method'): (
+        (2, (0,), ('IModeler',)),
+    ),
+    ('CreateSmartComponent', 'method'): (
+        (6, (0, 4,), ('IAssemblyDoc',)),
+    ),
+    ('CreateSplinesByEqnParams2', 'method'): (
+        (1, (0,), ('ISketchManager',)),
+    ),
+    ('CreateSurfaceCurve', 'method'): (
+        (2, (0,), ('ICurve',)),
+    ),
+    ('CreateSurfaceFeatureFromBody', 'method'): (
+        (2, (0,), ('IPartDoc',)),
+    ),
+    ('CreateSweptBody', 'method'): (
+        (15, (0,), ('IModeler',)),
+    ),
+    ('CreateSweptSurface', 'method'): (
+        (2, (0,), ('IModeler',)),
+    ),
+    ('CreateTaskpaneView', 'method'): (
+        (3, (2,), ('ISldWorks',)),
+    ),
+    ('CreateTransformRotateAxis', 'method'): (
+        (3, (0, 1,), ('IMathUtility',)),
+    ),
+    ('Cross', 'method'): (
+        (1, (0,), ('IMathVector',)),
+    ),
+    ('CustomBlankSize', 'put'): (
+        (1, (0,), ('ICostAnalysisSheetMetal',)),
+    ),
+    ('CutDirection', 'put'): (
+        (1, (0,), ('ISMNormalCutFeatureData2',)),
+    ),
+    ('CutListFolderLocation', 'method'): (
+        (1, (0,), ('IFeatureManager',)),
+    ),
+    ('CylindricalOrConicalEdge', 'put'): (
+        (1, (0,), ('ISweptFlangeFeatureData',)),
+    ),
+    ('D1Axis', 'put'): (
+        (1, (0,), ('ILinearPatternFeatureData', 'ILocalLinearPatternFeatureData',)),
+    ),
+    ('D1Direction', 'put'): (
+        (1, (0,), ('ICurveDrivenPatternFeatureData', 'ILocalCurvePatternFeatureData',)),
+    ),
+    ('D1EndConditionReference', 'put'): (
+        (1, (0,), ('IBaseFlangeFeatureData',)),
+    ),
+    ('D1EndReference', 'put'): (
+        (1, (0,), ('ILinearPatternFeatureData', 'ILocalLinearPatternFeatureData',)),
+    ),
+    ('D1EndSeedReference', 'put'): (
+        (1, (0,), ('ILinearPatternFeatureData', 'ILocalLinearPatternFeatureData',)),
+    ),
+    ('D1FaceNormal', 'put'): (
+        (1, (0,), ('ICurveDrivenPatternFeatureData', 'ILocalCurvePatternFeatureData',)),
+    ),
+    ('D1OffsetReference', 'put'): (
+        (1, (0,), ('IBaseFlangeFeatureData',)),
+    ),
+    ('D2Axis', 'put'): (
+        (1, (0,), ('ILinearPatternFeatureData', 'ILocalLinearPatternFeatureData',)),
+    ),
+    ('D2Direction', 'put'): (
+        (1, (0,), ('ICurveDrivenPatternFeatureData', 'ILocalCurvePatternFeatureData',)),
+    ),
+    ('D2EndConditionReference', 'put'): (
+        (1, (0,), ('IBaseFlangeFeatureData',)),
+    ),
+    ('D2EndReference', 'put'): (
+        (1, (0,), ('ILinearPatternFeatureData', 'ILocalLinearPatternFeatureData',)),
+    ),
+    ('D2EndSeedReference', 'put'): (
+        (1, (0,), ('ILinearPatternFeatureData', 'ILocalLinearPatternFeatureData',)),
+    ),
+    ('D2OffsetReference', 'put'): (
+        (1, (0,), ('IBaseFlangeFeatureData',)),
+    ),
+    ('Definition', 'put'): (
+        (1, (0,), ('ISketchBlockInstance',)),
+    ),
+    ('DeleteEntityName', 'method'): (
+        (1, (0,), ('IPartDoc',)),
+    ),
+    ('DeleteJoint', 'method'): (
+        (1, (0,), ('ICWJoints',)),
+    ),
+    ('DeletePoint', 'method'): (
+        (1, (0,), ('ISketchSpline',)),
+    ),
+    ('DeleteRelation', 'method'): (
+        (1, (0,), ('ISketchRelationManager',)),
+    ),
+    ('DepthReference', 'put'): (
+        (1, (0,), ('IBrokenOutSectionFeatureData',)),
+    ),
+    ('DimensionChangeNotify', 'method'): (
+        (1, (0,), ('DAssemblyDocEvents', 'DDrawingDocEvents', 'DPartDocEvents',)),
+    ),
+    ('DimensionLineDirection', 'put'): (
+        (1, (0,), ('IDimension',)),
+    ),
+    ('Direction', 'put'): (
+        (1, (0,), ('IDomeFeatureData2', 'IDragArrowManipulator',)),
+    ),
+    ('DirectionPull', 'put'): (
+        (1, (0,), ('IDraftFeatureData2',)),
+    ),
+    ('DirectionReference', 'put'): (
+        (1, (0,), ('IPrimaryMemberPointLengthFeatureData', 'ISimulationGravityFeatureData', 'ISimulationMotorFeatureData', 'ISurfaceRadiateFeatureData',)),
+    ),
+    ('DirectionVector', 'put'): (
+        (1, (0,), ('IRuledSurfaceFeatureData',)),
+    ),
+    ('Display', 'method'): (
+        (2, (0,), ('IBody', 'IBody2',)),
+        (4, (0,), ('IVertex',)),
+    ),
+    ('Display2', 'method'): (
+        (3, (0,), ('IBody2',)),
+    ),
+    ('Display3', 'method'): (
+        (3, (0,), ('IBody2',)),
+    ),
+    ('DisplayMode', 'get'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('DisplayMode', 'put'): (
+        (2, (0,), ('IModelDocExtension',)),
+    ),
+    ('DisplayStateSpecMaterialPropertyValues', 'get'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('DisplayStateSpecMaterialPropertyValues', 'put'): (
+        (2, (0,), ('IModelDocExtension',)),
+    ),
+    ('DisplayWireFrameXOR', 'method'): (
+        (2, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('DivergeDirection', 'put'): (
+        (1, (0,), ('IExplodeStep',)),
+    ),
+    ('Dot', 'method'): (
+        (1, (0,), ('IMathVector',)),
+    ),
+    ('DraftBody2', 'method'): (
+        (6, (3,), ('IBody2',)),
+    ),
+    ('Drag', 'method'): (
+        (1, (0,), ('IDragOperator',)),
+    ),
+    ('DragAsUI', 'method'): (
+        (1, (0,), ('IDragOperator',)),
+    ),
+    ('Edge', 'put'): (
+        (1, (0,), ('ICosmeticThreadFeatureData', 'IEdgeFlangeFeatureData', 'IThreadFeatureData',)),
+    ),
+    ('EdgeGetFace', 'method'): (
+        (1, (0,), ('IMidSurface', 'IMidSurface2', 'IMidSurface3',)),
+    ),
+    ('EdgeInFaceSense', 'method'): (
+        (1, (0,), ('IEdge',)),
+    ),
+    ('Edit', 'method'): (
+        (4, (0, 1, 2,), ('ISwComFeature',)),
+        (10, (1, 4, 7,), ('IMateReference',)),
+    ),
+    ('EditBody', 'put'): (
+        (1, (0,), ('IMacroFeatureData',)),
+    ),
+    ('EndDirectionVector', 'put'): (
+        (1, (0,), ('ILoftFeatureData', 'ISweepFeatureData',)),
+    ),
+    ('EndInContextEditNotify', 'method'): (
+        (2, (0,), ('DAssemblyDocEvents',)),
+    ),
+    ('EndPlane', 'put'): (
+        (1, (0,), ('IPrimaryMemberPointLengthFeatureData',)),
+    ),
+    ('EndPoint', 'put'): (
+        (1, (0,), ('IMagneticLine', 'IPrimaryMemberPointLengthFeatureData',)),
+    ),
+    ('EntitiesToMate', 'put'): (
+        (2, (1,), ('ICamFollowerMateFeatureData', 'IRackPinionMateFeatureData',)),
+    ),
+    ('Entity', 'put'): (
+        (1, (0,), ('IEdgePoint',)),
+    ),
+    ('EnumRelatedSectionedBodies', 'method'): (
+        (1, (0,), ('IPartDoc',)),
+    ),
+    ('EnumRelatedSectionedBodies2', 'method'): (
+        (1, (0,), ('IPartDoc',)),
+    ),
+    ('EnumSectionedBodies', 'method'): (
+        (1, (0,), ('IComponent', 'IComponent2',)),
+    ),
+    ('ExpandFeature', 'method'): (
+        (3, (0,), ('IFeatureManager',)),
+    ),
+    ('ExplodeSketchBlockInstance', 'method'): (
+        (1, (0,), ('ISketchManager',)),
+    ),
+    ('ExportCSVFile', 'method'): (
+        (2, (0,), ('ICosmosMotionStudyResults',)),
+    ),
+    ('ExtendSurface', 'method'): (
+        (6, (4, 5,), ('IBody2',)),
+    ),
+    ('ExtensionLineDirection', 'put'): (
+        (1, (0,), ('IDimension',)),
+    ),
+    ('Face', 'put'): (
+        (1, (0,), ('ICrossBreakFeatureData', 'IDomeFeatureData', 'IDomeFeatureData2', 'IEndCapFeatureData', 'IFaceHatch', 'IMirrorSolidFeatureData', 'ISimpleHoleFeatureData', 'ISimpleHoleFeatureData2', 'ISurfaceExtendFeatureData', 'IWizardHoleFeatureData', 'IWizardHoleFeatureData2', 'IWrapSketchFeatureData',)),
+    ),
+    ('FeatureEditPreNotify', 'method'): (
+        (1, (0,), ('DAssemblyDocEvents', 'DPartDocEvents',)),
+    ),
+    ('FeatureFolderLocation', 'method'): (
+        (1, (0,), ('IFeatureManager',)),
+    ),
+    ('FeatureSketchEditPreNotify', 'method'): (
+        (2, (0, 1,), ('DAssemblyDocEvents', 'DPartDocEvents',)),
+    ),
+    ('FeatureTransform', 'put'): (
+        (1, (0,), ('IMacroFeatureData',)),
+    ),
+    ('FileNewNotify', 'method'): (
+        (2, (0,), ('DSldWorksEvents',)),
+    ),
+    ('FileNewNotify2', 'method'): (
+        (3, (0,), ('DSldWorksEvents',)),
+    ),
+    ('FindAttribute', 'method'): (
+        (2, (0,), ('IBody2', 'IComponent', 'IComponent2', 'IEntity',)),
+    ),
+    ('FindTrackedObjects', 'method'): (
+        (4, (1,), ('IModelDocExtension',)),
+    ),
+    ('FindTwoEdgeMaxDeviation', 'method'): (
+        (2, (0, 1,), ('IModeler',)),
+    ),
+    ('FirstItem', 'put'): (
+        (1, (0,), ('IAutoBalloonOptions',)),
+    ),
+    ('FirstPlane', 'put'): (
+        (1, (0,), ('ISectionViewData',)),
+    ),
+    ('FixPointVertex', 'put'): (
+        (1, (0,), ('ISurfaceFlattenFeatureData',)),
+    ),
+    ('FixedFace', 'put'): (
+        (1, (0,), ('IFlatPatternFeatureData', 'IFoldsFeatureData', 'IJogFeatureData',)),
+    ),
+    ('FixedFace2', 'put'): (
+        (1, (0,), ('IFlatPatternFeatureData',)),
+    ),
+    ('FixedReference', 'put'): (
+        (1, (0,), ('ISheetMetalFeatureData',)),
+    ),
+    ('FlipLoopNotify', 'method'): (
+        (2, (0, 1,), ('DAssemblyDocEvents', 'DPartDocEvents',)),
+    ),
+    ('FloorSelection', 'put'): (
+        (1, (0,), ('ISwScene',)),
+    ),
+    ('FullyDefineSketch', 'method'): (
+        (10, (5, 7,), ('ISketchManager',)),
+    ),
+    ('GetAccelerationComponentForAllStepsAtNode', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetAccelerationForEntities', 'method'): (
+        (6, (2,), ('ICWResults',)),
+    ),
+    ('GetAngularAcceleration', 'method'): (
+        (2, (1,), ('IMotionStudyResults',)),
+    ),
+    ('GetAngularVelocity', 'method'): (
+        (2, (1,), ('IMotionStudyResults',)),
+    ),
+    ('GetBSurfParams3', 'method'): (
+        (5, (2,), ('ISurface',)),
+    ),
+    ('GetBodyOutline', 'method'): (
+        (6, (1,), ('IModeler',)),
+    ),
+    ('GetBodyOutline2', 'method'): (
+        (7, (1,), ('IModeler',)),
+    ),
+    ('GetCMPosition', 'method'): (
+        (2, (1,), ('IMotionStudyResults',)),
+    ),
+    ('GetCoincidenceTransform', 'method'): (
+        (2, (0,), ('IBody2',)),
+    ),
+    ('GetCoincidenceTransform2', 'method'): (
+        (2, (0,), ('IBody2',)),
+    ),
+    ('GetComponentsTransformInterferenceCount', 'method'): (
+        (3, (1, 2,), ('IInterferenceDetectionMgr',)),
+    ),
+    ('GetConicRhoOrRadius', 'method'): (
+        (1, (0,), ('ISimpleFilletFeatureData2', 'IVariableFilletFeatureData2',)),
+    ),
+    ('GetConicRhoOrRadius2', 'method'): (
+        (2, (0,), ('IVariableFilletFeatureData2',)),
+    ),
+    ('GetContactForcesAndFriction', 'method'): (
+        (6, (1,), ('ICWResults',)),
+    ),
+    ('GetCookie', 'method'): (
+        (3, (2,), ('ISldWorks',)),
+    ),
+    ('GetCookiex64', 'method'): (
+        (3, (2,), ('ISldWorks',)),
+    ),
+    ('GetCorresponding', 'method'): (
+        (1, (0,), ('IComponent2', 'IModelDocExtension', 'IPartDoc', 'IView',)),
+    ),
+    ('GetCorresponding2', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('GetCorrespondingEntity', 'method'): (
+        (1, (0,), ('IComponent2', 'IModelDocExtension', 'IPartDoc', 'IView',)),
+    ),
+    ('GetCorrespondingEntity2', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('GetCurvatureControl', 'method'): (
+        (1, (0,), ('IFillSurfaceFeatureData',)),
+    ),
+    ('GetDirection', 'method'): (
+        (1, (0,), ('IRipFeatureData',)),
+    ),
+    ('GetDisplacementAtPoints', 'method'): (
+        (6, (2,), ('ICWResults',)),
+    ),
+    ('GetDisplacementComponentForAllStepsAtNode', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetDisplacementForEntities', 'method'): (
+        (6, (2,), ('ICWResults',)),
+    ),
+    ('GetDistance', 'method'): (
+        (1, (0,), ('ISimpleFilletFeatureData2', 'IVariableFilletFeatureData2',)),
+        (6, (0,), ('IEntity',)),
+    ),
+    ('GetDontCutAllInstances', 'method'): (
+        (1, (0,), ('IDrSection',)),
+    ),
+    ('GetDrawingComponent', 'method'): (
+        (1, (0,), ('IComponent2', 'IEntity',)),
+    ),
+    ('GetEdgeFins', 'method'): (
+        (1, (0,), ('ITessellation',)),
+    ),
+    ('GetEdgeIdType', 'method'): (
+        (1, (0,), ('IMacroFeatureData',)),
+    ),
+    ('GetEdgeUserId', 'method'): (
+        (3, (0,), ('IMacroFeatureData',)),
+    ),
+    ('GetElementDataFromEntity', 'method'): (
+        (2, (0,), ('ICWMesh',)),
+    ),
+    ('GetEntitiesNeedUserId', 'method'): (
+        (3, (0,), ('IMacroFeatureData',)),
+    ),
+    ('GetEntitiesNeedUserIdCount', 'method'): (
+        (3, (0,), ('IMacroFeatureData',)),
+    ),
+    ('GetEntityName', 'method'): (
+        (1, (0,), ('IModelDoc', 'IModelDoc2', 'IPartDoc',)),
+    ),
+    ('GetEnvelopeAccelerationForEntities', 'method'): (
+        (6, (2,), ('ICWResults',)),
+    ),
+    ('GetEnvelopeDisplacementForEntities', 'method'): (
+        (8, (3,), ('ICWResults',)),
+    ),
+    ('GetEnvelopeStrainForEntities', 'method'): (
+        (7, (3,), ('ICWResults',)),
+    ),
+    ('GetEnvelopeStressForEntities', 'method'): (
+        (8, (3,), ('ICWResults',)),
+    ),
+    ('GetEnvelopeVelocityForEntities', 'method'): (
+        (6, (2,), ('ICWResults',)),
+    ),
+    ('GetEulerAngles', 'method'): (
+        (2, (1,), ('IMotionStudyResults',)),
+    ),
+    ('GetFaceFacets', 'method'): (
+        (1, (0,), ('ITessellation',)),
+    ),
+    ('GetFaceIdType', 'method'): (
+        (1, (0,), ('IMacroFeatureData',)),
+    ),
+    ('GetFaceUserId', 'method'): (
+        (3, (0,), ('IMacroFeatureData',)),
+    ),
+    ('GetFeatureScope', 'method'): (
+        (1, (0,), ('IAssemblyDoc',)),
+    ),
+    ('GetFeatureScopeCount', 'method'): (
+        (1, (0,), ('IAssemblyDoc',)),
+    ),
+    ('GetFlattenSheetMetalPersistReference', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('GetForceFromMate', 'method'): (
+        (2, (1,), ('IMotionStudyResults',)),
+    ),
+    ('GetFreeBodyForcesAndMoments', 'method'): (
+        (5, (0,), ('ICWResults',)),
+    ),
+    ('GetFreeBodyForcesAndMomentsForAStep', 'method'): (
+        (6, (0,), ('ICWResults',)),
+    ),
+    ('GetInferencePoints', 'method'): (
+        (6, (0,), ('ISwAddinBroker', 'ISwPointInferenceBroker',)),
+    ),
+    ('GetIntersectCurveCount', 'method'): (
+        (2, (0,), ('ISurface',)),
+    ),
+    ('GetIntersectCurveCount2', 'method'): (
+        (2, (0,), ('ISurface',)),
+    ),
+    ('GetIntersectSurfaceCount', 'method'): (
+        (1, (0,), ('ISurface',)),
+    ),
+    ('GetIntersectionEdges', 'method'): (
+        (1, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('GetIntersectionEdges2', 'method'): (
+        (2, (0,), ('IBody2',)),
+    ),
+    ('GetIsFlipped', 'method'): (
+        (1, (0,), ('IChamferFeatureData2',)),
+    ),
+    ('GetLinearAcceleration', 'method'): (
+        (2, (1,), ('IMotionStudyResults',)),
+    ),
+    ('GetLinearVelocity', 'method'): (
+        (2, (1,), ('IMotionStudyResults',)),
+    ),
+    ('GetLinearizedStressValuesAlongSCL', 'method'): (
+        (9, (7,), ('ICWPlot',)),
+    ),
+    ('GetManifoldBodiesCount', 'method'): (
+        (1, (0,), ('IModeler',)),
+    ),
+    ('GetMemberIndex', 'method'): (
+        (1, (0,), ('IBeltChainFeatureData',)),
+    ),
+    ('GetMinMaxAcceleration', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetMinMaxDisplacement', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetMinMaxDisplacementForHarmonic', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetMinMaxDisplacementRMS', 'method'): (
+        (4, (1,), ('ICWResults',)),
+    ),
+    ('GetMinMaxStrain', 'method'): (
+        (5, (3,), ('ICWResults',)),
+    ),
+    ('GetMinMaxStress', 'method'): (
+        (6, (3,), ('ICWResults',)),
+    ),
+    ('GetMinMaxStressForHarmonic', 'method'): (
+        (7, (4,), ('ICWResults',)),
+    ),
+    ('GetMinMaxStressForHarmonic2', 'method'): (
+        (7, (4,), ('ICWResults',)),
+    ),
+    ('GetMinMaxStressRMS', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetMinMaxThermal', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetMinMaxVelocity', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetMirrorOrientation', 'method'): (
+        (2, (0,), ('ICWCompositeShellOptions',)),
+    ),
+    ('GetMirrorOrientation2', 'method'): (
+        (2, (0,), ('ICWCompositeShellOptions',)),
+    ),
+    ('GetNextDisplayDimension', 'method'): (
+        (1, (0,), ('IFeature',)),
+    ),
+    ('GetNodeDataFromEntity', 'method'): (
+        (2, (0,), ('ICWMesh',)),
+    ),
+    ('GetObjectId', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('GetPartialEdgeFilletData', 'method'): (
+        (1, (0,), ('ISimpleFilletFeatureData2',)),
+    ),
+    ('GetPathSegmentAt', 'method'): (
+        (1, (0,), ('IStructuralMemberFeatureData',)),
+    ),
+    ('GetPersistReference', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('GetPersistReference3', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('GetPersistReferenceCount', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('GetPersistReferenceCount3', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('GetPreTrimmedBodies', 'method'): (
+        (1, (0,), ('IFeatureManager',)),
+    ),
+    ('GetProjectedPointOn', 'method'): (
+        (2, (0, 1,), ('IFace2', 'ISurface',)),
+    ),
+    ('GetPropertyManagerPage', 'method'): (
+        (3, (2,), ('IModelDoc', 'IModelDoc2',)),
+    ),
+    ('GetRadius', 'method'): (
+        (1, (0,), ('ISimpleFilletFeatureData', 'ISimpleFilletFeatureData2', 'IVariableFilletFeatureData', 'IVariableFilletFeatureData2',)),
+    ),
+    ('GetRadius2', 'method'): (
+        (2, (0,), ('IVariableFilletFeatureData2',)),
+    ),
+    ('GetReactionForcesAndMoments', 'method'): (
+        (4, (1,), ('ICWResults',)),
+    ),
+    ('GetReactionForcesAndMomentsWithSelections', 'method'): (
+        (7, (1,), ('ICWResults',)),
+    ),
+    ('GetRelatedSectionedBodies', 'method'): (
+        (1, (0,), ('IPartDoc',)),
+    ),
+    ('GetRelatedTangentEdgeCount', 'method'): (
+        (1, (0,), ('IView',)),
+    ),
+    ('GetRelatedTangentEdges', 'method'): (
+        (1, (0,), ('IView',)),
+    ),
+    ('GetRemoteForces', 'method'): (
+        (5, (1,), ('ICWResults',)),
+    ),
+    ('GetRotateOrientation', 'method'): (
+        (2, (0,), ('ICWCompositeShellOptions',)),
+    ),
+    ('GetRotateOrientation2', 'method'): (
+        (2, (0,), ('ICWCompositeShellOptions',)),
+    ),
+    ('GetRotationalDisplacement', 'method'): (
+        (4, (1,), ('ICWResults',)),
+    ),
+    ('GetRouteSegmentID', 'method'): (
+        (1, (0,), ('IElectricalRoute',)),
+    ),
+    ('GetSectionedBodies', 'method'): (
+        (1, (0,), ('IComponent', 'IComponent2',)),
+    ),
+    ('GetSectionedBody', 'method'): (
+        (1, (0,), ('IPartDoc',)),
+    ),
+    ('GetSelectByIdSpecification', 'method'): (
+        (4, (0,), ('ISelectionMgr',)),
+    ),
+    ('GetSelectedObjectsBBox', 'method'): (
+        (3, (0,), ('ISwAddinBroker',)),
+    ),
+    ('GetSetbackDistanceCount', 'method'): (
+        (1, (0,), ('ISimpleFilletFeatureData2', 'IVariableFilletFeatureData2',)),
+    ),
+    ('GetSetbackVertexDistance', 'method'): (
+        (2, (0,), ('ISimpleFilletFeatureData2', 'IVariableFilletFeatureData2',)),
+    ),
+    ('GetShellElementNormalAt', 'method'): (
+        (1, (0,), ('ICWMesh',)),
+    ),
+    ('GetSketchSegments', 'method'): (
+        (1, (0,), ('IStructuralMemberFeatureData',)),
+    ),
+    ('GetStrain', 'method'): (
+        (4, (2,), ('ICWResults',)),
+    ),
+    ('GetStrainComponentForAllStepsAtNode', 'method'): (
+        (4, (2,), ('ICWResults',)),
+    ),
+    ('GetStrainForEntities', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetStrainForEntities2', 'method'): (
+        (6, (3,), ('ICWResults',)),
+    ),
+    ('GetStrainForEntities3', 'method'): (
+        (9, (3,), ('ICWResults',)),
+    ),
+    ('GetStress', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetStressComponentForAllStepsAtNode', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetStressForEntities', 'method'): (
+        (6, (2,), ('ICWResults',)),
+    ),
+    ('GetStressForEntities2', 'method'): (
+        (7, (3,), ('ICWResults',)),
+    ),
+    ('GetStressForEntities3', 'method'): (
+        (10, (3,), ('ICWResults',)),
+    ),
+    ('GetThermalComponentForAllStepsAtNode', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetThermalForEntities', 'method'): (
+        (6, (2,), ('ICWResults',)),
+    ),
+    ('GetThermalValues', 'method'): (
+        (4, (1,), ('ICWResults',)),
+    ),
+    ('GetThermalValuesAtPoints', 'method'): (
+        (6, (2,), ('ICWResults',)),
+    ),
+    ('GetTorqueFromMate', 'method'): (
+        (2, (1,), ('IMotionStudyResults',)),
+    ),
+    ('GetTranslationalDisplacement', 'method'): (
+        (4, (1,), ('ICWResults',)),
+    ),
+    ('GetUserValueIn', 'method'): (
+        (1, (0,), ('IDimension',)),
+    ),
+    ('GetValues', 'method'): (
+        (3, (0, 1,), ('ICosmosMotionStudyResults',)),
+    ),
+    ('GetVelocityComponentForAllStepsAtNode', 'method'): (
+        (5, (2,), ('ICWResults',)),
+    ),
+    ('GetVelocityForEntities', 'method'): (
+        (6, (2,), ('ICWResults',)),
+    ),
+    ('GetVisibleEntities', 'method'): (
+        (2, (0,), ('IView',)),
+    ),
+    ('GetVisibleEntities2', 'method'): (
+        (2, (0,), ('IView',)),
+    ),
+    ('GetVisibleEntityCount', 'method'): (
+        (2, (0,), ('IView',)),
+    ),
+    ('GetVisibleEntityCount2', 'method'): (
+        (2, (0,), ('IView',)),
+    ),
+    ('GetYAxis', 'method'): (
+        (1, (0,), ('IMotionPlotFeatureOutput',)),
+    ),
+    ('Group1PathLink1', 'put'): (
+        (1, (0,), ('IChainPatternFeatureData',)),
+    ),
+    ('Group1PathLink2', 'put'): (
+        (1, (0,), ('IChainPatternFeatureData',)),
+    ),
+    ('Group1PathPlane', 'put'): (
+        (1, (0,), ('IChainPatternFeatureData',)),
+    ),
+    ('Group1PatternComponent', 'put'): (
+        (1, (0,), ('IChainPatternFeatureData',)),
+    ),
+    ('Group2PathLink1', 'put'): (
+        (1, (0,), ('IChainPatternFeatureData',)),
+    ),
+    ('Group2PathLink2', 'put'): (
+        (1, (0,), ('IChainPatternFeatureData',)),
+    ),
+    ('Group2PathPlane', 'put'): (
+        (1, (0,), ('IChainPatternFeatureData',)),
+    ),
+    ('Group2PatternComponent', 'put'): (
+        (1, (0,), ('IChainPatternFeatureData',)),
+    ),
+    ('HelpPoint', 'put'): (
+        (1, (0,), ('ISimpleFilletFeatureData2',)),
+    ),
+    ('Hide', 'method'): (
+        (1, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('IAccessSelections', 'method'): (
+        (2, (0, 1,), ('IBaseFlangeFeatureData', 'IBendsFeatureData', 'IBreakCornerFeatureData', 'IBrokenOutSectionFeatureData', 'IChamferFeatureData2', 'ICircularPatternFeatureData', 'IClosedCornerFeatureData', 'IConnectionPointFeatureData', 'ICoordinateSystemFeatureData', 'ICosmeticThreadFeatureData', 'ICurveDrivenPatternFeatureData', 'IDeleteFaceFeatureData', 'IDerivedPartFeatureData', 'IDerivedPatternFeatureData', 'IDomeFeatureData', 'IDomeFeatureData2', 'IDraftFeatureData2', 'IEdgeFlangeFeatureData', 'IExtrudeFeatureData', 'IExtrudeFeatureData2', 'IFillSurfaceFeatureData', 'IFlatPatternFeatureData', 'IFoldsFeatureData', 'IHemFeatureData', 'IHoleSeriesFeatureData', 'IHoleSeriesFeatureData2', 'IJogFeatureData', 'ILinearPatternFeatureData', 'ILocalCircularPatternFeatureData', 'ILocalLinearPatternFeatureData', 'ILoftFeatureData', 'ILoftedBendsFeatureData', 'IMacroFeatureData', 'IMirrorPatternFeatureData', 'IMirrorSolidFeatureData', 'IMiterFlangeFeatureData', 'IOneBendFeatureData', 'IProjectionCurveFeatureData', 'IRefAxisFeatureData', 'IRefPlaneFeatureData', 'IRefPointFeatureData', 'IReplaceFaceFeatureData', 'IRevolveFeatureData2', 'IRibFeatureData2', 'IRipFeatureData', 'IScaleFeatureData', 'ISheetMetalFeatureData', 'IShellFeatureData', 'ISimpleFilletFeatureData', 'ISimpleFilletFeatureData2', 'ISimpleHoleFeatureData', 'ISimpleHoleFeatureData2', 'ISketchPatternFeatureData', 'ISketchedBendFeatureData', 'ISurfExtrudeFeatureData', 'ISurfRevolveFeatureData', 'ISurfaceCutFeatureData', 'ISurfaceExtendFeatureData', 'ISurfaceKnitFeatureData', 'ISurfaceOffsetFeatureData', 'ISurfacePlanarFeatureData', 'ISurfaceRadiateFeatureData', 'ISurfaceTrimFeatureData', 'ISweepFeatureData', 'ITablePatternFeatureData', 'IThickenFeatureData', 'IVariableFilletFeatureData', 'IVariableFilletFeatureData2', 'IWizardHoleFeatureData', 'IWizardHoleFeatureData2',)),
+    ),
+    ('IAccessSelections2', 'method'): (
+        (2, (0, 1,), ('IBaseFlangeFeatureData', 'IBendsFeatureData', 'ICircularPatternFeatureData', 'IClosedCornerFeatureData', 'IDerivedPatternFeatureData', 'IEdgeFlangeFeatureData', 'IFlatPatternFeatureData', 'IFoldsFeatureData', 'ILinearPatternFeatureData', 'ILocalCircularPatternFeatureData', 'ILocalLinearPatternFeatureData', 'IMirrorPatternFeatureData', 'IMirrorSolidFeatureData', 'IMiterFlangeFeatureData', 'IOneBendFeatureData', 'IProjectionCurveFeatureData', 'ISheetMetalFeatureData', 'ISketchPatternFeatureData', 'ISketchedBendFeatureData', 'ITablePatternFeatureData',)),
+    ),
+    ('IAdd', 'method'): (
+        (1, (0,), ('IMathVector',)),
+    ),
+    ('IAddBodies', 'method'): (
+        (2, (1,), ('IMassProperty',)),
+    ),
+    ('IAddComponent', 'method'): (
+        (2, (0,), ('IDragOperator',)),
+    ),
+    ('IAddDisplayStateSpecificRenderMaterial', 'method'): (
+        (6, (0,), ('IModelDocExtension',)),
+    ),
+    ('IAddDisplayText', 'method'): (
+        (5, (2,), ('IDisplayDimension',)),
+    ),
+    ('IAddDynamicClearance', 'method'): (
+        (5, (0, 1,), ('IDragOperator',)),
+    ),
+    ('IAddMate', 'method'): (
+        (7, (1,), ('IMoveCopyBodyFeatureData',)),
+    ),
+    ('IAddRelation', 'method'): (
+        (3, (1,), ('ISketchRelationManager',)),
+    ),
+    ('IAddVector', 'method'): (
+        (1, (0,), ('IMathPoint',)),
+    ),
+    ('ICheckInterferenceCount', 'method'): (
+        (6, (0, 1,), ('IModeler',)),
+    ),
+    ('ICheckInterferenceCount2', 'method'): (
+        (6, (0, 1,), ('IModeler',)),
+    ),
+    ('ICheckInterferenceCount3', 'method'): (
+        (8, (1, 3,), ('IModeler',)),
+    ),
+    ('IClosestDistance', 'method'): (
+        (4, (0, 1,), ('IModelDoc2',)),
+    ),
+    ('ICollisionDetection', 'method'): (
+        (4, (1,), ('IDragOperator',)),
+    ),
+    ('ICombineVolumes', 'method'): (
+        (1, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('IComponentReload2', 'method'): (
+        (3, (0,), ('IAssemblyDoc',)),
+    ),
+    ('IComponentReload3', 'method'): (
+        (3, (0,), ('IAssemblyDoc',)),
+    ),
+    ('ICopyWizardHole', 'method'): (
+        (3, (0, 1,), ('IModeler',)),
+    ),
+    ('ICreateBaseFeature', 'method'): (
+        (1, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('ICreateBlendSurface', 'method'): (
+        (10, (0, 2,), ('IBody', 'IBody2',)),
+    ),
+    ('ICreateBlockDefinition', 'method'): (
+        (13, (4, 6, 8, 10, 12,), ('IDrawingDoc',)),
+    ),
+    ('ICreateBodiesFromSheets', 'method'): (
+        (5, (1,), ('IModeler',)),
+    ),
+    ('ICreateBodiesFromSheets2', 'method'): (
+        (6, (1,), ('IModeler',)),
+    ),
+    ('ICreateBodyFromFaces', 'method'): (
+        (4, (1,), ('IModeler',)),
+    ),
+    ('ICreateBodyFromFaces2', 'method'): (
+        (5, (1,), ('IModeler',)),
+    ),
+    ('ICreateBodyFromFaces3', 'method'): (
+        (5, (1,), ('IModeler',)),
+    ),
+    ('ICreateBrepBody', 'method'): (
+        (12, (6, 7,), ('IModeler',)),
+    ),
+    ('ICreateBrepBody2', 'method'): (
+        (12, (6, 7,), ('IModeler',)),
+    ),
+    ('ICreateBrepBody3', 'method'): (
+        (16, (6, 7, 8, 9, 10,), ('IModeler',)),
+    ),
+    ('ICreateCustomSymbol', 'method'): (
+        (6, (1, 3, 5,), ('IDrawingDoc',)),
+    ),
+    ('ICreateExtrusionSurface', 'method'): (
+        (2, (0,), ('IBody', 'IBody2', 'IModeler',)),
+    ),
+    ('ICreateExtrusionSurfaceDLL', 'method'): (
+        (2, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('ICreateFeatureFromBody', 'method'): (
+        (1, (0,), ('IPartDoc',)),
+    ),
+    ('ICreateFeatureFromBody2', 'method'): (
+        (2, (0,), ('IPartDoc',)),
+    ),
+    ('ICreateFeatureFromBody3', 'method'): (
+        (3, (0,), ('IPartDoc',)),
+    ),
+    ('ICreateFeatureFromBody4', 'method'): (
+        (3, (0,), ('IPartDoc',)),
+    ),
+    ('ICreateInstance', 'method'): (
+        (3, (0, 1,), ('IAttributeDef',)),
+    ),
+    ('ICreateInstance2', 'method'): (
+        (4, (0, 1,), ('IAttributeDef',)),
+    ),
+    ('ICreateInstance3', 'method'): (
+        (6, (0, 1, 2,), ('IAttributeDef',)),
+    ),
+    ('ICreateInstance4', 'method'): (
+        (6, (0, 1, 2,), ('IAttributeDef',)),
+    ),
+    ('ICreateLoftSurface', 'method'): (
+        (22, (1, 5, 8, 9, 11, 13, 16, 17,), ('IModeler',)),
+    ),
+    ('ICreateOffsetSurface', 'method'): (
+        (2, (0,), ('IBody', 'IBody2', 'IModeler',)),
+    ),
+    ('ICreatePCurve', 'method'): (
+        (4, (0,), ('IModeler',)),
+    ),
+    ('ICreatePropertyManagerPage', 'method'): (
+        (4, (2,), ('ISldWorks',)),
+    ),
+    ('ICreateRevolutionSurface', 'method'): (
+        (4, (0,), ('IBody', 'IBody2', 'IModeler',)),
+    ),
+    ('ICreateRevolutionSurfaceDLL', 'method'): (
+        (4, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('ICreateRuledSurface', 'method'): (
+        (3, (0, 1,), ('IBody2', 'IModeler',)),
+    ),
+    ('ICreateRuledSurfaceFromEdge', 'method'): (
+        (15, (0, 2,), ('IModeler',)),
+    ),
+    ('ICreateSectionViewAt3', 'method'): (
+        (12, (11,), ('IDrawingDoc',)),
+    ),
+    ('ICreateSectionViewAt4', 'method'): (
+        (7, (6,), ('IDrawingDoc',)),
+    ),
+    ('ICreateSectionViewAt5', 'method'): (
+        (8, (6,), ('IDrawingDoc',)),
+    ),
+    ('ICreateSheetFromFaces', 'method'): (
+        (2, (1,), ('IModeler',)),
+    ),
+    ('ICreateSheetFromSurface', 'method'): (
+        (2, (0,), ('IModeler',)),
+    ),
+    ('ICreateSheetFromSurface2', 'method'): (
+        (2, (0,), ('IModeler',)),
+    ),
+    ('ICreateSurfaceFeatureFromBodyCount', 'method'): (
+        (2, (0,), ('IPartDoc',)),
+    ),
+    ('ICreateSurfaceFeatureFromBodyCount2', 'method'): (
+        (2, (0,), ('IPartDoc',)),
+    ),
+    ('ICreateSweptSurface', 'method'): (
+        (2, (0,), ('IModeler',)),
+    ),
+    ('ICreateTransformRotateAxis', 'method'): (
+        (3, (0, 1,), ('IMathUtility',)),
+    ),
+    ('ICreateTrimmedSheet', 'method'): (
+        (2, (1,), ('ISurface',)),
+    ),
+    ('ICreateTrimmedSheet2', 'method'): (
+        (2, (1,), ('ISurface',)),
+    ),
+    ('ICreateTrimmedSheet3', 'method'): (
+        (2, (1,), ('ISurface',)),
+    ),
+    ('ICreateTrimmedSheet4', 'method'): (
+        (3, (1,), ('ISurface',)),
+    ),
+    ('ICreateWireBody', 'method'): (
+        (3, (1,), ('IModeler',)),
+    ),
+    ('ICross', 'method'): (
+        (1, (0,), ('IMathVector',)),
+    ),
+    ('IDeleteBlends', 'method'): (
+        (2, (1,), ('IBody', 'IBody2',)),
+    ),
+    ('IDeleteBlends2', 'method'): (
+        (3, (1,), ('IBody', 'IBody2',)),
+    ),
+    ('IDeleteBlends3', 'method'): (
+        (4, (1,), ('IBody2',)),
+    ),
+    ('IDeleteEntityName', 'method'): (
+        (1, (0,), ('IPartDoc',)),
+    ),
+    ('IDeleteFaces2', 'method'): (
+        (3, (1,), ('IBody', 'IBody2',)),
+    ),
+    ('IDeleteFaces3', 'method'): (
+        (5, (1,), ('IBody', 'IBody2',)),
+    ),
+    ('IDeleteFacesFromSheetBody', 'method'): (
+        (2, (1,), ('IModeler',)),
+    ),
+    ('IDeleteFacesMakeSheetBodies', 'method'): (
+        (3, (1,), ('IBody2',)),
+    ),
+    ('IDeleteFacesMakeSheetBodiesCount', 'method'): (
+        (2, (1,), ('IBody2',)),
+    ),
+    ('IDisplay', 'method'): (
+        (2, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('IDisplayWireFrameXOR', 'method'): (
+        (2, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('IDot', 'method'): (
+        (1, (0,), ('IMathVector',)),
+    ),
+    ('IDraftBody', 'method'): (
+        (5, (1, 2,), ('IBody', 'IBody2',)),
+    ),
+    ('IDraftBody2', 'method'): (
+        (6, (1, 2, 3,), ('IBody2',)),
+    ),
+    ('IDrag', 'method'): (
+        (1, (0,), ('IDragOperator',)),
+    ),
+    ('IEdgeGetFace', 'method'): (
+        (1, (0,), ('IMidSurface', 'IMidSurface2', 'IMidSurface3',)),
+    ),
+    ('IEdgeInFaceSense', 'method'): (
+        (1, (0,), ('IEdge',)),
+    ),
+    ('IEdgeInFaceSense2', 'method'): (
+        (1, (0,), ('IEdge',)),
+    ),
+    ('IExtendSurface', 'method'): (
+        (7, (1, 5, 6,), ('IBody2',)),
+    ),
+    ('IFace', 'put'): (
+        (1, (0,), ('IDomeFeatureData', 'IDomeFeatureData2', 'ISimpleHoleFeatureData', 'ISimpleHoleFeatureData2', 'ISurfaceExtendFeatureData', 'IWizardHoleFeatureData', 'IWizardHoleFeatureData2',)),
+    ),
+    ('IFeatureReferenceCurve', 'method'): (
+        (5, (1,), ('IModelDoc', 'IModelDoc2',)),
+    ),
+    ('IFindAttribute', 'method'): (
+        (2, (0,), ('IComponent', 'IComponent2', 'IEntity',)),
+    ),
+    ('IFindTwoEdgeMaxDeviation', 'method'): (
+        (2, (0, 1,), ('IModeler',)),
+    ),
+    ('IGetAllowedRelations', 'method'): (
+        (3, (1,), ('ISketchRelationManager',)),
+    ),
+    ('IGetAllowedRelationsCount', 'method'): (
+        (2, (1,), ('ISketchRelationManager',)),
+    ),
+    ('IGetComponentsTransformInterference', 'method'): (
+        (5, (1, 2,), ('IInterferenceDetectionMgr',)),
+    ),
+    ('IGetConicRhoOrRadius', 'method'): (
+        (1, (0,), ('ISimpleFilletFeatureData2', 'IVariableFilletFeatureData2',)),
+    ),
+    ('IGetCorrespondingEntity', 'method'): (
+        (1, (0,), ('IComponent2', 'IPartDoc',)),
+    ),
+    ('IGetDecalProperties', 'method'): (
+        (2, (0, 1,), ('IFace2',)),
+    ),
+    ('IGetDistance', 'method'): (
+        (6, (0,), ('IEntity',)),
+    ),
+    ('IGetEdgeFins', 'method'): (
+        (1, (0,), ('ITessellation',)),
+    ),
+    ('IGetEdgeFinsCount', 'method'): (
+        (1, (0,), ('ITessellation',)),
+    ),
+    ('IGetEntitiesNeedUserId', 'method'): (
+        (5, (0,), ('IMacroFeatureData',)),
+    ),
+    ('IGetEntityName', 'method'): (
+        (1, (0,), ('IModelDoc', 'IModelDoc2', 'IPartDoc',)),
+    ),
+    ('IGetFaceFacets', 'method'): (
+        (1, (0,), ('ITessellation',)),
+    ),
+    ('IGetFaceFacets2', 'method'): (
+        (1, (0,), ('ITessellation',)),
+    ),
+    ('IGetFaceFacetsCount', 'method'): (
+        (1, (0,), ('ITessellation',)),
+    ),
+    ('IGetFaceFacetsCount2', 'method'): (
+        (1, (0,), ('ITessellation',)),
+    ),
+    ('IGetFeatureScope', 'method'): (
+        (2, (0,), ('IAssemblyDoc',)),
+    ),
+    ('IGetFlattenSheetMetalPersistReference', 'method'): (
+        (2, (0,), ('IModelDocExtension',)),
+    ),
+    ('IGetIntersectionEdgeCount', 'method'): (
+        (1, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('IGetIntersectionEdges', 'method'): (
+        (1, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('IGetMaterialPropertyValuesForFace', 'method'): (
+        (1, (0,), ('IBody2', 'IComponent2',)),
+    ),
+    ('IGetPersistReference', 'method'): (
+        (2, (0,), ('IModelDocExtension',)),
+    ),
+    ('IGetPersistReference3', 'method'): (
+        (2, (0,), ('IModelDocExtension',)),
+    ),
+    ('IGetRadius', 'method'): (
+        (1, (0,), ('ISimpleFilletFeatureData', 'ISimpleFilletFeatureData2', 'IVariableFilletFeatureData', 'IVariableFilletFeatureData2',)),
+    ),
+    ('IGetRelatedTangentEdges', 'method'): (
+        (2, (0,), ('IView',)),
+    ),
+    ('IGetSectionProperties', 'method'): (
+        (2, (1,), ('IModelDocExtension',)),
+    ),
+    ('IGetSectionProperties2', 'method'): (
+        (2, (1,), ('IModelDocExtension',)),
+    ),
+    ('IGetSectionedBody', 'method'): (
+        (1, (0,), ('IPartDoc',)),
+    ),
+    ('IGetSectionedBody2', 'method'): (
+        (1, (0,), ('IPartDoc',)),
+    ),
+    ('IGetSetbackVertexDistance', 'method'): (
+        (3, (1,), ('ISimpleFilletFeatureData2', 'IVariableFilletFeatureData2',)),
+    ),
+    ('IGetTessellation', 'method'): (
+        (2, (1,), ('IBody', 'IBody2',)),
+    ),
+    ('IGetUserValueIn', 'method'): (
+        (1, (0,), ('IDimension',)),
+    ),
+    ('IGetUserValueIn2', 'method'): (
+        (1, (0,), ('IDimension',)),
+    ),
+    ('IGetVisibleEntities', 'method'): (
+        (3, (0,), ('IView',)),
+    ),
+    ('IGetVisibleEntities2', 'method'): (
+        (3, (0,), ('IView',)),
+    ),
+    ('IHide', 'method'): (
+        (1, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('IImprintCurve', 'method'): (
+        (5, (0,), ('IFace2',)),
+    ),
+    ('IImprintingFacesCount', 'method'): (
+        (9, (1, 3,), ('IModeler',)),
+    ),
+    ('IImprintingFacesCount2', 'method'): (
+        (9, (1, 3,), ('IModeler',)),
+    ),
+    ('IInsertCombineFeature', 'method'): (
+        (4, (1, 3,), ('IFeatureManager', 'IPartDoc',)),
+    ),
+    ('IInsertMacroFeature', 'method'): (
+        (9, (7,), ('IFeatureManager',)),
+    ),
+    ('IInsertMacroFeature2', 'method'): (
+        (14, (10,), ('IFeatureManager',)),
+    ),
+    ('IInsertMacroFeature3', 'method'): (
+        (15, (11,), ('IFeatureManager',)),
+    ),
+    ('IInsertMultiJogLeader2', 'method'): (
+        (2, (1,), ('IDrawingDoc',)),
+    ),
+    ('IInsertMultiJogLeader3', 'method'): (
+        (4, (1,), ('IDrawingDoc',)),
+    ),
+    ('IInsertSheetMetalEdgeFlange', 'method'): (
+        (11, (0, 1,), ('IModelDoc2',)),
+    ),
+    ('IInsertSheetMetalEdgeFlange2', 'method'): (
+        (15, (1, 3, 14,), ('IFeatureManager',)),
+    ),
+    ('IInsertSketchForEdgeFlange', 'method'): (
+        (3, (0,), ('IModelDoc2',)),
+    ),
+    ('IIntersectCurve', 'method'): (
+        (5, (0,), ('ICurve',)),
+        (6, (0,), ('ISurface',)),
+    ),
+    ('IIntersectCurve2', 'method'): (
+        (6, (0,), ('ISurface',)),
+    ),
+    ('IIntersectCurveSize', 'method'): (
+        (5, (0,), ('ICurve',)),
+    ),
+    ('IIntersectSurface', 'method'): (
+        (4, (0,), ('ISurface',)),
+    ),
+    ('IIsCoincident', 'method'): (
+        (2, (0,), ('IFace2',)),
+    ),
+    ('IIsSame', 'method'): (
+        (1, (0,), ('IFace', 'IFace2',)),
+    ),
+    ('IJoinCurves', 'method'): (
+        (2, (1,), ('ICurve',)),
+    ),
+    ('IMakeManifoldBodies', 'method'): (
+        (2, (0,), ('IModeler',)),
+    ),
+    ('IMatchedBoolean', 'method'): (
+        (6, (1, 3, 4,), ('IBody', 'IBody2',)),
+    ),
+    ('IMatchedBoolean2', 'method'): (
+        (7, (2, 4, 5,), ('IBody2',)),
+    ),
+    ('IMatchedBoolean3', 'method'): (
+        (7, (2, 4, 5,), ('IBody2',)),
+    ),
+    ('IMatchedBoolean4', 'method'): (
+        (8, (2, 4, 5,), ('IBody2',)),
+    ),
+    ('IMergeCurves', 'method'): (
+        (2, (1,), ('IModeler',)),
+    ),
+    ('IMirrorComponents', 'method'): (
+        (12, (0, 2, 4,), ('IAssemblyDoc',)),
+    ),
+    ('IModifyDefinition', 'method'): (
+        (3, (0, 1, 2,), ('IFeature',)),
+    ),
+    ('IModifyDefinition2', 'method'): (
+        (3, (0, 1, 2,), ('IFeature',)),
+    ),
+    ('IMultiSelect', 'method'): (
+        (4, (1, 3,), ('IModelDocExtension',)),
+    ),
+    ('IMultiply', 'method'): (
+        (1, (0,), ('IMathTransform',)),
+    ),
+    ('IMultiplyTransform', 'method'): (
+        (1, (0,), ('IMathPoint', 'IMathVector',)),
+    ),
+    ('IOperations', 'method'): (
+        (4, (1, 3,), ('IBody', 'IBody2',)),
+    ),
+    ('IOperations2', 'method'): (
+        (3, (1,), ('IBody', 'IBody2',)),
+    ),
+    ('IRayIntersections', 'method'): (
+        (8, (0,), ('IModelDoc', 'IModelDoc2',)),
+    ),
+    ('IRemoveFacesFromSheet', 'method'): (
+        (2, (1,), ('IBody', 'IBody2',)),
+    ),
+    ('IRemoveInnerLoops', 'method'): (
+        (2, (1,), ('IFace', 'IFace2',)),
+    ),
+    ('IReorderComponents', 'method'): (
+        (4, (1, 2,), ('IAssemblyDoc',)),
+    ),
+    ('IReorganizeComponents', 'method'): (
+        (3, (1, 2,), ('IAssemblyDoc',)),
+    ),
+    ('IReplaceSurfaces', 'method'): (
+        (5, (1, 2,), ('IModeler',)),
+    ),
+    ('IReplaceSurfaces2', 'method'): (
+        (5, (1, 2,), ('IModeler',)),
+    ),
+    ('IRestore', 'method'): (
+        (1, (0,), ('IModeler',)),
+    ),
+    ('IRestore2', 'method'): (
+        (1, (0,), ('IModeler',)),
+    ),
+    ('IRevolvePlanarLoop', 'method'): (
+        (8, (7,), ('ILoop',)),
+    ),
+    ('ISave', 'method'): (
+        (1, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('ISectionBySheet', 'method'): (
+        (3, (0, 2,), ('IBody', 'IBody2',)),
+    ),
+    ('ISelectEntity', 'method'): (
+        (2, (0,), ('IView',)),
+    ),
+    ('ISetAttachedEntities', 'method'): (
+        (2, (1,), ('IAnnotation',)),
+    ),
+    ('ISetBends', 'method'): (
+        (2, (1,), ('IFoldsFeatureData',)),
+    ),
+    ('ISetBodies', 'method'): (
+        (2, (1,), ('IDeleteBodyFeatureData', 'IMoveCopyBodyFeatureData', 'IScaleFeatureData', 'IView',)),
+    ),
+    ('ISetBodiesToBeTrimmed', 'method'): (
+        (2, (1,), ('IWeldmentTrimExtendFeatureData',)),
+    ),
+    ('ISetBodiesToCombine', 'method'): (
+        (2, (1,), ('ICombineBodiesFeatureData',)),
+    ),
+    ('ISetBody', 'method'): (
+        (1, (0,), ('IFeature',)),
+    ),
+    ('ISetBody2', 'method'): (
+        (2, (0,), ('IFeature',)),
+    ),
+    ('ISetBody3', 'method'): (
+        (2, (0,), ('IFeature',)),
+    ),
+    ('ISetCavitySurfaces', 'method'): (
+        (2, (1,), ('IToolingSplitFeatureData',)),
+    ),
+    ('ISetComponentState', 'method'): (
+        (6, (2,), ('IAssemblyDoc',)),
+    ),
+    ('ISetComponents', 'method'): (
+        (2, (1,), ('ICavityFeatureData',)),
+    ),
+    ('ISetConicRhoOrRadius', 'method'): (
+        (2, (0,), ('ISimpleFilletFeatureData2', 'IVariableFilletFeatureData2',)),
+    ),
+    ('ISetConstraintCurves', 'method'): (
+        (2, (1,), ('IFillSurfaceFeatureData',)),
+    ),
+    ('ISetContours', 'method'): (
+        (2, (1,), ('IExtrudeFeatureData2', 'IRevolveFeatureData2', 'ISplitLineFeatureData',)),
+    ),
+    ('ISetCoreSurfaces', 'method'): (
+        (2, (1,), ('IToolingSplitFeatureData',)),
+    ),
+    ('ISetCurrentSurface', 'method'): (
+        (1, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('ISetCurves', 'method'): (
+        (2, (1,), ('IImportedCurveFeatureData',)),
+    ),
+    ('ISetData', 'method'): (
+        (5, (0, 1, 2, 3,), ('IMathTransform',)),
+    ),
+    ('ISetDeletedFaces', 'method'): (
+        (2, (1,), ('IDeleteFaceFeatureData',)),
+    ),
+    ('ISetDetailTextFormat', 'method'): (
+        (1, (0,), ('IDetailingDefaults',)),
+    ),
+    ('ISetDimensionTextFormat', 'method'): (
+        (1, (0,), ('IDetailingDefaults',)),
+    ),
+    ('ISetEdges', 'method'): (
+        (2, (1,), ('IChamferFeatureData2', 'IEdgeFlangeFeatureData', 'IHemFeatureData', 'IMiterFlangeFeatureData', 'IRipFeatureData', 'IShutOffSurfaceFeatureData', 'ISimpleFilletFeatureData2',)),
+        (3, (1,), ('IRuledSurfaceFeatureData',)),
+    ),
+    ('ISetEditBodies', 'method'): (
+        (2, (1,), ('IMacroFeatureData',)),
+    ),
+    ('ISetEntities', 'method'): (
+        (2, (1,), ('IBreakCornerFeatureData', 'IDisplayStateSetting', 'ISurfaceKnitFeatureData', 'ISurfaceOffsetFeatureData',)),
+    ),
+    ('ISetEntitiesToJoin', 'method'): (
+        (2, (1,), ('ICompositeCurveFeatureData',)),
+    ),
+    ('ISetEntitiesToSplit', 'method'): (
+        (2, (1,), ('IPartingLineFeatureData',)),
+    ),
+    ('ISetEntityName', 'method'): (
+        (2, (0,), ('IPartDoc',)),
+    ),
+    ('ISetExcludedComponents', 'method'): (
+        (2, (1,), ('IDrSection',)),
+    ),
+    ('ISetExcludedFaces', 'method'): (
+        (2, (1,), ('IFlatPatternFeatureData',)),
+    ),
+    ('ISetFace', 'method'): (
+        (2, (1,), ('IExtrudeFeatureData', 'IExtrudeFeatureData2', 'ISurfExtrudeFeatureData',)),
+    ),
+    ('ISetFaceArray', 'method'): (
+        (2, (1,), ('IProjectionCurveFeatureData',)),
+    ),
+    ('ISetFaces', 'method'): (
+        (2, (1,), ('IChamferFeatureData2', 'IClosedCornerFeatureData', 'IDomeFeatureData2', 'IHealEdgesFeatureData', 'IMoveFaceFeatureData', 'ISplitLineFeatureData', 'ISurfaceOffsetFeatureData',)),
+        (3, (2,), ('ISimpleFilletFeatureData2',)),
+        (5, (2, 4,), ('IWeldmentBeadFeatureData',)),
+    ),
+    ('ISetFacesForReplacement', 'method'): (
+        (2, (1,), ('IReplaceFaceFeatureData',)),
+    ),
+    ('ISetFacesRemoved', 'method'): (
+        (2, (1,), ('IShellFeatureData',)),
+    ),
+    ('ISetFacesToDraft', 'method'): (
+        (2, (1,), ('IDraftFeatureData2',)),
+    ),
+    ('ISetFeatureScopeBodies', 'method'): (
+        (2, (1,), ('IExtrudeFeatureData2', 'ILoftFeatureData', 'IMirrorPatternFeatureData', 'IRevolveFeatureData2', 'ISimpleHoleFeatureData2', 'ISurfaceCutFeatureData', 'ISweepFeatureData', 'IThickenFeatureData', 'IWizardHoleFeatureData2',)),
+    ),
+    ('ISetFeatures', 'method'): (
+        (2, (1,), ('ISimpleFilletFeatureData2',)),
+    ),
+    ('ISetGroups', 'method'): (
+        (2, (1,), ('IStructuralMemberFeatureData',)),
+    ),
+    ('ISetGuideCurves', 'method'): (
+        (2, (1,), ('ILoftFeatureData', 'ISweepFeatureData',)),
+    ),
+    ('ISetHiddenEdges', 'method'): (
+        (2, (1,), ('IView',)),
+    ),
+    ('ISetHoldLines', 'method'): (
+        (2, (1,), ('ISimpleFilletFeatureData2',)),
+    ),
+    ('ISetItems', 'method'): (
+        (2, (1,), ('ISurfaceExtendFeatureData',)),
+    ),
+    ('ISetJoinedParts', 'method'): (
+        (2, (1,), ('IJoinFeatureData',)),
+    ),
+    ('ISetLoops', 'method'): (
+        (2, (1,), ('IChamferFeatureData2', 'ISimpleFilletFeatureData2',)),
+    ),
+    ('ISetMirrorFaceArray', 'method'): (
+        (2, (1,), ('IMirrorPatternFeatureData',)),
+    ),
+    ('ISetMultipleThicknessFaces', 'method'): (
+        (2, (1,), ('IShellFeatureData',)),
+    ),
+    ('ISetOriginEntity', 'method'): (
+        (1, (0,), ('ICoordinateSystemFeatureData',)),
+    ),
+    ('ISetParents', 'method'): (
+        (2, (1,), ('IMacroFeatureData',)),
+    ),
+    ('ISetPartingLines', 'method'): (
+        (2, (1,), ('IDraftFeatureData2', 'IPartingLineFeatureData', 'IPartingSurfaceFeatureData',)),
+    ),
+    ('ISetPartingSurfaces', 'method'): (
+        (2, (1,), ('IToolingSplitFeatureData',)),
+    ),
+    ('ISetPatchBoundary', 'method'): (
+        (2, (1,), ('IFillSurfaceFeatureData',)),
+    ),
+    ('ISetPathSegments', 'method'): (
+        (2, (1,), ('IStructuralMemberFeatureData',)),
+    ),
+    ('ISetPatternBodyArray', 'method'): (
+        (2, (1,), ('ICircularPatternFeatureData', 'ICurveDrivenPatternFeatureData', 'ILinearPatternFeatureData', 'IMirrorSolidFeatureData', 'ISketchPatternFeatureData', 'ITablePatternFeatureData',)),
+    ),
+    ('ISetPatternFaceArray', 'method'): (
+        (2, (1,), ('ICircularPatternFeatureData', 'ICurveDrivenPatternFeatureData', 'ILinearPatternFeatureData', 'ISketchPatternFeatureData', 'ITablePatternFeatureData',)),
+    ),
+    ('ISetPatternFeatureArray', 'method'): (
+        (2, (1,), ('ICircularPatternFeatureData', 'ICurveDrivenPatternFeatureData', 'ILinearPatternFeatureData', 'IMirrorPatternFeatureData', 'ISketchPatternFeatureData', 'ITablePatternFeatureData',)),
+    ),
+    ('ISetPiecesToKeep', 'method'): (
+        (2, (1,), ('ISurfaceTrimFeatureData',)),
+    ),
+    ('ISetProfiles', 'method'): (
+        (2, (1,), ('ILoftFeatureData', 'ILoftedBendsFeatureData',)),
+    ),
+    ('ISetPropagatingEdges', 'method'): (
+        (2, (1,), ('ISurfaceExtendFeatureData',)),
+    ),
+    ('ISetRadiatedEntities', 'method'): (
+        (2, (1,), ('ISurfaceRadiateFeatureData',)),
+    ),
+    ('ISetRadius', 'method'): (
+        (2, (0,), ('ISimpleFilletFeatureData', 'ISimpleFilletFeatureData2', 'IVariableFilletFeatureData', 'IVariableFilletFeatureData2',)),
+    ),
+    ('ISetReferencePoints', 'method'): (
+        (2, (1,), ('IDimension',)),
+    ),
+    ('ISetReferences', 'method'): (
+        (2, (1,), ('ILibraryFeatureData',)),
+    ),
+    ('ISetReplacementSurfaces', 'method'): (
+        (2, (1,), ('IReplaceFaceFeatureData',)),
+    ),
+    ('ISetSectionTextFormat', 'method'): (
+        (1, (0,), ('IDetailingDefaults',)),
+    ),
+    ('ISetSeedComponentArray', 'method'): (
+        (2, (1,), ('IDerivedPatternFeatureData', 'ILocalCircularPatternFeatureData', 'ILocalLinearPatternFeatureData',)),
+    ),
+    ('ISetSegments', 'method'): (
+        (2, (1,), ('IStructuralMemberGroup',)),
+    ),
+    ('ISetSelections', 'method'): (
+        (2, (1,), ('IRefAxisFeatureData', 'IRefPlaneFeatureData', 'IRefPointFeatureData',)),
+        (3, (1,), ('IMacroFeatureData',)),
+    ),
+    ('ISetSelections2', 'method'): (
+        (4, (1, 3,), ('IMacroFeatureData',)),
+    ),
+    ('ISetSetbackVertexDistance', 'method'): (
+        (4, (1, 2,), ('ISimpleFilletFeatureData2', 'IVariableFilletFeatureData2',)),
+    ),
+    ('ISetSetbackVertices', 'method'): (
+        (2, (1,), ('ISimpleFilletFeatureData2', 'IVariableFilletFeatureData2',)),
+    ),
+    ('ISetSplitTargets', 'method'): (
+        (2, (1,), ('ISplitLineFeatureData',)),
+    ),
+    ('ISetSplitTools', 'method'): (
+        (2, (1,), ('ISplitLineFeatureData',)),
+    ),
+    ('ISetTextFormat', 'method'): (
+        (1, (0,), ('IDetailingDefaults',)),
+        (2, (1,), ('IDisplayDimension', 'IDrSection', 'IGtol', 'INote', 'ISketchText',)),
+        (3, (2,), ('IAnnotation',)),
+    ),
+    ('ISetTextFormatAtIndex', 'method'): (
+        (2, (1,), ('INote',)),
+    ),
+    ('ISetThroughPoints', 'method'): (
+        (2, (1,), ('IReferencePointCurveFeatureData',)),
+    ),
+    ('ISetTrimTools', 'method'): (
+        (2, (1,), ('ISplitBodyFeatureData', 'ISurfaceTrimFeatureData',)),
+    ),
+    ('ISetTrimmingBoundary', 'method'): (
+        (2, (1,), ('IWeldmentTrimExtendFeatureData',)),
+    ),
+    ('ISetUserPreferenceTextFormat', 'method'): (
+        (2, (1,), ('IModelDoc', 'IModelDoc2',)),
+    ),
+    ('ISetUserValueIn', 'method'): (
+        (2, (0,), ('IDimension',)),
+    ),
+    ('ISetUserValueIn2', 'method'): (
+        (3, (0,), ('IDimension',)),
+    ),
+    ('ISetUserValueIn3', 'method'): (
+        (3, (0,), ('IDimension',)),
+    ),
+    ('ISetVertex', 'method'): (
+        (2, (1,), ('IExtrudeFeatureData', 'IExtrudeFeatureData2', 'ISurfExtrudeFeatureData',)),
+    ),
+    ('ISetVirtualEdges', 'method'): (
+        (3, (2,), ('IWeldmentBeadFeatureData',)),
+    ),
+    ('ISetXAxisEntities', 'method'): (
+        (2, (1,), ('ICoordinateSystemFeatureData',)),
+    ),
+    ('ISetYAxisEntities', 'method'): (
+        (2, (1,), ('ICoordinateSystemFeatureData',)),
+    ),
+    ('ISetZAxisEntities', 'method'): (
+        (2, (1,), ('ICoordinateSystemFeatureData',)),
+    ),
+    ('ISplitFaceOnParamCount', 'method'): (
+        (4, (0,), ('IModeler',)),
+    ),
+    ('ISplitFaceOnParamCount2', 'method'): (
+        (4, (0,), ('IModeler',)),
+    ),
+    ('ISubtract', 'method'): (
+        (1, (0,), ('IMathPoint', 'IMathVector',)),
+    ),
+    ('ISubtractVector', 'method'): (
+        (1, (0,), ('IMathPoint',)),
+    ),
+    ('ISweepPlanarLoop', 'method'): (
+        (5, (4,), ('ILoop', 'ILoop2',)),
+    ),
+    ('IToolsCheckInterference2', 'method'): (
+        (5, (1,), ('IAssemblyDoc',)),
+    ),
+    ('IToolsCheckInterference3', 'method'): (
+        (5, (1,), ('IAssemblyDoc',)),
+    ),
+    ('IVertex', 'put'): (
+        (1, (0,), ('IChamferFeatureData2', 'ISimpleHoleFeatureData', 'ISimpleHoleFeatureData2', 'ISurfaceExtendFeatureData', 'IWizardHoleFeatureData', 'IWizardHoleFeatureData2',)),
+    ),
+    ('IdentifyToSW', 'method'): (
+        (1, (0,), ('ISwPEManager',)),
+    ),
+    ('ImprintCurve', 'method'): (
+        (3, (0,), ('IFace2',)),
+    ),
+    ('ImprintCurveCount', 'method'): (
+        (3, (0,), ('IFace2',)),
+    ),
+    ('Initialize', 'method'): (
+        (3, (2,), ('IConvertSolidFeatureData',)),
+        (9, (2,), ('IBaseFlangeFeatureData',)),
+    ),
+    ('InsertAngleDimension', 'method'): (
+        (1, (0,), ('IDimXpertPart',)),
+    ),
+    ('InsertAnnotationView', 'method'): (
+        (5, (1, 3,), ('IModelDocExtension',)),
+    ),
+    ('InsertBOMBalloon2', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('InsertBasicDimension', 'method'): (
+        (1, (0,), ('IDimXpertPart',)),
+    ),
+    ('InsertBeamEntity', 'method'): (
+        (1, (0,), ('ICWJoints',)),
+    ),
+    ('InsertBendNotes', 'method'): (
+        (1, (0,), ('IPartDoc',)),
+    ),
+    ('InsertBoltSeriesEntity', 'method'): (
+        (1, (0,), ('ICWBoltConnector',)),
+    ),
+    ('InsertCombineFeature', 'method'): (
+        (3, (1,), ('IFeatureManager', 'IPartDoc',)),
+    ),
+    ('InsertDatum', 'method'): (
+        (1, (0,), ('IDimXpertPart',)),
+    ),
+    ('InsertDwgOrDxfFile2', 'method'): (
+        (2, (1,), ('IFeatureManager',)),
+    ),
+    ('InsertEntity', 'method'): (
+        (1, (0,), ('ICWBearingLoad', 'ICWContactComponent', 'ICWConvection', 'ICWDistributedMass', 'ICWDynamicInitialCondition', 'ICWElasticConnector', 'ICWForce', 'ICWHeatFlux', 'ICWHeatPower', 'ICWMeshControl', 'ICWPressure', 'ICWRadiation', 'ICWRemoteLoad', 'ICWRestraint', 'ICWShell', 'ICWTemperature',)),
+    ),
+    ('InsertEntityAtFirstLocation', 'method'): (
+        (1, (0,), ('ICWBoltConnector', 'ICWPinConnector', 'ICWRigidConnector', 'ICWSpringConnector',)),
+    ),
+    ('InsertEntityAtSecondLocation', 'method'): (
+        (1, (0,), ('ICWBoltConnector', 'ICWPinConnector', 'ICWRigidConnector', 'ICWSpringConnector',)),
+    ),
+    ('InsertLoadReference', 'method'): (
+        (1, (0,), ('IAssemblyDoc',)),
+    ),
+    ('InsertLocationDimension', 'method'): (
+        (1, (0,), ('IDimXpertPart',)),
+    ),
+    ('InsertMacroFeature', 'method'): (
+        (8, (6,), ('IFeatureManager',)),
+    ),
+    ('InsertMacroFeature2', 'method'): (
+        (11, (8,), ('IFeatureManager',)),
+    ),
+    ('InsertMagneticLine', 'method'): (
+        (2, (0, 1,), ('ISheet',)),
+    ),
+    ('InsertMateReference', 'method'): (
+        (10, (1, 4, 7,), ('IFeatureManager',)),
+    ),
+    ('InsertMateReference2', 'method'): (
+        (12, (1, 5, 9,), ('IFeatureManager',)),
+    ),
+    ('InsertMidSurface', 'method'): (
+        (4, (0, 1,), ('IFeatureManager',)),
+    ),
+    ('InsertNewPart2', 'method'): (
+        (2, (1,), ('IAssemblyDoc',)),
+    ),
+    ('InsertNewVirtualPart', 'method'): (
+        (2, (0,), ('IAssemblyDoc',)),
+    ),
+    ('InsertPattern', 'method'): (
+        (3, (0,), ('IDimXpertPart',)),
+    ),
+    ('InsertPlotFeature', 'method'): (
+        (3, (0, 1, 2,), ('ICosmosMotionStudyResults',)),
+    ),
+    ('InsertReferenceGeometry', 'method'): (
+        (1, (0,), ('ICWBoltConnector',)),
+    ),
+    ('InsertSecurityNote', 'method'): (
+        (2, (1,), ('IFeatureManager',)),
+    ),
+    ('InsertSheetMetal3dBend', 'method'): (
+        (6, (5,), ('IFeatureManager',)),
+    ),
+    ('InsertSheetMetalBaseFlange', 'method'): (
+        (16, (9,), ('IFeatureManager',)),
+    ),
+    ('InsertSheetMetalBaseFlange2', 'method'): (
+        (19, (9,), ('IFeatureManager',)),
+    ),
+    ('InsertSheetMetalEdgeFlange', 'method'): (
+        (11, (0, 1,), ('IModelDoc2',)),
+        (13, (0, 1, 12,), ('IFeatureManager',)),
+    ),
+    ('InsertSheetMetalEdgeFlange2', 'method'): (
+        (13, (12,), ('IFeatureManager',)),
+    ),
+    ('InsertSheetMetalHem', 'method'): (
+        (9, (8,), ('IFeatureManager',)),
+    ),
+    ('InsertSheetMetalHem2', 'method'): (
+        (16, (8,), ('IFeatureManager',)),
+    ),
+    ('InsertSheetMetalMiterFlange', 'method'): (
+        (14, (13,), ('IFeatureManager',)),
+    ),
+    ('InsertSizeDimension', 'method'): (
+        (1, (0,), ('IDimXpertPart',)),
+    ),
+    ('InsertSketchBlockInstance', 'method'): (
+        (4, (0, 1,), ('ISketchManager',)),
+    ),
+    ('InsertSketchForEdgeFlange', 'method'): (
+        (3, (0,), ('IModelDoc2',)),
+    ),
+    ('InsertSlicing', 'method'): (
+        (2, (0,), ('IFeatureManager',)),
+    ),
+    ('InsertSourceEntity', 'method'): (
+        (1, (0,), ('ICWContactSet',)),
+    ),
+    ('InsertSpotWeldLocations', 'method'): (
+        (1, (0,), ('ICWSpotWeldConnector',)),
+    ),
+    ('InsertStackedBalloon2', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('InsertTableNotify', 'method'): (
+        (3, (0,), ('DAssemblyDocEvents', 'DDrawingDocEvents', 'DPartDocEvents',)),
+    ),
+    ('InsertTargetEntity', 'method'): (
+        (1, (0,), ('ICWContactSet',)),
+    ),
+    ('InsertTightFitEntity', 'method'): (
+        (1, (0,), ('ICWBoltConnector',)),
+    ),
+    ('InsertViewAsBlock', 'method'): (
+        (2, (0, 1,), ('IView',)),
+    ),
+    ('InsertionPoint', 'put'): (
+        (1, (0,), ('ISketchBlockDefinition',)),
+    ),
+    ('InstallModelColorizer', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('InstallQuickTipGuide', 'method'): (
+        (1, (0,), ('ISldWorks',)),
+    ),
+    ('InstancePosition', 'put'): (
+        (1, (0,), ('ISketchBlockInstance',)),
+    ),
+    ('IntersectCurve', 'method'): (
+        (5, (0,), ('ICurve', 'ISurface',)),
+    ),
+    ('IntersectCurve2', 'method'): (
+        (5, (0,), ('ISurface',)),
+    ),
+    ('IntersectSurface', 'method'): (
+        (3, (0,), ('ISurface',)),
+    ),
+    ('IsCoincident', 'method'): (
+        (2, (0,), ('IFace2',)),
+    ),
+    ('IsPatternSeed', 'method'): (
+        (1, (0,), ('IBody2',)),
+    ),
+    ('IsSame', 'method'): (
+        (1, (0,), ('IFace', 'IFace2',)),
+        (2, (0, 1,), ('ISldWorks',)),
+    ),
+    ('JointPoint', 'put'): (
+        (1, (0,), ('IUniversalJointMateFeatureData',)),
+    ),
+    ('LightSheetCreateNotify', 'method'): (
+        (3, (0,), ('DSldWorksEvents',)),
+    ),
+    ('LightingDialogCreateNotify', 'method'): (
+        (1, (0,), ('DAssemblyDocEvents', 'DPartDocEvents',)),
+    ),
+    ('LoadFile3', 'method'): (
+        (3, (2,), ('ISldWorks',)),
+    ),
+    ('LoadFile4', 'method'): (
+        (4, (2,), ('ISldWorks',)),
+    ),
+    ('LocateProfilePoint', 'put'): (
+        (1, (0,), ('IStructuralMemberFeatureData', 'IStructuralMemberGroup',)),
+    ),
+    ('Location', 'put'): (
+        (1, (0,), ('ISimulationMotorFeatureData',)),
+    ),
+    ('MainBody', 'put'): (
+        (1, (0,), ('ICombineBodiesFeatureData',)),
+    ),
+    ('MakeManifoldBodies', 'method'): (
+        (1, (0,), ('IModeler',)),
+    ),
+    ('MakeSketchBlockFromFile', 'method'): (
+        (5, (0,), ('ISketchManager',)),
+    ),
+    ('MakeSketchBlockFromSelected', 'method'): (
+        (1, (0,), ('ISketchManager',)),
+    ),
+    ('MakeSketchBlockFromSketch', 'method'): (
+        (2, (0, 1,), ('ISketchManager',)),
+    ),
+    ('MakeStackedBalloon', 'method'): (
+        (1, (0,), ('INote',)),
+    ),
+    ('MakeSubFeature', 'method'): (
+        (1, (0,), ('IFeature',)),
+    ),
+    ('MatchedBoolean', 'method'): (
+        (6, (1,), ('IBody', 'IBody2',)),
+    ),
+    ('MateEntity1', 'put'): (
+        (1, (0,), ('ILinearCouplerMateFeatureData',)),
+    ),
+    ('MateEntity2', 'put'): (
+        (1, (0,), ('ILinearCouplerMateFeatureData',)),
+    ),
+    ('MirrorComponents', 'method'): (
+        (9, (0,), ('IAssemblyDoc',)),
+    ),
+    ('MirrorComponents2', 'method'): (
+        (13, (0,), ('IAssemblyDoc',)),
+    ),
+    ('MirrorComponents3', 'method'): (
+        (14, (0,), ('IAssemblyDoc',)),
+    ),
+    ('MirrorPlane', 'put'): (
+        (1, (0,), ('IMirrorComponentFeatureData',)),
+    ),
+    ('MiterTrimPlanePoint', 'put'): (
+        (1, (0,), ('ITwoMemberCornerTreatmentFeatureData',)),
+    ),
+    ('ModelToSketchTransform', 'put'): (
+        (1, (0,), ('ISketch',)),
+    ),
+    ('ModelToViewTransform', 'put'): (
+        (1, (0,), ('IView',)),
+    ),
+    ('ModifyDefinition', 'method'): (
+        (3, (0, 1, 2,), ('IFeature',)),
+    ),
+    ('ModifyMemberParameters', 'method'): (
+        (3, (0,), ('IBeltChainFeatureData',)),
+    ),
+    ('ModifyTableNotify', 'method'): (
+        (6, (0,), ('DAssemblyDocEvents', 'DDrawingDocEvents', 'DPartDocEvents',)),
+    ),
+    ('MultiSelect', 'method'): (
+        (3, (2,), ('IModelDocExtension',)),
+    ),
+    ('MultiSelect2', 'method'): (
+        (3, (2,), ('IModelDocExtension',)),
+    ),
+    ('Multiply', 'method'): (
+        (1, (0,), ('IMathTransform',)),
+    ),
+    ('MultiplyTransform', 'method'): (
+        (1, (0,), ('IMathPoint', 'IMathVector',)),
+    ),
+    ('NeutralPlane', 'put'): (
+        (1, (0,), ('IDraftFeatureData2',)),
+    ),
+    ('Normal', 'put'): (
+        (1, (0,), ('IPlaneManipulator',)),
+    ),
+    ('OffsetPlanarWireBody', 'method'): (
+        (3, (1,), ('IBody2',)),
+    ),
+    ('OffsetPlaneReference', 'put'): (
+        (1, (0,), ('ISMNormalCutFeatureData2',)),
+    ),
+    ('OffsetReference', 'put'): (
+        (1, (0,), ('IEdgeFlangeFeatureData', 'IJogFeatureData',)),
+    ),
+    ('OnDelete', 'method'): (
+        (2, (0,), ('ISwManipulatorHandler', 'ISwManipulatorHandler2',)),
+    ),
+    ('OnDirectionFlipped', 'method'): (
+        (1, (0,), ('ISwManipulatorHandler', 'ISwManipulatorHandler2',)),
+    ),
+    ('OnDoubleValueChanged', 'method'): (
+        (4, (0,), ('ISwManipulatorHandler', 'ISwManipulatorHandler2',)),
+    ),
+    ('OnEndDrag', 'method'): (
+        (1, (0,), ('ISwManipulatorHandler',)),
+        (2, (0,), ('ISwManipulatorHandler2',)),
+    ),
+    ('OnEndNoDrag', 'method'): (
+        (2, (0,), ('ISwManipulatorHandler', 'ISwManipulatorHandler2',)),
+    ),
+    ('OnHandleLmbSelected', 'method'): (
+        (2, (0,), ('ISwManipulatorHandler2',)),
+    ),
+    ('OnHandleRmbSelected', 'method'): (
+        (2, (0,), ('ISwManipulatorHandler', 'ISwManipulatorHandler2',)),
+    ),
+    ('OnHandleSelected', 'method'): (
+        (2, (0,), ('ISwManipulatorHandler', 'ISwManipulatorHandler2',)),
+    ),
+    ('OnItemSetFocus', 'method'): (
+        (2, (0,), ('ISwManipulatorHandler', 'ISwManipulatorHandler2',)),
+    ),
+    ('OnLmbSelected', 'method'): (
+        (2, (0,), ('ISwManipulatorHandler',)),
+    ),
+    ('OnStringValueChanged', 'method'): (
+        (4, (0,), ('ISwCalloutHandler', 'ISwManipulatorHandler', 'ISwManipulatorHandler2',)),
+    ),
+    ('OnSubmitSelection', 'method'): (
+        (4, (1,), ('IPropertyManagerPage2Handler3', 'IPropertyManagerPage2Handler4',)),
+        (5, (1,), ('IPropertyManagerPage2Handler5', 'IPropertyManagerPage2Handler6', 'IPropertyManagerPage2Handler7', 'IPropertyManagerPage2Handler8', 'IPropertyManagerPage2Handler9',)),
+    ),
+    ('OnUpdateDrag', 'method'): (
+        (3, (0, 2,), ('ISwManipulatorHandler', 'ISwManipulatorHandler2',)),
+    ),
+    ('OpenDesignTableNotify', 'method'): (
+        (1, (0,), ('DAssemblyDocEvents', 'DPartDocEvents',)),
+    ),
+    ('OpenDoc7', 'method'): (
+        (1, (0,), ('ISldWorks',)),
+    ),
+    ('Operations', 'method'): (
+        (3, (1,), ('IBody', 'IBody2',)),
+    ),
+    ('Operations2', 'method'): (
+        (3, (1,), ('IBody', 'IBody2',)),
+    ),
+    ('Orientation3', 'put'): (
+        (1, (0,), ('IModelView',)),
+    ),
+    ('Origin', 'put'): (
+        (1, (0,), ('IDragArrowManipulator', 'IPlaneManipulator', 'ITriadManipulator',)),
+    ),
+    ('OriginEntity', 'put'): (
+        (1, (0,), ('ICoordinateSystemFeatureData',)),
+    ),
+    ('Owner', 'put'): (
+        (1, (0,), ('IAnnotation',)),
+    ),
+    ('PartCollideNotify', 'method'): (
+        (7, (1, 2, 3, 4, 5, 6,), ('DMotionStudyEvents',)),
+    ),
+    ('PasteAppearance', 'method'): (
+        (2, (0,), ('ISldWorks',)),
+    ),
+    ('Path', 'put'): (
+        (1, (0,), ('IChainPatternFeatureData', 'ISweepFeatureData',)),
+    ),
+    ('PathPlaneReference', 'put'): (
+        (1, (0,), ('IChainPatternFeatureData',)),
+    ),
+    ('PatternDirection', 'put'): (
+        (1, (0,), ('IFillPatternFeatureData',)),
+    ),
+    ('PatternFeature', 'put'): (
+        (1, (0,), ('IDerivedPatternFeatureData',)),
+    ),
+    ('PiercePointSelectionObject', 'put'): (
+        (1, (0,), ('IStructureSystemMemberProfile',)),
+    ),
+    ('PlanarEntity', 'put'): (
+        (1, (0,), ('IBoundingBoxFeatureData', 'IGroundPlaneFeatureData',)),
+    ),
+    ('Plane', 'put'): (
+        (1, (0,), ('IMirrorPatternFeatureData',)),
+    ),
+    ('Position', 'put'): (
+        (1, (0,), ('ICallout',)),
+    ),
+    ('PositionOffsetReference', 'put'): (
+        (1, (0,), ('IEdgeFlangeFeatureData',)),
+    ),
+    ('PresentationTransform', 'put'): (
+        (1, (0,), ('IComponent2',)),
+    ),
+    ('PrintOut4', 'method'): (
+        (3, (2,), ('IModelDocExtension',)),
+    ),
+    ('Profile', 'put'): (
+        (1, (0,), ('ISweepFeatureData', 'ISweptFlangeFeatureData',)),
+    ),
+    ('ProfileAlignmentObject', 'put'): (
+        (1, (0,), ('IStructureSystemMemberProfile',)),
+    ),
+    ('ProfileLocation', 'put'): (
+        (1, (0,), ('IThreadFeatureData',)),
+    ),
+    ('ProjectCurveOnSurface', 'method'): (
+        (3, (0, 1, 2,), ('IModeler',)),
+    ),
+    ('PromptBodiesToKeepNotify', 'method'): (
+        (2, (0,), ('DAssemblyDocEvents', 'DPartDocEvents',)),
+    ),
+    ('PropertySheetCreateNotify', 'method'): (
+        (2, (0,), ('DSldWorksEvents',)),
+    ),
+    ('PublishSTEP242File2', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('PublishTo3DPDF', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('PullDirection', 'put'): (
+        (1, (0,), ('IWrapSketchFeatureData',)),
+    ),
+    ('PullDirectionBase', 'put'): (
+        (1, (0,), ('IPartingLineFeatureData', 'IPartingSurfaceFeatureData', 'ISplitLineFeatureData',)),
+    ),
+    ('PutDispatch', 'method'): (
+        (3, (2,), ('ISafeArrayUtility',)),
+    ),
+    ('PutUNKNOWN', 'method'): (
+        (3, (2,), ('ISafeArrayUtility',)),
+    ),
+    ('ReactionLocation', 'put'): (
+        (1, (0,), ('ISimulationForceFeatureData',)),
+    ),
+    ('Reference', 'put'): (
+        (2, (1,), ('IRefPlaneFeatureData',)),
+    ),
+    ('ReferenceComponent', 'put'): (
+        (1, (0,), ('ISimulationForceFeatureData',)),
+    ),
+    ('ReferenceComponent1', 'put'): (
+        (1, (0,), ('ILinearCouplerMateFeatureData',)),
+    ),
+    ('ReferenceComponent2', 'put'): (
+        (1, (0,), ('ILinearCouplerMateFeatureData',)),
+    ),
+    ('ReferenceEntity', 'put'): (
+        (1, (0,), ('IAngleMateFeatureData',)),
+    ),
+    ('ReferenceLine', 'put'): (
+        (1, (0,), ('ISMGussetFeatureData',)),
+    ),
+    ('ReferencePart', 'put'): (
+        (1, (0,), ('IMotionPlotAxisFeatureData',)),
+    ),
+    ('ReferencePoint', 'put'): (
+        (1, (0,), ('ISMGussetFeatureData', 'ISketchPatternFeatureData', 'ITablePatternFeatureData',)),
+    ),
+    ('RegenPostNotify2', 'method'): (
+        (1, (0,), ('DAssemblyDocEvents', 'DPartDocEvents',)),
+    ),
+    ('Regenerate', 'method'): (
+        (4, (0, 1, 2,), ('ISwComFeature',)),
+    ),
+    ('RelativeComponent', 'put'): (
+        (1, (0,), ('ISimulationMotorFeatureData',)),
+    ),
+    ('RemoveCommandTab', 'method'): (
+        (1, (0,), ('ICommandManager',)),
+    ),
+    ('RemoveCommandTabBox', 'method'): (
+        (1, (0,), ('ICommandTab',)),
+    ),
+    ('RemoveModelColorizer', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('RemoveNote', 'method'): (
+        (2, (0, 1,), ('IMagneticLine',)),
+    ),
+    ('RenamedDocumentNotify', 'method'): (
+        (1, (0,), ('DAssemblyDocEvents', 'DPartDocEvents',)),
+    ),
+    ('ReorderComponents', 'method'): (
+        (3, (1,), ('IAssemblyDoc',)),
+    ),
+    ('ReorganizeComponents', 'method'): (
+        (2, (1,), ('IAssemblyDoc',)),
+    ),
+    ('ReplaceCircularFaceForShaft', 'method'): (
+        (1, (0,), ('ICWBearingConnector',)),
+    ),
+    ('ReplaceCircularFaceOrEdgeForHousing', 'method'): (
+        (1, (0,), ('ICWBearingConnector',)),
+    ),
+    ('ReplaceCoordinateSystem', 'method'): (
+        (1, (0,), ('ICWBearingLoad',)),
+    ),
+    ('ReplaceEntity', 'method'): (
+        (1, (0,), ('ICWContactComponent',)),
+        (2, (0, 1,), ('ISketchRelation',)),
+    ),
+    ('ReplaceEntityAtFirstFace', 'method'): (
+        (1, (0,), ('ICWSpotWeldConnector',)),
+    ),
+    ('ReplaceEntityAtFirstLocation', 'method'): (
+        (1, (0,), ('ICWLinkConnector',)),
+    ),
+    ('ReplaceEntityAtSecondFace', 'method'): (
+        (1, (0,), ('ICWSpotWeldConnector',)),
+    ),
+    ('ReplaceEntityAtSecondLocation', 'method'): (
+        (1, (0,), ('ICWLinkConnector',)),
+    ),
+    ('ReplaceFacesAndEdges', 'method'): (
+        (4, (1, 2,), ('ICWEdgeWeldConnector',)),
+    ),
+    ('ReplaceFacesThenAutoGenerateTouchingEdges', 'method'): (
+        (3, (1, 2,), ('ICWEdgeWeldConnector',)),
+    ),
+    ('ReplaceViewWithBlock', 'method'): (
+        (1, (0,), ('IView',)),
+    ),
+    ('Restore', 'method'): (
+        (1, (0,), ('IModeler',)),
+    ),
+    ('Rotation', 'put'): (
+        (1, (0,), ('IView3D',)),
+    ),
+    ('RotationAxis', 'put'): (
+        (1, (0,), ('ILocalLinearPatternFeatureData',)),
+    ),
+    ('RotationRollEntity', 'put'): (
+        (1, (0,), ('ICamera',)),
+    ),
+    ('Save', 'method'): (
+        (1, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('SaveAs', 'method'): (
+        (6, (3,), ('IModelDocExtension',)),
+    ),
+    ('SaveAs2', 'method'): (
+        (8, (3,), ('IModelDocExtension',)),
+    ),
+    ('SaveAs3', 'method'): (
+        (7, (3, 4,), ('IModelDocExtension',)),
+    ),
+    ('SavePackAndGo', 'method'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('SaveTo3DExperience', 'method'): (
+        (3, (0,), ('IModelDocExtension',)),
+    ),
+    ('SaveToAVI', 'method'): (
+        (2, (1,), ('IMotionStudy',)),
+    ),
+    ('SecondPlane', 'put'): (
+        (1, (0,), ('ISectionViewData',)),
+    ),
+    ('SectionProfile', 'put'): (
+        (1, (0,), ('ISpring',)),
+    ),
+    ('SectionProfileCenter', 'put'): (
+        (1, (0,), ('ISpring',)),
+    ),
+    ('Security', 'method'): (
+        (4, (0, 1, 2,), ('ISwComFeature',)),
+    ),
+    ('SeedFace', 'put'): (
+        (1, (0,), ('ISurfaceKnitFeatureData',)),
+    ),
+    ('SeedFeatureCenter', 'put'): (
+        (1, (0,), ('IFillPatternFeatureData',)),
+    ),
+    ('Select', 'method'): (
+        (2, (1,), ('IBreakLine', 'ICenterMark', 'IDetailCircle', 'IDrawingComponent', 'IFacet', 'IManipulator', 'ISilhouetteEdge', 'ISketchBlockInstance', 'ISketchPath',)),
+        (3, (0, 2,), ('ILoop2',)),
+        (5, (2,), ('IAdvancedRouteSelector',)),
+    ),
+    ('Select2', 'method'): (
+        (2, (1,), ('IBody2', 'IConfiguration', 'ISilhouetteEdge', 'ISketchContour', 'ISketchRegion',)),
+    ),
+    ('Select3', 'method'): (
+        (2, (1,), ('IAnnotation', 'IComponent2',)),
+        (3, (2,), ('IEntity', 'ISketchHatch', 'ISketchPoint', 'ISketchSegment',)),
+    ),
+    ('Select4', 'method'): (
+        (2, (1,), ('IEntity', 'ISketchHatch', 'ISketchPoint', 'ISketchSegment',)),
+        (3, (1,), ('IComponent2',)),
+    ),
+    ('SelectByID', 'method'): (
+        (8, (7,), ('IModelDocExtension',)),
+    ),
+    ('SelectByID2', 'method'): (
+        (9, (7,), ('IModelDocExtension',)),
+    ),
+    ('SelectChain', 'method'): (
+        (2, (1,), ('ISketchSegment',)),
+    ),
+    ('SelectEdgeForPullDirection', 'method'): (
+        (1, (0,), ('ICWTopologyDemoldControl',)),
+    ),
+    ('SelectEntity', 'method'): (
+        (2, (0,), ('IView',)),
+    ),
+    ('SelectFirstSymmetryPlane', 'method'): (
+        (1, (0,), ('ICWTopologySymmetryControl',)),
+    ),
+    ('SelectPlaneForDirection', 'method'): (
+        (1, (0,), ('ICWTopologyDemoldControl',)),
+    ),
+    ('SelectSecondSymmetryPlane', 'method'): (
+        (1, (0,), ('ICWTopologySymmetryControl',)),
+    ),
+    ('SelectThirdSymmetryPlane', 'method'): (
+        (1, (0,), ('ICWTopologySymmetryControl',)),
+    ),
+    ('SelectedPoint', 'put'): (
+        (1, (0,), ('ILocalCurvePatternFeatureData', 'ILocalSketchPatternFeatureData',)),
+    ),
+    ('SelectionEndReferencePoint', 'put'): (
+        (1, (0,), ('ITabAndSlotGroupData',)),
+    ),
+    ('SelectionEntity', 'put'): (
+        (1, (0,), ('IAdvancedHoleElementData',)),
+    ),
+    ('SelectionManager', 'put'): (
+        (1, (0,), ('IModelDoc', 'IModelDoc2',)),
+    ),
+    ('SelectionSlotFace', 'put'): (
+        (1, (0,), ('ITabAndSlotGroupData',)),
+    ),
+    ('SelectionStartReferencePoint', 'put'): (
+        (1, (0,), ('ITabAndSlotGroupData',)),
+    ),
+    ('SelectionTabEdge', 'put'): (
+        (1, (0,), ('ITabAndSlotGroupData',)),
+    ),
+    ('SensorAlertPreNotify', 'method'): (
+        (2, (0,), ('DAssemblyDocEvents', 'DPartDocEvents',)),
+    ),
+    ('SetAddinCallbackInfo', 'method'): (
+        (3, (1,), ('ISldWorks',)),
+    ),
+    ('SetAddinCallbackInfo2', 'method'): (
+        (3, (1,), ('ISldWorks',)),
+    ),
+    ('SetApiUndoObject', 'method'): (
+        (2, (0,), ('IModelDocExtension',)),
+    ),
+    ('SetAssembly', 'method'): (
+        (1, (0,), ('ICollisionDetectionManager',)),
+    ),
+    ('SetBeamBodyMaterial', 'method'): (
+        (1, (0,), ('ICWBeamBody',)),
+    ),
+    ('SetBody', 'method'): (
+        (1, (0,), ('IFeature', 'IImportedCurveFeatureData',)),
+    ),
+    ('SetBody2', 'method'): (
+        (2, (0,), ('IFeature',)),
+    ),
+    ('SetBodyScope', 'method'): (
+        (1, (0,), ('ICornerReliefFeatureData',)),
+    ),
+    ('SetCallout', 'method'): (
+        (2, (1,), ('ISelectionMgr',)),
+    ),
+    ('SetCellTextFormat', 'method'): (
+        (4, (3,), ('ITableAnnotation',)),
+    ),
+    ('SetConicRhoOrRadius', 'method'): (
+        (2, (0,), ('ISimpleFilletFeatureData2', 'IVariableFilletFeatureData2',)),
+    ),
+    ('SetCoordinateSystem', 'method'): (
+        (1, (0,), ('ICWForce', 'ICWPressure', 'ICWTopologyDisplacementConstraint', 'ICWTopologyMinimizeMaximumDisplacementGoal', 'IMassProperty', 'IMassProperty2',)),
+    ),
+    ('SetCurrentSurface', 'method'): (
+        (1, (0,), ('IBody', 'IBody2',)),
+    ),
+    ('SetCurvatureControl', 'method'): (
+        (3, (0,), ('IFillSurfaceFeatureData',)),
+    ),
+    ('SetCustomBendAllowance', 'method'): (
+        (1, (0,), ('IBendsFeatureData', 'IEdgeFlangeFeatureData', 'IHemFeatureData', 'IJogFeatureData', 'IMiterFlangeFeatureData', 'IOneBendFeatureData', 'ISheetMetalFeatureData', 'ISketchedBendFeatureData', 'ISweptFlangeFeatureData',)),
+    ),
+    ('SetData', 'method'): (
+        (5, (0, 1, 2, 3,), ('IMathTransform',)),
+    ),
+    ('SetDetailTextFormat', 'method'): (
+        (1, (0,), ('IDetailingDefaults',)),
+    ),
+    ('SetDimensionTextFormat', 'method'): (
+        (1, (0,), ('IDetailingDefaults',)),
+    ),
+    ('SetDirection', 'method'): (
+        (2, (0,), ('IRipFeatureData',)),
+    ),
+    ('SetDirectionEntity', 'method'): (
+        (1, (0,), ('ICWDynamicInitialCondition',)),
+    ),
+    ('SetDirectionEntityForUniformExcitation', 'method'): (
+        (1, (0,), ('ICWBaseExcitation',)),
+    ),
+    ('SetDirectionReference', 'method'): (
+        (1, (0,), ('IMoveFaceFeatureData',)),
+        (2, (0, 1,), ('IExtrudeFeatureData2', 'IRuledSurfaceFeatureData', 'ISimpleHoleFeatureData2',)),
+    ),
+    ('SetDirectionVector', 'method'): (
+        (3, (2,), ('IBoundaryBossFeatureData',)),
+    ),
+    ('SetDisplacementControlOptions', 'method'): (
+        (3, (0,), ('ICWNonLinearStudyOptions',)),
+    ),
+    ('SetDistance', 'method'): (
+        (2, (0,), ('ISimpleFilletFeatureData2', 'IVariableFilletFeatureData2',)),
+    ),
+    ('SetDontCutAllInstances', 'method'): (
+        (2, (0,), ('IDrSection',)),
+    ),
+    ('SetEdgeUserId', 'method'): (
+        (3, (0,), ('IMacroFeatureData',)),
+    ),
+    ('SetEndConditionEntity', 'method'): (
+        (1, (0,), ('IMoveFaceFeatureData',)),
+    ),
+    ('SetEndConditionReference', 'method'): (
+        (1, (0,), ('ISimpleHoleFeatureData2', 'IThreadFeatureData', 'IWizardHoleFeatureData2',)),
+        (2, (1,), ('IExtrudeFeatureData2',)),
+    ),
+    ('SetEndPoints', 'method'): (
+        (2, (0, 1,), ('ISimulationDamperFeatureData', 'ISimulationForceFeatureData', 'ISimulationLinearSpringFeatureData', 'ISimulationSpringFeatureData',)),
+    ),
+    ('SetEntityForGravityDirection', 'method'): (
+        (1, (0,), ('ICWDropTestSetup',)),
+    ),
+    ('SetEntityForGravityDirection2', 'method'): (
+        (1, (0,), ('ICWDropTestSetup',)),
+    ),
+    ('SetEntityForTargetOrientation', 'method'): (
+        (1, (0,), ('ICWDropTestSetup',)),
+    ),
+    ('SetEntityForTargetOrientation2', 'method'): (
+        (1, (0,), ('ICWDropTestSetup',)),
+    ),
+    ('SetEntityForVelocityDirection', 'method'): (
+        (1, (0,), ('ICWDropTestSetup',)),
+    ),
+    ('SetEntityForVelocityDirection2', 'method'): (
+        (1, (0,), ('ICWDropTestSetup',)),
+    ),
+    ('SetEntityName', 'method'): (
+        (2, (0,), ('IPartDoc',)),
+    ),
+    ('SetExplodeDirection', 'method'): (
+        (2, (0,), ('IExplodeStep', 'IPartExplodeStep',)),
+    ),
+    ('SetExtractionDirection', 'method'): (
+        (2, (0, 1,), ('ICoreFeatureData',)),
+    ),
+    ('SetFace', 'method'): (
+        (2, (1,), ('IExtrudeFeatureData', 'IExtrudeFeatureData2', 'ISurfExtrudeFeatureData',)),
+    ),
+    ('SetFaceComp1', 'method'): (
+        (1, (0,), ('ICWGeneralSpringConnector',)),
+    ),
+    ('SetFaceComp2', 'method'): (
+        (1, (0,), ('ICWGeneralSpringConnector',)),
+    ),
+    ('SetFaceMap', 'method'): (
+        (4, (3,), ('IPartDoc',)),
+    ),
+    ('SetFaceUserId', 'method'): (
+        (3, (0,), ('IMacroFeatureData',)),
+    ),
+    ('SetFixedFace', 'method'): (
+        (1, (0,), ('IConvertSolidFeatureData',)),
+        (4, (3,), ('ISketchedBendFeatureData',)),
+    ),
+    ('SetForce', 'method'): (
+        (2, (1,), ('IMate2',)),
+    ),
+    ('SetFromEntity', 'method'): (
+        (1, (0,), ('IExtrudeFeatureData2', 'IMoveFaceFeatureData',)),
+    ),
+    ('SetFromPoint', 'method'): (
+        (1, (0,), ('ISecondaryMemberUpToMembersFeatureData',)),
+    ),
+    ('SetGaugeTableParameters', 'method'): (
+        (1, (0,), ('ISweptFlangeFeatureData',)),
+    ),
+    ('SetImportedFeatureParameters', 'method'): (
+        (1, (0,), ('IFeature',)),
+    ),
+    ('SetImportedNote', 'method'): (
+        (2, (1,), ('IMBD3DPdfData',)),
+    ),
+    ('SetInstanceToVaryOptions', 'method'): (
+        (1, (0,), ('ICircularPatternFeatureData', 'ILinearPatternFeatureData',)),
+    ),
+    ('SetIsFlipped', 'method'): (
+        (2, (0,), ('IChamferFeatureData2',)),
+    ),
+    ('SetMaterialVisualProperties', 'method'): (
+        (3, (0,), ('IPartDoc',)),
+    ),
+    ('SetMirrorOrientation', 'method'): (
+        (2, (0,), ('ICWCompositeShellOptions',)),
+    ),
+    ('SetMirrorOrientation2', 'method'): (
+        (2, (0,), ('ICWCompositeShellOptions',)),
+    ),
+    ('SetNonLinearStudyOptions', 'method'): (
+        (1, (0,), ('ICWStudy',)),
+    ),
+    ('SetOverrideOptions', 'method'): (
+        (3, (0,), ('IMassProperty2',)),
+    ),
+    ('SetPartialEdgeFilletData', 'method'): (
+        (2, (0, 1,), ('ISimpleFilletFeatureData2',)),
+    ),
+    ('SetPartialFilletParameters', 'method'): (
+        (7, (3, 6,), ('IPartialEdgeFilletData',)),
+    ),
+    ('SetPathAlignmentDirectionVector', 'method'): (
+        (1, (0,), ('ISweepFeatureData',)),
+    ),
+    ('SetPlacementFace', 'method'): (
+        (2, (0, 1,), ('ILibraryFormToolFeatureData',)),
+    ),
+    ('SetPlacementPlane', 'method'): (
+        (1, (0,), ('ILibraryFeatureData',)),
+    ),
+    ('SetPlyParameters', 'method'): (
+        (4, (3,), ('ICWCompositeShellOptions',)),
+    ),
+    ('SetPositionEntity', 'method'): (
+        (3, (0, 2,), ('ICamera',)),
+    ),
+    ('SetProjectionEntity', 'method'): (
+        (1, (0,), ('IMeasure',)),
+    ),
+    ('SetRadius', 'method'): (
+        (2, (0,), ('ISimpleFilletFeatureData', 'ISimpleFilletFeatureData2', 'IVariableFilletFeatureData', 'IVariableFilletFeatureData2',)),
+    ),
+    ('SetReferenceCoordinateSystem', 'method'): (
+        (1, (0,), ('ICWGeneralSpringConnector',)),
+        (2, (1,), ('ICWRemoteLoad',)),
+    ),
+    ('SetReferenceCoordinateSystem2', 'method'): (
+        (2, (1,), ('ICWRemoteLoad',)),
+    ),
+    ('SetReferenceEntity', 'method'): (
+        (1, (0,), ('ICWCentriFugalForce', 'ICWGravity',)),
+    ),
+    ('SetReferenceGeometry', 'method'): (
+        (1, (0,), ('ICWForce', 'ICWPressure', 'ICWRestraint',)),
+    ),
+    ('SetReferencePlane', 'method'): (
+        (2, (0,), ('ICWMaterial',)),
+    ),
+    ('SetRotateOrientation', 'method'): (
+        (2, (0,), ('ICWCompositeShellOptions',)),
+    ),
+    ('SetRotateOrientation2', 'method'): (
+        (2, (0,), ('ICWCompositeShellOptions',)),
+    ),
+    ('SetRotationAxis', 'method'): (
+        (2, (0,), ('IExplodeStep',)),
+    ),
+    ('SetSectionTextFormat', 'method'): (
+        (1, (0,), ('IDetailingDefaults',)),
+    ),
+    ('SetSetbackVertexDistance', 'method'): (
+        (3, (0,), ('ISimpleFilletFeatureData2', 'IVariableFilletFeatureData2',)),
+    ),
+    ('SetShellMaterial', 'method'): (
+        (1, (0,), ('ICWShell',)),
+    ),
+    ('SetSolidBodyMaterial', 'method'): (
+        (1, (0,), ('ICWSolidBody',)),
+    ),
+    ('SetSunLightSourcePropertyValues', 'method'): (
+        (5, (0,), ('IModelDocExtension',)),
+    ),
+    ('SetSupportingFaces', 'method'): (
+        (2, (0, 1,), ('IGussetFeatureData',)),
+    ),
+    ('SetTargetPointEntity', 'method'): (
+        (3, (0, 2,), ('ICamera',)),
+    ),
+    ('SetTextFormat', 'method'): (
+        (1, (0,), ('IDetailingDefaults',)),
+        (2, (1,), ('IDetailCircle', 'IDisplayDimension', 'IDrSection', 'IGtol', 'INote', 'ISketchText', 'ITableAnnotation',)),
+        (3, (2,), ('IAnnotation',)),
+    ),
+    ('SetTextFormatAtIndex', 'method'): (
+        (2, (1,), ('INote',)),
+    ),
+    ('SetTextSegmentFormat', 'method'): (
+        (2, (1,), ('IParagraphs',)),
+    ),
+    ('SetTexture', 'method'): (
+        (2, (1,), ('IBody2', 'IComponent2', 'IFace2', 'IModelDocExtension',)),
+        (3, (2,), ('IFeature',)),
+    ),
+    ('SetTextureByDisplayState', 'method'): (
+        (2, (1,), ('IBody2', 'IComponent2', 'IFace2', 'IFeature', 'IModelDocExtension',)),
+    ),
+    ('SetThermostat', 'method'): (
+        (1, (0,), ('ICWHeatFlux', 'ICWHeatPower',)),
+    ),
+    ('SetTorque', 'method'): (
+        (2, (1,), ('IMate2',)),
+    ),
+    ('SetTransformAndSolve', 'method'): (
+        (1, (0,), ('IComponent2',)),
+    ),
+    ('SetTransformAndSolve2', 'method'): (
+        (1, (0,), ('IComponent2',)),
+    ),
+    ('SetTransformAndSolve3', 'method'): (
+        (2, (0,), ('IComponent2',)),
+    ),
+    ('SetTrimToolMember', 'method'): (
+        (1, (0,), ('IComplexCornerTreatmentFeatureData',)),
+    ),
+    ('SetUserPreferenceTextFormat', 'method'): (
+        (2, (1,), ('IModelDoc', 'IModelDoc2',)),
+        (3, (2,), ('IModelDocExtension',)),
+    ),
+    ('SetUserValueIn', 'method'): (
+        (2, (0,), ('IDimension',)),
+    ),
+    ('SetUserValueIn2', 'method'): (
+        (3, (0,), ('IDimension',)),
+    ),
+    ('SetVertex', 'method'): (
+        (1, (0,), ('ICWTopologyDisplacementConstraint',)),
+        (2, (1,), ('IExtrudeFeatureData', 'IExtrudeFeatureData2', 'ISurfExtrudeFeatureData',)),
+    ),
+    ('SetVisibleBox', 'method'): (
+        (2, (0, 1,), ('IModelDocExtension',)),
+    ),
+    ('Show', 'method'): (
+        (1, (0,), ('IManipulator',)),
+    ),
+    ('ShowMessageBar', 'method'): (
+        (2, (0, 1,), ('IModelDocExtension',)),
+    ),
+    ('ShowModelWindow', 'method'): (
+        (1, (0,), ('IFrame',)),
+    ),
+    ('ShowUserNotification', 'method'): (
+        (2, (0, 1,), ('IModelDocExtension', 'ISldWorks',)),
+    ),
+    ('Sketch', 'put'): (
+        (1, (0,), ('ILocalSketchPatternFeatureData', 'IProjectionCurveFeatureData', 'ISketchPatternFeatureData', 'ISplitLineFeatureData',)),
+    ),
+    ('Sort', 'method'): (
+        (1, (0,), ('IBomTableAnnotation',)),
+    ),
+    ('SortCutList', 'method'): (
+        (2, (0,), ('IBodyFolder',)),
+    ),
+    ('SourceSketch', 'put'): (
+        (1, (0,), ('IWrapSketchFeatureData',)),
+    ),
+    ('SplitFaceOnParam', 'method'): (
+        (4, (0,), ('IModeler',)),
+    ),
+    ('StartDirectionVector', 'put'): (
+        (1, (0,), ('ILoftFeatureData', 'ISweepFeatureData',)),
+    ),
+    ('StartEntity', 'put'): (
+        (1, (0,), ('IThreadFeatureData',)),
+    ),
+    ('StartFromFacePlane', 'put'): (
+        (1, (0,), ('ICosmeticThreadFeatureData',)),
+    ),
+    ('StartPoint', 'put'): (
+        (1, (0,), ('IMagneticLine',)),
+    ),
+    ('Subtract', 'method'): (
+        (1, (0,), ('IMathPoint', 'IMathVector',)),
+    ),
+    ('SubtractVector', 'method'): (
+        (1, (0,), ('IMathPoint',)),
+    ),
+    ('SuppressionStateChangeNotify', 'method'): (
+        (5, (0,), ('DAssemblyDocEvents', 'DPartDocEvents',)),
+    ),
+    ('Surface', 'put'): (
+        (1, (0,), ('IThickenFeatureData',)),
+    ),
+    ('SurfaceForCut', 'put'): (
+        (1, (0,), ('ISurfaceCutFeatureData',)),
+    ),
+    ('SymmetryPlane', 'put'): (
+        (1, (0,), ('ISymmetricMateFeatureData',)),
+    ),
+    ('TabFace', 'put'): (
+        (1, (0,), ('ITabAndSlotGroupData',)),
+    ),
+    ('TargetBody', 'put'): (
+        (1, (0,), ('ICoreFeatureData', 'IIndentFeatureData',)),
+    ),
+    ('TargetPointPosition', 'put'): (
+        (1, (0,), ('ICamera',)),
+    ),
+    ('TextFormat', 'put'): (
+        (1, (0,), ('ICallout',)),
+    ),
+    ('ThickenSheet', 'method'): (
+        (3, (0,), ('IModeler',)),
+    ),
+    ('ThirdPlane', 'put'): (
+        (1, (0,), ('ISectionViewData',)),
+    ),
+    ('Transform', 'put'): (
+        (1, (0,), ('IComponent2', 'IModelView',)),
+    ),
+    ('Transform2', 'put'): (
+        (1, (0,), ('IComponent2',)),
+    ),
+    ('TransformReferenceEntity', 'put'): (
+        (1, (0,), ('IMoveCopyBodyFeatureData',)),
+    ),
+    ('TranslateToVertex', 'put'): (
+        (1, (0,), ('IMoveCopyBodyFeatureData',)),
+    ),
+    ('Translation', 'put'): (
+        (1, (0,), ('IView3D',)),
+    ),
+    ('Translation3', 'put'): (
+        (1, (0,), ('IModelView',)),
+    ),
+    ('Transparency', 'get'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('Transparency', 'put'): (
+        (2, (0,), ('IModelDocExtension',)),
+    ),
+    ('UnInstallQuickTipGuide', 'method'): (
+        (1, (0,), ('ISldWorks',)),
+    ),
+    ('Value', 'method'): (
+        (5, (0,), ('ISwColorContour',)),
+        (9, (0,), ('ISwColorContour1',)),
+    ),
+    ('Vertex', 'put'): (
+        (1, (0,), ('IChamferFeatureData2', 'ISimpleHoleFeatureData', 'ISimpleHoleFeatureData2', 'ISurfaceExtendFeatureData', 'IWizardHoleFeatureData', 'IWizardHoleFeatureData2',)),
+    ),
+    ('View', 'put'): (
+        (1, (0,), ('ISelectData',)),
+    ),
+    ('ViewCreatePreNotify', 'method'): (
+        (1, (0,), ('DDrawingDocEvents',)),
+    ),
+    ('ViewNewNotify2', 'method'): (
+        (1, (0,), ('DAssemblyDocEvents', 'DDrawingDocEvents', 'DPartDocEvents',)),
+    ),
+    ('Visibility', 'get'): (
+        (1, (0,), ('IModelDocExtension',)),
+    ),
+    ('Visibility', 'put'): (
+        (2, (0,), ('IModelDocExtension',)),
+    ),
+    ('WeldSymbol', 'put'): (
+        (1, (0,), ('ICosmeticWeldBeadFeatureData',)),
+    ),
+    ('XAxis', 'put'): (
+        (1, (0,), ('ITriadManipulator',)),
+    ),
+    ('YAxis', 'put'): (
+        (1, (0,), ('ITriadManipulator',)),
+    ),
+    ('ZAxis', 'put'): (
+        (1, (0,), ('ITriadManipulator',)),
+    ),
+    ('appCallbackFunction', 'method'): (
+        (3, (2,), ('ICwAddincallback',)),
+    ),
+    ('appCallbackFunction2', 'method'): (
+        (3, (2,), ('ICwAddincallback',)),
+    ),
+}

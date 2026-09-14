@@ -337,3 +337,66 @@ class TestCallWithAnAlreadyEvaluatedMember:
 
         with pytest.raises(SwCallError, match="already evaluated"):
             com.call(FakeDispatch(), "Visible", 1)
+
+
+class TestNothing:
+    """The null COM object, and why a bare None is not one.
+
+    A parameter declared ``IDispatch*`` that the caller has nothing to put in
+    is VBA's ``Nothing``. pywin32 marshals a bare ``None`` as ``VT_EMPTY``
+    instead, and SOLIDWORKS answers "Type mismatch" without naming the
+    parameter - measured against a real ``SaveAs3`` on 2026, where the
+    difference is the whole call.
+    """
+
+    def test_it_is_a_null_dispatch_variant(self):
+        value = com.nothing()
+        assert value.varianttype == com.VT_DISPATCH
+        assert value.value is None
+
+    def test_call_turns_none_into_one_where_the_table_says_so(self):
+        """SaveAs3's ExportData and AdvancedSaveAsOptions, at index 3 and 4."""
+        seen = {}
+
+        class FakeExtension:
+            def SaveAs3(self, name, version, options, export, advanced, errors, warnings):
+                seen["export"] = export
+                seen["advanced"] = advanced
+                seen["name"] = name
+                errors.value = 0
+                warnings.value = 0
+                return True
+
+        ok, out = com.call_out(
+            FakeExtension(),
+            "SaveAs3",
+            "C:/out/bracket.step",
+            0,
+            2,
+            None,
+            None,
+            interface="IModelDocExtension",
+        )
+        assert ok is True
+        assert out == {"Errors": 0, "Warnings": 0}
+        assert seen["export"].varianttype == com.VT_DISPATCH
+        assert seen["advanced"].value is None
+        assert seen["name"] == "C:/out/bracket.step"
+
+    def test_it_leaves_a_none_alone_where_the_table_does_not(self):
+        """SetSuppression2's Config_names is a VARIANT, and None means none."""
+        seen = {}
+
+        class FakeFeature:
+            def SetSuppression2(self, state, config_opt, config_names):
+                seen["names"] = config_names
+                return True
+
+        assert com.call(FakeFeature(), "SetSuppression2", 0, 1, None) is True
+        assert seen["names"] is None
+
+    def test_a_pointer_to_an_interface_counts_too(self):
+        """SelectByID2's Callout is ICallout*, which is VT_PTR, not VT_DISPATCH."""
+        from swcomapi import signatures
+
+        assert sorted(signatures.dispatch_ins_for_args("SelectByID2", 9)) == [7]

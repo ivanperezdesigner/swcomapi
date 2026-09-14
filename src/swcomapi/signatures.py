@@ -45,7 +45,7 @@ different methods::
 """
 
 from .errors import SwAmbiguousMemberError
-from .generated._out_data import OUT_PARAMS
+from .generated._out_data import DISPATCH_IN, OUT_PARAMS
 
 
 def shape_for_args(member, argument_count, interface=None, kind="method"):
@@ -124,6 +124,62 @@ def shape_for_args(member, argument_count, interface=None, kind="method"):
         + " Pass interface= to say which one you mean.",
         member=member,
     )
+
+
+def dispatch_ins_for_args(member, argument_count, interface=None, kind="method"):
+    """Which argument positions of ``member`` want a COM object going in.
+
+    Returns a frozenset of indexes into the caller's argument list, empty when
+    the member takes none or is not in the table.
+
+    ``swcomapi.com.call_out`` uses it to turn a ``None`` in one of those
+    positions into the null ``VT_DISPATCH`` that VBA spells ``Nothing``. A
+    bare ``None`` gets marshalled as ``VT_EMPTY`` and SOLIDWORKS answers
+    "Type mismatch" without saying which parameter it means, which is a
+    genuinely hard afternoon.
+
+    Unlike `shape_for_args`, an argument count that fits nothing is not an
+    error here: the call is about to be made anyway and will produce a better
+    message than this lookup could.
+
+    Examples::
+
+        >>> sorted(dispatch_ins_for_args("SaveAs3", 5))
+        [3, 4]
+        >>> sorted(dispatch_ins_for_args("OpenDoc6", 4))
+        []
+    """
+    shapes = DISPATCH_IN.get((member, kind))
+    if not shapes:
+        return frozenset()
+
+    if interface is not None:
+        narrowed = tuple(shape for shape in shapes if interface in shape[2])
+        if narrowed:
+            shapes = narrowed
+
+    fitting = [shape for shape in shapes if _fits(shape, member, argument_count, kind)]
+    if len(fitting) != 1:
+        return frozenset()
+    return frozenset(fitting[0][1])
+
+
+def _fits(shape, member, argument_count, kind):
+    """True if ``shape`` could be the method being called with that many args.
+
+    A range rather than a number, because this same lookup answers for both
+    ends of the call: `swcomapi.com.call_out` asks about what the caller
+    passed, which is short of the arity by however many ``[out]`` parameters
+    get slotted in, and `swcomapi.com.call` asks again about the finished
+    argument list, which has them all.
+    """
+    arity = shape[0]
+    lowest = arity
+    for out_arity, outputs, _ in OUT_PARAMS.get((member, kind), ()):
+        if out_arity == arity:
+            lowest = arity - len(outputs)
+            break
+    return lowest <= argument_count <= arity
 
 
 def outputs_of(member, arity=None, interface=None, kind="method"):

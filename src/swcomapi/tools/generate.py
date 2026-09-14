@@ -437,6 +437,86 @@ def out_shapes(api):
     return dict(sorted(shapes.items()))
 
 
+def _wants_object(param, known):
+    """True if ``param`` is an interface pointer going in.
+
+    Three spellings, all of them real:
+
+    ================  ===============  ==========================
+    declared as       VARTYPE          example
+    ================  ===============  ==========================
+    ``IDispatch*``    ``VT_DISPATCH``  ``SaveAs3(ExportData)``
+    ``IUnknown*``     ``VT_UNKNOWN``   ``IBody.ISave(StreamIn)``
+    ``ICallout*``     ``VT_PTR``       ``SelectByID2(Callout)``
+    ================  ===============  ==========================
+
+    The third is the one that needs the interface names: ``VT_PTR`` is also
+    how ``long*`` and ``double*`` arrive, and those really are numbers.
+    """
+    if param["vt"] in (tlb.VT_DISPATCH, tlb.VT_UNKNOWN):
+        return True
+    if param["vt"] != tlb.VT_PTR:
+        return False
+    target = param["com"].rstrip("*")
+    return target in ("IDispatch", "IUnknown") or target in known
+
+
+def dispatch_shapes(api):
+    """Where the ``[in]`` parameters that want a COM object are.
+
+    Returns ``{(name, kind): [{arity, positions, interfaces}, ...]}``, with
+    ``positions`` the parameter indexes declared ``IDispatch*`` or
+    ``IUnknown*`` going in.
+
+    Why this table exists
+    ---------------------
+
+    A great many SOLIDWORKS methods take an object they do not need. The
+    canonical case is the export path::
+
+        IModelDocExtension.SaveAs3(Name, Version, Options,
+                                   ExportData, AdvancedSaveAsOptions,
+                                   Errors, Warnings)
+
+    ``ExportData`` and ``AdvancedSaveAsOptions`` are ``IDispatch*``, and for a
+    plain export there is nothing to put in them. VBA writes ``Nothing``. The
+    obvious Python translation is ``None``, and it fails: pywin32 marshals a
+    bare ``None`` as ``VT_EMPTY``, SOLIDWORKS wants a null ``VT_DISPATCH``,
+    and the call dies with "Type mismatch" naming no parameter.
+
+    With this table `swcomapi.com.call_out` converts the ``None`` itself.
+    Measured: 977 member names take one, in 1,007 shapes, and no two shapes of
+    the same name share an argument count.
+    """
+    known = set(api["interfaces"])
+    shapes = {}
+    for interface_name, interface in api["interfaces"].items():
+        for member in interface["members"]:
+            positions = [
+                index
+                for index, param in enumerate(member["params"])
+                if param["direction"] == "in" and _wants_object(param, known)
+            ]
+            if not positions:
+                continue
+            key = (member["name"], member["kind"])
+            arity = len(member["params"])
+            for existing in shapes.setdefault(key, []):
+                if existing["arity"] == arity and existing["positions"] == positions:
+                    existing["interfaces"].append(interface_name)
+                    break
+            else:
+                shapes[key].append(
+                    {"arity": arity, "positions": positions, "interfaces": [interface_name]}
+                )
+
+    for entries in shapes.values():
+        entries.sort(key=lambda entry: entry["arity"])
+        for entry in entries:
+            entry["interfaces"].sort()
+    return dict(sorted(shapes.items()))
+
+
 def emit_out_data(api):
     """`generated/_out_data.py`: which parameters a method writes into.
 
@@ -472,6 +552,26 @@ def emit_out_data(api):
             )
             interfaces = ", ".join(repr(i) for i in entry["interfaces"])
             out.append(f"        ({entry['arity']}, ({outs},), ({interfaces},)),")
+        out.append("    ),")
+    out.append("}")
+    dispatch = dispatch_shapes(api)
+    out.append("")
+    out.append(
+        f"# {len(dispatch)} member names take an [in] parameter that wants a COM\n"
+        "# object. Pass None for one you have nothing to put in, and\n"
+        "# `swcomapi.com.call_out` turns it into the null VT_DISPATCH that VBA\n"
+        "# spells Nothing. A bare None reaches SOLIDWORKS as VT_EMPTY and the\n"
+        '# call fails with "Type mismatch", naming no parameter.\n'
+        "#\n"
+        "# Each entry: (member_name, kind) -> [ (arity, positions, interfaces) ].\n"
+    )
+    out.append("DISPATCH_IN = {")
+    for (name, kind), entries in dispatch.items():
+        out.append(f"    ({name!r}, {kind!r}): (")
+        for entry in entries:
+            positions = ", ".join(str(index) for index in entry["positions"])
+            interfaces = ", ".join(repr(i) for i in entry["interfaces"])
+            out.append(f"        ({entry['arity']}, ({positions},), ({interfaces},)),")
         out.append("    ),")
     out.append("}")
     return "\n".join(out) + "\n"

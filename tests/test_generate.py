@@ -313,3 +313,101 @@ class TestGatherRefusesNothing:
     def test_no_libraries_at_all_is_an_error_with_a_way_out(self):
         with pytest.raises(generate.GenerationError, match="SWCOMAPI_SOLIDWORKS_DIR"):
             generate.gather([])
+
+
+def com_param(name, com_type, vt, direction="in"):
+    """One parameter as `tlb.read_member` reports it."""
+    return {
+        "name": name,
+        "com": com_type,
+        "py": "Any",
+        "vt": vt,
+        "direction": direction,
+        "optional": False,
+        "flags": 1,
+    }
+
+
+class TestDispatchShapes:
+    """Which ``[in]`` parameters want a COM object, and so accept ``None``.
+
+    Three spellings, all of them real, and the third is why the interface
+    names have to be consulted: ``VT_PTR`` is also how ``long*`` arrives.
+    """
+
+    @pytest.fixture
+    def shapes(self):
+        interfaces = {
+            "IThing": {
+                "name": "IThing",
+                "doc": "",
+                "guid": "",
+                "kind": "dispatch",
+                "library": "SldWorks",
+                "members": [
+                    {
+                        "name": "SaveIt",
+                        "kind": "method",
+                        "doc": "",
+                        "has_out": False,
+                        "com_only": False,
+                        "params": [
+                            com_param("Name", "BSTR", 8),
+                            com_param("ExportData", "IDispatch*", 9),
+                            com_param("Stream", "IUnknown*", 13),
+                        ],
+                    },
+                    {
+                        "name": "SelectIt",
+                        "kind": "method",
+                        "doc": "",
+                        "has_out": False,
+                        "com_only": False,
+                        "params": [
+                            com_param("Mark", "long*", 26),
+                            com_param("Callout", "ICallout*", 26),
+                        ],
+                    },
+                    {
+                        "name": "CountIt",
+                        "kind": "method",
+                        "doc": "",
+                        "has_out": False,
+                        "com_only": False,
+                        "params": [com_param("Many", "long", 3)],
+                    },
+                ],
+            },
+            "ICallout": {
+                "name": "ICallout",
+                "doc": "",
+                "guid": "",
+                "kind": "dispatch",
+                "library": "SldWorks",
+                "members": [],
+            },
+        }
+        return generate.dispatch_shapes(api(interfaces=interfaces))
+
+    def test_vt_dispatch_and_vt_unknown_both_count(self, shapes):
+        entry = shapes[("SaveIt", "method")][0]
+        assert entry["positions"] == [1, 2]
+        assert entry["arity"] == 3
+
+    def test_a_pointer_to_an_interface_counts(self, shapes):
+        assert shapes[("SelectIt", "method")][0]["positions"] == [1]
+
+    def test_a_pointer_to_a_number_does_not(self, shapes):
+        """long* is VT_PTR too, and it really is a number."""
+        assert 0 not in shapes[("SelectIt", "method")][0]["positions"]
+
+    def test_a_member_with_no_object_parameter_is_absent(self, shapes):
+        assert ("CountIt", "method") not in shapes
+
+    def test_the_real_table_knows_the_export_path(self):
+        """The case that found all of this: SaveAs3 on the installed release."""
+        from swcomapi.generated._out_data import DISPATCH_IN
+
+        assert DISPATCH_IN[("SaveAs3", "method")] == (
+            (7, (3, 4), ("IModelDocExtension",)),
+        )

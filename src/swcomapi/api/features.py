@@ -29,24 +29,16 @@ from ..errors import SwCallError
 
 # Tree entries that are furniture rather than modelling. Type names as
 # GetTypeName2 reports them.
+#
+# Anything whose type name ends in "Folder" is furniture too, and is not
+# listed here: a release that adds one - 2026 has InkMarkupFolder and
+# ConfigTableFolder that earlier ones did not - should not need an edit.
 FURNITURE = frozenset(
     {
         "OriginProfileFeature",
         "RefPlane",
         "CoordSys",
         "DetailCabinet",
-        "CommentsFolder",
-        "FavoriteFolder",
-        "HistoryFolder",
-        "SelectionSetFolder",
-        "SensorFolder",
-        "DocsFolder",
-        "MaterialFolder",
-        "SolidBodyFolder",
-        "SurfaceBodyFolder",
-        "EnvFolder",
-        "LiveSectionFolder",
-        "GridSystemFolder",
         "ProfileFeature",
     }
 )
@@ -88,9 +80,11 @@ class Feature:
     def is_furniture(self):
         """True for a tree entry that is not a modelling feature.
 
-        The origin, the default planes, the annotations and comments folders.
+        The origin, the default planes, and every folder: annotations,
+        comments, equations, the configuration table. See `FURNITURE`.
         """
-        return self.type in FURNITURE
+        kind = self.type
+        return kind in FURNITURE or kind.endswith("Folder")
 
     # ---------------------------------------------------------- suppression
 
@@ -169,6 +163,8 @@ class Feature:
         else:
             scope, names = swThisConfiguration, None
 
+        from ..const import swSuppressFeature
+
         ok = com.call(self.com, "SetSuppression2", action, scope, names)
         if not ok:
             raise SwCallError(
@@ -176,6 +172,22 @@ class Feature:
                 f"{self.name!r}. A feature that others depend on cannot be "
                 f"suppressed on its own; try unsuppress(with_dependents=True) "
                 f"for the reverse case.",
+                member="SetSuppression2",
+            )
+
+        # SetSuppression2 returns True for a change it did not make. A feature
+        # whose state is driven by a configuration table is the case that
+        # bites: the table wins, the call reports success, and the tree does
+        # not move. Reading the state back is the only way to know.
+        wanted = action == swSuppressFeature
+        states = com.to_list(com.call(self.com, "IsSuppressed2", scope, names))
+        if states and any(bool(state) != wanted for state in states):
+            raise SwCallError(
+                f"SOLIDWORKS reported success but {self.name!r} is still "
+                f"{'un' if wanted else ''}suppressed. The usual cause is a "
+                f"configuration table driving $STATE@{self.name}: the table "
+                f"owns the state and a direct call cannot override it. Change "
+                f"the table, or the sketch or feature it is built on.",
                 member="SetSuppression2",
             )
         return True
