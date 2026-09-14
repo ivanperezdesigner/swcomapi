@@ -238,8 +238,9 @@ class TestCallOut:
     def test_collects_the_out_parameters_in_order(self, monkeypatch):
         """OpenDoc6's real shape: a return value plus two [out] ints.
 
-        The warning 32 is swFileLoadWarning_ReadOnly, the one you get opening
-        a file someone else has open.
+        The warning 32 is swFileLoadWarning_NeedsRegen. The one you get
+        opening a file someone else already has open is
+        swFileLoadWarning_ReadOnly, which is 2.
         """
         # `call` catches pythoncom.com_error, so the fake must be that type.
         monkeypatch.setattr(com.pythoncom, "com_error", FakeComError, raising=False)

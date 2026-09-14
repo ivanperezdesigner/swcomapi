@@ -68,6 +68,10 @@ select = ["E", "F", "I", "UP", "B", "W"]
 # The generated modules are machine output: no point policing their style.
 [tool.ruff.lint.per-file-ignores]
 "src/swcomapi/generated/*" = ["E501", "F401"]
+# The stubs are machine output too. A handful of SOLIDWORKS constant names
+# are long enough on their own to break any line limit, e.g.
+# swsTopologyDisplacementConstraintValuation_MultiplicationFactor.
+"src/swcomapi/*.pyi" = ["E501"]
 
 [tool.mypy]
 python_version = "3.10"

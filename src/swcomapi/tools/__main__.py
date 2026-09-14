@@ -2,13 +2,13 @@
 
     python -m swcomapi.tools survey      # what is installed, and how big it is
     python -m swcomapi.tools survey -v   # plus the per-interface breakdown
-
-`generate` lands in the next step.
+    python -m swcomapi.tools generate    # rebuild swcomapi/generated
 """
 
 import argparse
 import sys
 
+from . import generate as generate_module
 from . import install, tlb
 
 
@@ -35,10 +35,66 @@ def main(argv=None):
         help="also list the ten largest interfaces",
     )
 
+    gen = sub.add_parser("generate", help="rebuild swcomapi/generated from the type libraries")
+    gen.add_argument(
+        "-d",
+        "--dir",
+        dest="directory",
+        help="the SOLIDWORKS directory; defaults to the registered install",
+    )
+    gen.add_argument(
+        "-o",
+        "--out",
+        dest="root",
+        help="the swcomapi package directory to write into; defaults to this one",
+    )
+    gen.add_argument(
+        "--core-only",
+        action="store_true",
+        help="only sldworks.tlb and swconst.tlb, skipping the add-in libraries",
+    )
+
     args = parser.parse_args(argv)
     if args.command == "survey":
         return _survey(args)
+    if args.command == "generate":
+        return _generate(args)
     return 1
+
+
+def _generate(args):
+    try:
+        directory = args.directory or install.solidworks_dir()
+    except install.InstallNotFoundError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    paths = install.library_paths(directory, include_addins=not args.core_only)
+    print(f"reading {len(paths)} type libraries from {directory}")
+
+    try:
+        api, written = generate_module.run(paths, args.root)
+    except generate_module.GenerationError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    numbers = generate_module.counts(api)
+    print(f"SOLIDWORKS {api['year']}")
+    for key in ("libraries", "enums", "constants", "interfaces", "members",
+                "documented", "properties", "with_out", "com_only"):
+        print(f"  {key:<12} {numbers[key]:>7}")
+
+    if api["failed"]:
+        print()
+        print("not loadable on this machine:")
+        for filename, error in api["failed"]:
+            print(f"  {filename}: {error}")
+
+    print()
+    print("written:")
+    for path, size in written:
+        print(f"  {size/1024:>8.0f} KB  {path}")
+    return 0
 
 
 def _survey(args):

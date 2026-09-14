@@ -16,6 +16,12 @@ import re
 
 from .. import com
 
+# SOLIDWORKS numbers its releases internally from 28 for 2020 onwards, so the
+# year is the major version plus 1992. The same number appears in the type
+# libraries' version, which is why the generator uses this too.
+RELEASE_YEAR_OFFSET = 1992
+FIRST_KNOWN_MAJOR = 28
+
 
 class SolidWorks:
     """A connected SOLIDWORKS application.
@@ -162,6 +168,28 @@ class SolidWorks:
             return "<SolidWorks (not responding)>"
 
 
+def year_from_major(major):
+    """The release year from an internal major version, or None.
+
+    Used both for a running application and for a type library, which carry
+    the same number: SOLIDWORKS 2026 is major 34 in both.
+
+    Examples::
+
+        >>> year_from_major(34)
+        2026
+        >>> year_from_major(28)
+        2020
+        >>> year_from_major(27) is None
+        True
+    """
+    if major is None or major < FIRST_KNOWN_MAJOR:
+        # Before 2020 the numbering does not follow this rule; say nothing
+        # rather than report a wrong year.
+        return None
+    return major + RELEASE_YEAR_OFFSET
+
+
 def _year_from_revision(revision):
     """The release year from a build string, or None.
 
@@ -175,11 +203,7 @@ def _year_from_revision(revision):
         major = int(head)
     except ValueError:
         return None
-    if major < 28:
-        # Before 2020 the numbering does not follow this rule; say nothing
-        # rather than report a wrong year.
-        return None
-    return major + 1992
+    return year_from_major(major)
 
 
 def _service_pack_from_build(base_version):

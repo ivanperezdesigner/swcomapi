@@ -20,5 +20,21 @@ and the project follows [Semantic Versioning](https://semver.org/).
 - `swcomapi.api.app.SolidWorks` — identity and window state, with the raw
   `ISldWorks` on `.com`.
 - `examples/01_connect.py`.
+- `swcomapi.tools.install` - finds SOLIDWORKS through its COM registration,
+  since the install directory moved between 2025 and 2026.
+- `swcomapi.tools.tlb` - reads a type library into plain data: every interface,
+  member, parameter direction and enumeration, plus the vendor's own one-line
+  descriptions. 86% of members carry one, and the official pages are behind an
+  Akamai rule that refuses non-browser clients, so this is the documentation.
+- `swcomapi.tools.generate` and `python -m swcomapi.tools {survey,generate}`.
+  Output is deterministic: no timestamps, no paths, everything sorted.
+- `swcomapi.enums` - all 1,434 enumerations as real `IntEnum` classes, built on
+  demand. Measured: 1,434 eager classes cost ~158 ms to import, the data plus
+  on-demand building costs ~8 ms.
+- `swcomapi.const` - all 14,889 constants as bare names, the way VBA sees them.
+  Safe because every name is distinct across every enumeration; the generator
+  refuses to emit if that ever stops being true.
+- `swcomapi/enums.pyi` and `swcomapi/const.pyi` - generated stubs, so the
+  editor and mypy see every name without paying for it at runtime.
 
 [Unreleased]: https://github.com/ivanperezdesigner/swcomapi/compare/main...HEAD

@@ -8,11 +8,13 @@ import doctest
 
 import pytest
 
-from swcomapi import com, units
+from swcomapi import com, const, enums, units
 from swcomapi.api import app
 from swcomapi.tools import tlb
 
-MODULES = [com, units, app, tlb]
+# swcomapi.tools.generate is absent on purpose: what it documents is the
+# files it emits, and those are checked in tests/test_generate.py.
+MODULES = [com, units, app, tlb, enums, const]
 
 
 @pytest.mark.parametrize("module", MODULES, ids=lambda m: m.__name__)

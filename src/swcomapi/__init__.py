@@ -44,6 +44,9 @@ _LAZY = {
 # Submodules worth having at the top level. These resolve to the module
 # itself, not to something inside it.
 _LAZY_MODULES = {
+    "const": "swcomapi.const",
+    "enums": "swcomapi.enums",
+    "generated": "swcomapi.generated",
     "com": "swcomapi.com",
     "units": "swcomapi.units",
     "session": "swcomapi.session",
@@ -72,6 +75,9 @@ __all__ = [
     "wait_until_ready",
     "SolidWorks",
     # submodules worth having at the top level
+    "enums",
+    "const",
+    "generated",
     "com",
     "units",
     "session",

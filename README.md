@@ -4,6 +4,7 @@ Drive SOLIDWORKS from Python over its COM API — with the enums it never gave
 you, and a pythonic layer over the calls you actually make.
 
 > **Status: alpha, under construction.** Nothing is published to PyPI yet.
+> Done so far: the COM core, and the generated enumerations.
 
 ```bash
 pip install swcomapi     # not yet available
