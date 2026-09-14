@@ -1,0 +1,80 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "swcomapi"
+dynamic = ["version"]
+description = "Drive SOLIDWORKS from Python: the full COM API surface, with real enums and a pythonic layer on top."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "Ivan Perez" }]
+keywords = ["solidworks", "cad", "com", "api", "automation", "pywin32", "macro"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Manufacturing",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
+# The enums, the signature table and the doc links are pure data: they import
+# and work on any platform. Only an actual connection needs pywin32, and only
+# Windows can ever have SOLIDWORKS, so the dependency is marked accordingly.
+dependencies = ["pywin32>=306; sys_platform == 'win32'"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "build>=1.2",
+    "twine>=5",
+]
+
+[project.urls]
+Homepage = "https://github.com/ivanperezdesigner/swcomapi"
+Documentation = "https://github.com/ivanperezdesigner/swcomapi/blob/main/DOCUMENTATION.md"
+Issues = "https://github.com/ivanperezdesigner/swcomapi/issues"
+Changelog = "https://github.com/ivanperezdesigner/swcomapi/blob/main/CHANGELOG.md"
+
+[tool.hatch.version]
+path = "src/swcomapi/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/swcomapi"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "live: needs a real SOLIDWORKS install; skipped unless SWCOMAPI_LIVE=1",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "W"]
+
+# The generated modules are machine output: no point policing their style.
+[tool.ruff.lint.per-file-ignores]
+"src/swcomapi/generated/*" = ["E501", "F401"]
+
+[tool.mypy]
+python_version = "3.10"
+# Only the generated stubs and the raw COM layer are type checked. The
+# pythonic layer in api/ is deliberately written without annotations.
+files = ["src/swcomapi"]
+# api/ and tools/ are hand-written and deliberately unannotated.
+exclude = "src/swcomapi/(api|tools)/"
+strict = false
+warn_unused_ignores = false
+warn_redundant_casts = true

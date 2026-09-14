@@ -1,0 +1,27 @@
+# Build artefacts
+dist/
+build/
+*.egg-info/
+
+# Environments
+venv/
+.venv/
+
+# Caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# SOLIDWORKS scratch output from manual runs
+*.SLDPRT
+*.SLDASM
+*.SLDDRW
+*.pdf
+*.dxf
+*.dwg
+*.step
+*.stp
+*.igs
+*.stl
