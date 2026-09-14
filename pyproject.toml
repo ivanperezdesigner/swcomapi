@@ -35,6 +35,7 @@ dev = [
     "pytest>=8",
     "ruff>=0.6",
     "mypy>=1.11",
+    "types-pywin32",
     "build>=1.2",
     "twine>=5",
 ]
