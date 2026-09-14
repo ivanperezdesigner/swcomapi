@@ -269,6 +269,42 @@ def call(obj, member, *args, interface=None, kind="method"):
         raise _translate(exc, member) from exc
 
 
+def set_property(obj, member, value):
+    """Write to a property. Returns ``value``.
+
+    obj
+        the COM object
+    member
+        the property name, as a str
+    value
+        what to write
+
+    `call` reads; this writes, and they are not the same operation in COM. A
+    property put is a different invocation kind, and the bridge only reaches
+    it through attribute assignment::
+
+        set_property(component, "Visible", 1)     # component.Visible = 1
+
+    Going through `call` instead gets you "was already evaluated by the COM
+    bridge": reading ``Visible`` hands back the current value, and a value
+    cannot be called with an argument.
+
+    Raises `SwMemberNotFoundError` when the property does not exist or is read
+    only, and `SwCallError` for anything else.
+    """
+    _require_pywin32()
+    try:
+        setattr(obj, member, value)
+    except AttributeError as exc:
+        raise SwMemberNotFoundError(
+            f"{_name_of(obj)} has no property {member!r} that can be written to",
+            member=member,
+        ) from exc
+    except pythoncom.com_error as exc:
+        raise _translate(exc, member) from exc
+    return value
+
+
 def nothing():
     """A null COM object, for an ``[in]`` parameter you have nothing to put in.
 

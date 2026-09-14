@@ -21,6 +21,7 @@ one attribute away::
 and ``swcomapi.describe("ISldWorks")`` lists all 366 of its members.
 """
 
+import os
 import re
 
 from .. import com
@@ -287,13 +288,58 @@ class SolidWorks:
                 f"path, or set it in Tools > Options > Default Templates."
             )
 
-        model = com.call(self.com, "NewDocument", str(template), 0, 0.0, 0.0)
+        template = str(template)
+        if not os.path.isfile(template):
+            template = self._template_in_search_path(template, kind)
+
+        model = com.call(self.com, "NewDocument", template, 0, 0.0, 0.0)
         if model is None:
             raise SwDocumentError(
                 f"SOLIDWORKS declined to create a {kind} from template "
-                f"{template!r}"
+                f"{template}",
+                path=template,
             )
         return wrap(model, self)
+
+    def _template_in_search_path(self, missing, kind):
+        """Find ``kind``'s template when the configured path is gone.
+
+        Upgrading SOLIDWORKS leaves the default template settings pointing at
+        the old release's folder, and only for the types the user never
+        touched: this machine's 2026 install has a part template under
+        ``SOLIDWORKS 2026`` and an assembly one still under
+        ``SOLIDWORKS 2025``, which no longer exists. ``NewDocument`` answers
+        that with a bare None.
+
+        So the file name is looked for in the template folders SOLIDWORKS is
+        actually searching. Returns the path found, as a str.
+
+        Raises `SwDocumentError` naming the configured path when there is
+        nothing to fall back to, since that is the setting to fix.
+        """
+        from ..const import swFileLocationsDocumentTemplates
+        from ..errors import SwDocumentError
+
+        wanted = os.path.basename(missing).lower()
+        folders = com.call(
+            self.com, "GetUserPreferenceStringValue", swFileLocationsDocumentTemplates
+        )
+        for folder in str(folders or "").split(";"):
+            folder = folder.strip()
+            if not folder or not os.path.isdir(folder):
+                continue
+            for entry in os.listdir(folder):
+                if entry.lower() == wanted:
+                    return os.path.join(folder, entry)
+
+        raise SwDocumentError(
+            f"the default {kind} template is set to {missing}, which does not "
+            f"exist, and no file of that name is in the template folders "
+            f"SOLIDWORKS is searching ({folders}). An upgrade leaves this "
+            f"behind; fix it in Tools > Options > Default Templates, or pass "
+            f"template= with a path.",
+            path=missing,
+        )
 
     @property
     def documents(self):

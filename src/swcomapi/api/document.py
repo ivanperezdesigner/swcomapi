@@ -512,17 +512,17 @@ class Assembly(Document):
 
     @property
     def components(self):
-        """The top-level components, as a list of raw ``IComponent2``.
+        """The top-level components, as a `swcomapi.api.components.Components`.
 
-        Not wrapped yet. ``component.Name2``, ``component.GetPathName()`` and
-        ``component.GetSuppression()`` are the ones you will want; every
-        member is listed by ``swcomapi.describe("IComponent2")``.
+        A sequence and a mapping at once::
+
+            asm.components.names()          # ['rail-1', 'rail-2', 'gusset-1']
+            asm.components["rail-2"].path   # 'C:\\\\work\\\\rail.SLDPRT'
+            asm.components.all()            # every level, not just the top
         """
-        configuration = self.configurations.raw(self.configuration)
-        root = com.call(configuration, "GetRootComponent3", True)
-        if root is None:
-            return []
-        return com.to_list(com.call(root, "GetChildren"))
+        from .components import Components
+
+        return Components(self)
 
     @property
     def component_count(self):
@@ -538,7 +538,7 @@ class Assembly(Document):
         Duplicates are kept: two instances of the same part are two entries,
         which is what a count of parts needs.
         """
-        return [com.call(child, "GetPathName") for child in self.components]
+        return self.components.paths()
 
 
 class Drawing(Document):
