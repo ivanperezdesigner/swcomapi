@@ -633,7 +633,27 @@ class Part(Document):
             if part.is_sheet_metal:
                 part.export_flat_pattern("blank.dxf")
         """
-        return bool(self.features.of_type("SheetMetal") or self.features.of_type("SMBaseFlange"))
+        from .sheetmetal import is_sheet_metal
+
+        return is_sheet_metal(self)
+
+    @property
+    def sheet_metal(self):
+        """The sheet metal parameters, as a `SheetMetal`, or None.
+
+        Thickness and bend radius in mm::
+
+            part.sheet_metal.thickness          # 2.0
+            part.sheet_metal.bend_radius        # 2.0
+            part.sheet_metal.k_factor           # 0.5
+            part.sheet_metal.as_dict()          # all of them at once
+
+        The first sheet metal feature, which is the only one in a part with a
+        single body. See `swcomapi.api.sheetmetal` for a part with several.
+        """
+        from .sheetmetal import of
+
+        return of(self)
 
     def export_flat_pattern(self, path, include_bend_lines=True):
         """Write the flat pattern to a DXF or DWG. Returns the path, as a str.

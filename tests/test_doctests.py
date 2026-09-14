@@ -21,10 +21,10 @@ from swcomapi.api import (
 from swcomapi.api import dimensions as dimensions_module
 from swcomapi.tools import tlb
 
-# swcomapi.api.modeling and swcomapi.api.geometry are absent on purpose too:
-# every example in them needs a running SOLIDWORKS and a solid to measure.
-# Those are executed for real in tests/live/test_modeling.py and
-# tests/live/test_geometry.py.
+# swcomapi.api.modeling, swcomapi.api.geometry and swcomapi.api.sheetmetal are
+# absent on purpose too: every example in them needs a running SOLIDWORKS and
+# a solid to measure. They are executed for real in tests/live/test_modeling.py,
+# tests/live/test_geometry_live.py and tests/live/test_sheetmetal_live.py.
 #
 # swcomapi.tools.generate is absent on purpose: what it documents is the
 # files it emits, and those are checked in tests/test_generate.py.
