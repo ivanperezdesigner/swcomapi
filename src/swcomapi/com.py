@@ -8,8 +8,16 @@ solving once:
    arguments. ``ISldWorks.OpenDoc6`` is the canonical example: the document
    comes back as the return value, but the errors and the warnings come back
    through the last two parameters. With late binding you have to hand pywin32
-   a ``VARIANT`` flagged ``VT_BYREF`` for each one, then read it afterwards.
-   ``out()`` builds them and ``call_out()`` reads them back.
+   a ``VARIANT`` flagged ``VT_BYREF`` for each one, and know its exact type.
+
+   ``call_out()`` does all of that for you, from the generated table in
+   ``swcomapi.signatures``::
+
+       >>> doc, out = call_out(app, "OpenDoc6", path, 1, 0, "")  # doctest: +SKIP
+       >>> out                                                   # doctest: +SKIP
+       {'Errors': 0, 'Warnings': 0}
+
+   ``byref()`` is there for the rare case the table cannot help with.
 
 2. **SafeArrays.** SOLIDWORKS returns arrays as flat tuples: ``GetBox`` gives
    six numbers that are really two corners, ``GetCoordinateSystem`` nine that
@@ -33,7 +41,19 @@ Examples::
     [(0.0, 0.0, 0.0), (0.025, 0.04, 0.01)]
 """
 
+import types
+
 from .errors import SwCallError, SwMemberNotFoundError, SwUnavailableError
+
+# What "this still needs calling" means. Everything else - a str, an int, a
+# tuple, a COM object - is a value the bridge has already produced.
+_INVOCABLE = (
+    types.MethodType,
+    types.FunctionType,
+    types.BuiltinFunctionType,
+    types.BuiltinMethodType,
+    types.MethodDescriptorType,
+)
 
 try:
     import pythoncom
@@ -126,8 +146,12 @@ def active_object(progid):
 # ------------------------------------------------------------ [out] arguments
 
 
-def out(vartype=None, initial=None):
+def byref(vartype=None, initial=None):
     """Build an argument a COM method can write its result into.
+
+    You rarely need this: `call_out` builds them for you. Reach for it when a
+    method is missing from the generated table, or when you want to see the
+    raw machinery.
 
     vartype
         one of the ``VT_*`` constants re-exported by this module; defaults to
@@ -137,12 +161,13 @@ def out(vartype=None, initial=None):
         otherwise
 
     Returns a ``win32com.client.VARIANT`` flagged ``VT_BYREF``. After the call
-    the result sits in its ``.value``; ``call_out`` reads that for you.
+    the result sits in its ``.value``.
 
-    Example, the two ``[out]`` parameters of ``ISldWorks.OpenDoc6``::
+    Example, the two ``[out]`` parameters of ``ISldWorks.OpenDoc6`` done the
+    hard way::
 
-        errors = out(VT_I4)
-        warnings = out(VT_I4)
+        errors = byref(VT_I4)
+        warnings = byref(VT_I4)
         doc = call(app, "OpenDoc6", path, 1, 0, "", errors, warnings)
         print(errors.value, warnings.value)   # 0 0
     """
@@ -154,8 +179,8 @@ def out(vartype=None, initial=None):
     return VARIANT(VT_BYREF | vartype, initial)
 
 
-def is_out(value):
-    """True if ``value`` was built by ``out()``."""
+def is_byref(value):
+    """True if ``value`` was built by `byref`."""
     return VARIANT is not None and isinstance(value, VARIANT)
 
 
@@ -170,13 +195,33 @@ def call(obj, member, *args):
     member
         the member name, as a str, spelled exactly as the API spells it
     args
-        the arguments in declaration order; use ``out()`` for ``[out]`` ones
+        the arguments in declaration order; use `byref` for ``[out]`` ones, or
+        let `call_out` build them
 
-    Returns whatever the member returns. A member that is not callable is read
-    as a property instead, so ``call(app, "Visible")`` works too.
+    Returns whatever the member returns.
 
-    Raises ``SwMemberNotFoundError`` when the member does not exist in the
-    installed SOLIDWORKS, and ``SwCallError`` for anything else.
+    Raises `SwMemberNotFoundError` when the member does not exist in the
+    installed SOLIDWORKS, and `SwCallError` for anything else.
+
+    The thing this gets right
+    ------------------------
+
+    Late binding is inconsistent about zero-argument members, in a way that
+    bites every script written against SOLIDWORKS. Reading the attribute
+    sometimes hands back the answer and sometimes hands back a method still
+    waiting to be called, and the difference is not something you can predict
+    from the documentation. All four of these are real, from one part
+    document::
+
+        doc.EditRebuild3   ->  True           a bool: already invoked
+        doc.GetTitle       ->  'Part1.SLDPRT' a str: already invoked
+        doc.ForceRebuild3  ->  <bound method> not invoked yet
+        doc.Extension      ->  <COMObject>    already invoked
+
+    Deciding with ``callable()`` looks right and is wrong: a ``CDispatch`` is
+    callable, so ``doc.Extension()`` gets attempted and fails with "Member not
+    found". The test that works is whether the attribute is a Python function
+    or method object; a COM object is not, and neither is a string.
     """
     _require_pywin32()
     try:
@@ -188,7 +233,13 @@ def call(obj, member, *args):
     except pythoncom.com_error as exc:
         raise _translate(exc, member) from exc
 
-    if not callable(attr):
+    if not needs_calling(attr):
+        if args:
+            raise SwCallError(
+                f"{member!r} was already evaluated by the COM bridge, which "
+                f"means it takes no arguments, but {len(args)} were given",
+                member=member,
+            )
         return attr
 
     try:
@@ -197,21 +248,91 @@ def call(obj, member, *args):
         raise _translate(exc, member) from exc
 
 
-def call_out(obj, member, *args):
-    """Call a method and collect its ``[out]`` parameters.
+def needs_calling(attr):
+    """True if ``attr`` is a method still waiting to be invoked.
 
-    Same arguments as ``call``. Returns ``(return_value, outs)``, where ``outs``
-    is a list holding the value of every argument built by ``out()``, in the
-    order they were passed.
+    See `call` for why this cannot be ``callable()``.
 
-    Example::
+    Examples::
 
-        doc, (errors, warnings) = call_out(
-            app, "OpenDoc6", path, 1, 0, "", out(VT_I4), out(VT_I4)
-        )
+        >>> needs_calling(True)
+        False
+        >>> needs_calling("Part1.SLDPRT")
+        False
+        >>> needs_calling((1.0, 2.0))
+        False
+        >>> needs_calling(len)
+        True
     """
-    result = call(obj, member, *args)
-    return result, [a.value for a in args if is_out(a)]
+    return isinstance(attr, _INVOCABLE)
+
+
+def call_out(obj, member, *args, interface=None, kind="method"):
+    """Call a method and collect what it wrote into its parameters.
+
+    Pass only the real arguments. The ``[out]`` ones are looked up in
+    ``swcomapi.signatures``, built, slotted into the right positions and read
+    back afterwards.
+
+    obj
+        the COM object
+    member
+        the method name, as a str
+    args
+        the ``[in]`` arguments, in order, with the ``[out]`` ones left out
+    interface
+        the interface name, for the 26 method names whose shape is ambiguous
+        and that the argument count does not settle
+    kind
+        ``"method"``, ``"get"`` or ``"put"``
+
+    Returns ``(return_value, outputs)``, where ``outputs`` is a dict keyed by
+    the parameter names the API uses.
+
+    An ``[in,out]`` parameter is both: pass its input value in ``args`` as
+    normal and it comes back in ``outputs`` too.
+
+    Examples, both of them real traps::
+
+        # GetBuildNumbers2 is three [out] strings and returns nothing.
+        _, out = call_out(app, "GetBuildNumbers2")
+        out["BaseVersion"]      # 'sw2026_SP03'
+
+        # OpenDoc6's last two parameters are [in,out] error codes.
+        doc, out = call_out(app, "OpenDoc6", path, 1, 0, "")
+        out["Errors"], out["Warnings"]      # 0, 0
+    """
+    from . import signatures
+
+    arity, outputs, supplies_inout = signatures.shape_for_args(
+        member, len(args), interface=interface, kind=kind
+    )
+    if not outputs:
+        return call(obj, member, *args), {}
+
+    # Walk the real parameter list and fill each position from the right
+    # place: a pure [out] gets a fresh holder inserted, an [in,out] gets one
+    # seeded with the caller's value, and everything else takes the next
+    # argument as given. Inserting rather than overwriting is what makes a
+    # mid-list [out] work, and SOLIDWORKS has plenty - see
+    # IModelDocExtension.GetMassProperties2(Accuracy, Status, UseSelected).
+    by_index = {index: (name, vartype, direction) for index, name, vartype, direction in outputs}
+    supplied = iter(args)
+    full = []
+    holders = {}
+    for position in range(arity):
+        if position not in by_index:
+            full.append(next(supplied))
+            continue
+        name, vartype, direction = by_index[position]
+        holder = byref(vartype)
+        if direction == "inout" and supplies_inout:
+            holder.value = next(supplied)
+        holders[name] = holder
+        full.append(holder)
+
+    result = call(obj, member, *full)
+    return result, {name: holder.value for name, holder in holders.items()}
 
 
 def _name_of(obj):

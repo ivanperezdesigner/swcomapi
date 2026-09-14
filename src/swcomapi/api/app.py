@@ -1,15 +1,24 @@
 """The application object: ``ISldWorks``.
 
 This is the root of everything. You get one from `swcomapi.connect`, and every
-document, every setting and every command hangs off it.
+document, every setting and every command hangs off it::
 
-Phase 1 covers identity and window state - what you need to prove a connection
-works. Opening, creating and closing documents arrive with `document.py`.
+    import swcomapi as swc
 
-The raw ``ISldWorks`` is always on ``.com``, so anything not wrapped yet is
-still one attribute away::
+    app = swc.connect()
+    print(app.version)                      # 'SOLIDWORKS 2026 SP3 (34.3.0)'
+
+    part = app.open("bracket.SLDPRT")       # a Part, Assembly or Drawing
+    app.documents                           # everything that is open
+    app.active                              # the one with focus, or None
+    app.close_all()
+
+The raw ``ISldWorks`` is always on ``.com``, so anything not wrapped is still
+one attribute away::
 
     app.com.SendMsgToUser2("hello", 0, 0)
+
+and ``swcomapi.describe("ISldWorks")`` lists all 366 of its members.
 """
 
 import re
@@ -76,8 +85,8 @@ class SolidWorks:
         ``ISldWorks.GetBuildNumbers2`` takes no arguments in the useful sense:
         all three of its parameters are ``[out]`` BSTRs, and the method itself
         returns nothing. Calling it the way it reads in the documentation
-        raises "Type mismatch" - which is exactly the trap `swcomapi.com.out`
-        exists to remove.
+        raises "Type mismatch" - which is exactly the trap
+        `swcomapi.com.call_out` exists to remove.
 
         The order is base version, current version, hot fixes::
 
@@ -85,14 +94,8 @@ class SolidWorks:
              'd260519.003',
              ' - Hotfix: #HF-1530816 #HF-1531787 ...']
         """
-        _, outs = com.call_out(
-            self.com,
-            "GetBuildNumbers2",
-            com.out(com.VT_BSTR),
-            com.out(com.VT_BSTR),
-            com.out(com.VT_BSTR),
-        )
-        return outs
+        _, out = com.call_out(self.com, "GetBuildNumbers2")
+        return [out["BaseVersion"], out["CurrentVersion"], out["HotFixes"]]
 
     @property
     def service_pack(self):
@@ -156,6 +159,214 @@ class SolidWorks:
     @visible.setter
     def visible(self, value):
         self.com.Visible = bool(value)
+
+    # ----------------------------------------------------------- documents
+
+    def open(self, path, configuration=None, read_only=False, silent=True, view_only=False):
+        """Open a file. Returns a `Part`, `Assembly` or `Drawing`.
+
+        path
+            the file to open. A relative path is resolved against the current
+            directory, because SOLIDWORKS resolves it against its own and that
+            is never what you meant.
+        configuration
+            open with this configuration active, by name
+        read_only
+            True opens it without taking the write lock, which is what you
+            want when several scripts read the same library part
+        silent
+            True suppresses the dialogs. Leave it True in a script: a dialog
+            with nobody to answer it hangs the call.
+        view_only
+            True opens it in Large Design Review, which is fast and cannot be
+            edited. For reading properties off a big assembly.
+
+        Raises FileNotFoundError if the file is not there - checked here,
+        because ``OpenDoc6`` reports a missing file as a generic error code.
+        Raises `SwDocumentError` if SOLIDWORKS reports an error, with the
+        decoded flag names. Warns `SwWarning` for a warning, since the
+        document did open.
+
+        Example::
+
+            part = app.open("parts/bracket.SLDPRT", configuration="BRK-040")
+        """
+        import os
+        import warnings
+
+        from ..const import (
+            swOpenDocOptions_ReadOnly,
+            swOpenDocOptions_Silent,
+            swOpenDocOptions_ViewOnly,
+        )
+        from ..errors import SwDocumentError, SwWarning
+        from .document import wrap
+        from .export import load_error_names, load_warning_names
+
+        target = os.path.abspath(path)
+        if not os.path.isfile(target):
+            raise FileNotFoundError(target)
+
+        options = 0
+        if silent:
+            options |= swOpenDocOptions_Silent
+        if read_only:
+            options |= swOpenDocOptions_ReadOnly
+        if view_only:
+            options |= swOpenDocOptions_ViewOnly
+
+        model, out = com.call_out(
+            self.com,
+            "OpenDoc6",
+            target,
+            document_type_of(target),
+            options,
+            "" if configuration is None else str(configuration),
+            interface="ISldWorks",
+        )
+
+        errors = out.get("Errors", 0) or 0
+        warning_code = out.get("Warnings", 0) or 0
+        if errors or model is None:
+            names = load_error_names(errors)
+            raise SwDocumentError(
+                f"could not open {target!r}"
+                + (f": {', '.join(names)}" if names else ""),
+                path=target,
+                errors=errors,
+                warnings=warning_code,
+                names=names,
+            )
+        if warning_code:
+            warnings.warn(
+                f"opened {target!r} with warnings: "
+                f"{', '.join(load_warning_names(warning_code))}",
+                SwWarning,
+                stacklevel=2,
+            )
+        return wrap(model, self)
+
+    def new_part(self, template=None):
+        """Create a new part. Returns a `Part`.
+
+        template
+            a ``.prtdot`` file; the user's default part template if omitted
+        """
+        return self._new(template, "part")
+
+    def new_assembly(self, template=None):
+        """Create a new assembly. Returns an `Assembly`."""
+        return self._new(template, "assembly")
+
+    def new_drawing(self, template=None):
+        """Create a new drawing. Returns a `Drawing`."""
+        return self._new(template, "drawing")
+
+    def _new(self, template, kind):
+        from ..const import (
+            swDefaultTemplateAssembly,
+            swDefaultTemplateDrawing,
+            swDefaultTemplatePart,
+        )
+        from ..errors import SwDocumentError
+        from .document import wrap
+
+        defaults = {
+            "part": swDefaultTemplatePart,
+            "assembly": swDefaultTemplateAssembly,
+            "drawing": swDefaultTemplateDrawing,
+        }
+        if template is None:
+            template = com.call(
+                self.com, "GetUserPreferenceStringValue", defaults[kind]
+            )
+        if not template:
+            raise SwDocumentError(
+                f"SOLIDWORKS has no default {kind} template configured, so "
+                f"there is nothing to create one from. Pass template= with a "
+                f"path, or set it in Tools > Options > Default Templates."
+            )
+
+        model = com.call(self.com, "NewDocument", str(template), 0, 0.0, 0.0)
+        if model is None:
+            raise SwDocumentError(
+                f"SOLIDWORKS declined to create a {kind} from template "
+                f"{template!r}"
+            )
+        return wrap(model, self)
+
+    @property
+    def documents(self):
+        """Every open document, as a list of `Document` subclasses.
+
+        Example::
+
+            for doc in app.documents:
+                print(doc.kind, doc.name)
+        """
+        from .document import wrap
+
+        return [wrap(model, self) for model in com.to_list(com.call(self.com, "GetDocuments"))]
+
+    @property
+    def active(self):
+        """The document with focus, as a `Document` subclass, or None.
+
+        None when SOLIDWORKS is open with nothing in it, which a script that
+        expects to work on "whatever is on screen" has to handle.
+        """
+        from .document import wrap
+
+        return wrap(com.call(self.com, "ActiveDoc"), self)
+
+    def close(self, name):
+        """Close a document by name, discarding unsaved changes.
+
+        name
+            the document's title, as ``document.name`` reports it - not its
+            path. ``CloseDoc`` wants the title, and silently does nothing when
+            given a path.
+
+        Returns None. Closing something that is not open does nothing.
+        """
+        com.call(self.com, "CloseDoc", str(name))
+
+    def close_all(self):
+        """Close every open document, discarding unsaved changes. Returns None.
+
+        Worth calling at the start of a batch run: what is open when a script
+        starts is whatever the last person left there.
+        """
+        com.call(self.com, "CloseAllDocuments", True)
+
+    # ------------------------------------------------------------- commands
+
+    def run_command(self, command, note=""):
+        """Run a SOLIDWORKS UI command by its ``swCommands_e`` value.
+
+        command
+            a member of ``swcomapi.enums.swCommands_e``
+        note
+            text for the undo stack, which is what the user sees if they undo
+
+        The escape hatch for the several hundred things that have a menu item
+        and no API call. It drives the interface, so SOLIDWORKS must be
+        visible and nothing modal may be open.
+
+        Example::
+
+            from swcomapi.const import swCommands_Save
+            app.run_command(swCommands_Save)
+        """
+        return com.call(self.com, "RunCommand", int(command), str(note))
+
+    def quit(self):
+        """Close SOLIDWORKS, discarding unsaved changes. Returns None.
+
+        Only for a session your script started with `swcomapi.launch`. Calling
+        it on a session a person is using closes their work.
+        """
+        com.call(self.com, "ExitApp")
 
     # ------------------------------------------------------------- plumbing
 
@@ -224,3 +435,44 @@ def _version_string(year, service_pack, revision):
     if service_pack is not None:
         name = f"{name} SP{service_pack}"
     return f"{name} ({revision})" if revision else name
+
+
+# Which swDocumentTypes_e a file extension means. OpenDoc6 needs telling, and
+# gets it wrong on its own for a file whose extension does not match what is
+# inside.
+DOCUMENT_TYPES = {
+    ".sldprt": "part",
+    ".prtdot": "part",
+    ".sldlfp": "part",
+    ".sldasm": "assembly",
+    ".asmdot": "assembly",
+    ".slddrw": "drawing",
+    ".drwdot": "drawing",
+}
+
+
+def document_type_of(path):
+    """The ``swDocumentTypes_e`` value for a file, from its extension.
+
+    Anything unrecognised gets ``swDocPART``, which is what SOLIDWORKS does
+    with an imported STEP or IGES: those come in as a part.
+
+    Examples::
+
+        >>> from swcomapi.const import swDocPART, swDocASSEMBLY, swDocDRAWING
+        >>> document_type_of("bracket.SLDPRT") == swDocPART
+        True
+        >>> document_type_of("frame.sldasm") == swDocASSEMBLY
+        True
+        >>> document_type_of("sheet1.SLDDRW") == swDocDRAWING
+        True
+        >>> document_type_of("imported.step") == swDocPART
+        True
+    """
+    import os
+
+    from ..const import swDocASSEMBLY, swDocDRAWING, swDocPART
+
+    values = {"part": swDocPART, "assembly": swDocASSEMBLY, "drawing": swDocDRAWING}
+    extension = os.path.splitext(str(path))[1].lower()
+    return values[DOCUMENT_TYPES.get(extension, "part")]

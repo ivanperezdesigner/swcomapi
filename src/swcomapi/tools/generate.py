@@ -387,6 +387,331 @@ def emit_generated_init(api):
     return "\n".join(out) + "\n"
 
 
+def out_shapes(api):
+    """Where the ``[out]`` parameters are, keyed by member name.
+
+    Returns ``{(name, kind): [shape, ...]}`` where each shape is::
+
+        {
+          "arity": 6,                         # total parameters
+          # index, name, VARTYPE, direction
+          "outs": [(4, "Errors", 3, "inout"), (5, "Warnings", 3, "inout")],
+          "interfaces": ["ISldWorks"],
+        }
+
+    Keyed by name rather than by interface because there is no way to ask a
+    live SOLIDWORKS object what interface it is: ``IDispatch.GetTypeInfo``
+    raises ``TYPE_E_ELEMENTNOTFOUND`` on every one of them.
+
+    Measured, so the shortcut is known to be safe: 982 member names take an
+    ``[out]`` parameter, 109 of them appear on more than one interface, and
+    only 26 disagree about the shape. Those 26 differ in how many parameters
+    they take, so the number of arguments a caller passes tells them apart.
+    Anything still ambiguous is reported rather than guessed at.
+    """
+    shapes = {}
+    for interface_name, interface in api["interfaces"].items():
+        for member in interface["members"]:
+            if not member["has_out"]:
+                continue
+            outs = [
+                (index, param["name"], param["out_vt"], param["direction"])
+                for index, param in enumerate(member["params"])
+                if param["direction"] in ("out", "inout")
+            ]
+            key = (member["name"], member["kind"])
+            arity = len(member["params"])
+            for existing in shapes.setdefault(key, []):
+                if existing["arity"] == arity and existing["outs"] == outs:
+                    existing["interfaces"].append(interface_name)
+                    break
+            else:
+                shapes[key].append(
+                    {"arity": arity, "outs": outs, "interfaces": [interface_name]}
+                )
+
+    for entries in shapes.values():
+        entries.sort(key=lambda entry: entry["arity"])
+        for entry in entries:
+            entry["interfaces"].sort()
+    return dict(sorted(shapes.items()))
+
+
+def emit_out_data(api):
+    """`generated/_out_data.py`: which parameters a method writes into.
+
+    The one generated table the library needs at run time. Everything else
+    generated is either constants or documentation.
+    """
+    shapes = out_shapes(api)
+    ambiguous = sum(1 for entries in shapes.values() if len(entries) > 1)
+
+    out = [
+        HEADER.format(
+            summary="Which parameters each method writes its results into.",
+            source=_source_line(api),
+        )
+    ]
+    out.append(
+        f"# {len(shapes)} member names take an [out] or [in,out] parameter.\n"
+        f"# {ambiguous} of them have more than one shape across the interfaces\n"
+        "# that declare them; those are told apart by how many arguments the\n"
+        "# caller passes. `swcomapi.signatures` does the lookup and\n"
+        "# `swcomapi.com.call_out` uses it.\n"
+        "#\n"
+        "# Each entry: (member_name, kind) -> [ (arity, outs, interfaces) ],\n"
+        "# where outs is ( (parameter_index, parameter_name, vartype), ... ).\n"
+    )
+    out.append("OUT_PARAMS = {")
+    for (name, kind), entries in shapes.items():
+        out.append(f"    ({name!r}, {kind!r}): (")
+        for entry in entries:
+            outs = ", ".join(
+                f"({index}, {pname!r}, {vt}, {direction!r})"
+                for index, pname, vt, direction in entry["outs"]
+            )
+            interfaces = ", ".join(repr(i) for i in entry["interfaces"])
+            out.append(f"        ({entry['arity']}, ({outs},), ({interfaces},)),")
+        out.append("    ),")
+    out.append("}")
+    return "\n".join(out) + "\n"
+
+
+def api_index(api):
+    """The whole API as a plain structure, for `swcomapi.apidoc`.
+
+    Shipped as gzipped JSON rather than as a Python module: it is 19,874
+    members deep, it is only read when someone asks for help, and JSON keeps
+    it out of the import path entirely.
+    """
+    interfaces = {}
+    for name, interface in api["interfaces"].items():
+        members = []
+        for member in interface["members"]:
+            entry = {
+                "name": member["name"],
+                "kind": member["kind"],
+                "doc": member["doc"],
+                "returns": member["returns"]["py"],
+                "returns_com": member["returns"]["com"],
+                "params": [
+                    {
+                        "name": param["name"],
+                        "py": param["py"],
+                        "com": param["com"],
+                        "dir": param["direction"],
+                    }
+                    for param in member["params"]
+                ],
+            }
+            if member["com_only"]:
+                entry["com_only"] = True
+            members.append(entry)
+        interfaces[name] = {
+            "doc": interface["doc"],
+            "library": interface["library"],
+            "members": members,
+        }
+
+    return {
+        "year": api["year"],
+        "libraries": [
+            {"name": lib["name"], "file": lib["file"]} for lib in api["libraries"]
+        ],
+        "interfaces": interfaces,
+        "enums": {
+            name: {
+                "library": enum["library"],
+                "members": [[member, value] for member, value in enum["members"]],
+            }
+            for name, enum in api["enums"].items()
+        },
+    }
+
+
+def emit_interfaces_stub(api):
+    """`interfaces.pyi`: one Protocol per interface.
+
+    For annotating a raw COM object when you want the editor to help::
+
+        from swcomapi.interfaces import IModelDoc2
+
+        def rebuild(doc: IModelDoc2) -> None:
+            doc.EditRebuild3()
+
+    Protocols rather than classes because nothing ever subclasses these: a
+    COM object is structurally whatever its server says it is.
+    """
+    out = [
+        '"""Stub for swcomapi.interfaces. Generated, do not edit.',
+        "",
+        "One Protocol per SOLIDWORKS interface, for annotating raw COM objects.",
+        "",
+        f"Source: {_source_line(api)}",
+        '"""',
+        "",
+        "from typing import Any, Protocol",
+        "",
+    ]
+    for name, interface in api["interfaces"].items():
+        out.append(f"class {name}(Protocol):")
+        doc = interface["doc"] or f"{name}, from {interface['library']}."
+        out.append(f'    """{_escape_doc(doc)}"""')
+        emitted = _emit_interface_members(interface)
+        out.extend(emitted or ["    ..."])
+        out.append("")
+    return "\n".join(out) + "\n"
+
+
+def _emit_interface_members(interface):
+    """The body lines of one Protocol."""
+    lines = []
+    seen = set()
+    # A member name can be the same as an interface name - ISketch has both a
+    # method called IEnumSketchSegments and a return type of that name - and
+    # inside the class body the method wins, which makes the annotation
+    # invalid. Any such collision is written as Any.
+    shadowed = {member["name"] for member in interface["members"]}
+    for member in interface["members"]:
+        # The C++-only twins take raw pointers and cannot be called from
+        # Python at all, so putting them in the stub would only invite
+        # mistakes. `swcomapi.apidoc` still knows about them.
+        if member["com_only"]:
+            continue
+        name = member["name"]
+        if name in seen:
+            # A property's setter adds nothing to a Protocol beyond its
+            # getter, and a duplicate name is a syntax-level redefinition.
+            continue
+        seen.add(name)
+
+        returns = _annotation(member["returns"]["py"], shadowed)
+        if member["kind"] in ("get", "put"):
+            lines.append("    @property")
+            lines.append(f"    def {name}(self) -> {returns}:")
+            lines.append(f'        """{_escape_doc(member["doc"] or name)}"""')
+            lines.append("        ...")
+            continue
+
+        params = ", ".join(
+            f"{_safe_param(param['name'], index)}: {_annotation(param['py'], shadowed)}"
+            for index, param in enumerate(member["params"])
+        )
+        signature = f"self, {params}" if params else "self"
+        lines.append(f"    def {name}({signature}) -> {returns}:")
+        lines.append(f'        """{_escape_doc(member["doc"] or name)}"""')
+        lines.append("        ...")
+    return lines
+
+
+def _annotation(py_type, shadowed=()):
+    """A Python annotation for a type name the reader produced.
+
+    py_type
+        the type name, as the reader spelled it
+    shadowed
+        names that a member of the same interface also uses, and which
+        therefore cannot be referred to from inside its class body
+
+    Interface names are written bare, not quoted. A stub is never evaluated,
+    so a forward reference to an interface declared later in the file resolves
+    without help - and quoting it makes ruff rightly complain.
+    """
+    if py_type in shadowed:
+        return "Any"
+    if py_type.startswith("I") and py_type[1:2].isupper():
+        return py_type
+    if py_type in ("None", "int", "float", "str", "bool", "Any"):
+        return py_type
+    if py_type.startswith("list["):
+        return py_type
+    # An enumeration or a record referenced by name: it is an int or an
+    # opaque value at run time, and Any is the only honest answer.
+    return "Any"
+
+
+def _safe_param(name, index):
+    """A parameter name that is a legal Python identifier.
+
+    The libraries use a handful of names that Python reserves - ``from``,
+    ``lambda`` - and a few members leave a parameter unnamed.
+    """
+    import keyword
+
+    if not name or not name.isidentifier() or keyword.iskeyword(name):
+        return f"arg{index}"
+    return name
+
+
+def _escape_doc(text):
+    """One line of prose, safe to put inside a ``\"\"\"`` docstring."""
+    cleaned = " ".join(str(text).split())
+    cleaned = cleaned.replace("\\", "\\\\").replace('"""', "'''")
+    if cleaned.endswith('"'):
+        cleaned += " "
+    return cleaned
+
+
+def emit_interfaces_module(api):
+    """`interfaces.py`: the run-time half of the interface Protocols.
+
+    The stub beside it is what matters; this exists so that an annotation
+    written without ``from __future__ import annotations`` still imports.
+    Each name resolves to an empty ``Protocol`` subclass, built on demand.
+    """
+    names = sorted(api["interfaces"])
+    out = [
+        HEADER.format(
+            summary=textwrap.dedent(
+                f"""\
+                Protocols for annotating raw SOLIDWORKS COM objects.
+
+                    from swcomapi.interfaces import IModelDoc2
+
+                    def rebuild(doc: IModelDoc2) -> None:
+                        doc.EditRebuild3()
+
+                What the editor and mypy read is ``interfaces.pyi`` beside this
+                file, which declares all {len(names)} interfaces with every
+                member and its description. This module exists so the same
+                import also works at run time, where each name is an empty
+                ``Protocol`` subclass: enough to annotate with, and it costs
+                nothing until you name one.
+
+                Use ``swcomapi.apidoc`` to look a member up instead of reading
+                the stub by hand."""
+            ),
+            source=_source_line(api),
+        )
+    ]
+    out.append("from typing import Protocol")
+    out.append("")
+    out.append("INTERFACES = (")
+    for name in names:
+        out.append(f"    {name!r},")
+    out.append(")")
+    out.append("")
+    out.append("_NAMES = frozenset(INTERFACES)")
+    out.append("__all__ = list(INTERFACES)")
+    out.append("")
+    out.append("")
+    out.append("def __getattr__(name):")
+    out.append('    """Build an empty Protocol for an interface name (PEP 562)."""')
+    out.append("    if name not in _NAMES:")
+    out.append("        raise AttributeError(")
+    out.append("            f\"module {__name__!r} has no interface {name!r}. \"")
+    out.append('            f"Try swcomapi.apidoc.find({name!r}) to search."')
+    out.append("        )")
+    out.append("    built = type(name, (Protocol,), {\"__module__\": __name__})")
+    out.append("    globals()[name] = built")
+    out.append("    return built")
+    out.append("")
+    out.append("")
+    out.append("def __dir__():")
+    out.append("    return list(INTERFACES)")
+    return "\n".join(out) + "\n"
+
+
 def _enum_summary(name, enum):
     """A one-line description for an enumeration that has none.
 
@@ -433,8 +758,11 @@ def write(api, root=None):
         os.path.join(generated, "__init__.py"): emit_generated_init(api),
         os.path.join(generated, "_meta.py"): emit_meta(api),
         os.path.join(generated, "_enum_data.py"): emit_enum_data(api),
+        os.path.join(generated, "_out_data.py"): emit_out_data(api),
         os.path.join(root, "enums.pyi"): emit_enums_stub(api),
         os.path.join(root, "const.pyi"): emit_const_stub(api),
+        os.path.join(root, "interfaces.py"): emit_interfaces_module(api),
+        os.path.join(root, "interfaces.pyi"): emit_interfaces_stub(api),
     }
 
     written = []
@@ -442,7 +770,30 @@ def write(api, root=None):
         with open(path, "w", encoding="utf-8", newline="\n") as handle:
             handle.write(text)
         written.append((path, len(text.encode("utf-8"))))
+
+    written.append(write_index(api, generated))
     return written
+
+
+def write_index(api, generated):
+    """Write ``generated/api_index.json.gz``. Returns ``(path, bytes)``.
+
+    Gzipped JSON, with ``mtime=0`` so the bytes do not change between runs -
+    gzip normally stamps the time into its header, which would break the
+    reproducibility check. Sorted keys and no indentation, for the same
+    reason and for size.
+    """
+    import gzip
+    import json
+
+    path = os.path.join(generated, "api_index.json.gz")
+    payload = json.dumps(
+        api_index(api), sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+    with open(path, "wb") as handle:
+        with gzip.GzipFile(fileobj=handle, mode="wb", mtime=0) as archive:
+            archive.write(payload)
+    return path, os.path.getsize(path)
 
 
 def run(paths=None, root=None):

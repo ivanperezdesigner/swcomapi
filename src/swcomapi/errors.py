@@ -63,6 +63,22 @@ class SwMemberNotFoundError(SwCallError, AttributeError):
     """
 
 
+class SwAmbiguousMemberError(SwError):
+    """A method name matches several different [out] parameter shapes.
+
+    26 SOLIDWORKS method names mean different things on different interfaces.
+    The number of arguments normally settles it; when it does not, say which
+    one you mean with ``arity=`` or ``interface=``.
+
+    Attributes:
+        member  the method name, as a str
+    """
+
+    def __init__(self, message, member=None):
+        super().__init__(message)
+        self.member = member
+
+
 class SwDocumentError(SwError):
     """Opening, saving or closing a document failed.
 

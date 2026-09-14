@@ -8,18 +8,37 @@ import doctest
 
 import pytest
 
-from swcomapi import com, const, enums, units
-from swcomapi.api import app
+from swcomapi import apidoc, com, const, doclinks, enums, signatures, units
+from swcomapi.api import app, document, export
+from swcomapi.api import dimensions as dimensions_module
 from swcomapi.tools import tlb
 
 # swcomapi.tools.generate is absent on purpose: what it documents is the
 # files it emits, and those are checked in tests/test_generate.py.
-MODULES = [com, units, app, tlb, enums, const]
+MODULES = [
+    com,
+    units,
+    app,
+    tlb,
+    enums,
+    const,
+    signatures,
+    doclinks,
+    apidoc,
+    document,
+    export,
+    dimensions_module,
+]
+
+
+# Several docstrings show real output that is long, wrapped, or a URL with a
+# stable prefix and a very long tail, so the whole suite runs with these on.
+FLAGS = doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE
 
 
 @pytest.mark.parametrize("module", MODULES, ids=lambda m: m.__name__)
 def test_docstring_examples(module):
-    results = doctest.testmod(module, verbose=False, report=True)
+    results = doctest.testmod(module, verbose=False, report=True, optionflags=FLAGS)
     assert results.failed == 0, f"{results.failed} of {results.attempted} examples failed"
 
 

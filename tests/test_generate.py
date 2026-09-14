@@ -271,9 +271,13 @@ class TestWrite:
         assert names == {
             "const.pyi",
             "enums.pyi",
+            "interfaces.py",
+            "interfaces.pyi",
             "generated/__init__.py",
             "generated/_enum_data.py",
             "generated/_meta.py",
+            "generated/_out_data.py",
+            "generated/api_index.json.gz",
         }
 
     def test_the_stubs_sit_beside_the_modules_they_describe(self, tmp_path):

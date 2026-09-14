@@ -160,32 +160,32 @@ class TestVartypes:
         assert com.VT_BYREF == pythoncom.VT_BYREF
 
 
-class TestOut:
+class TestByref:
     def test_defaults_to_a_variant_flagged_byref(self):
-        arg = com.out()
+        arg = com.byref()
         assert arg.varianttype == com.VT_BYREF | com.VT_VARIANT
         assert arg.value == 0
 
     def test_an_int_out_parameter(self):
         """The shape of OpenDoc6's errors and warnings."""
-        arg = com.out(com.VT_I4)
+        arg = com.byref(com.VT_I4)
         assert arg.varianttype == com.VT_BYREF | com.VT_I4
         assert arg.value == 0
 
     def test_a_string_out_parameter_starts_empty_not_zero(self):
-        arg = com.out(com.VT_BSTR)
+        arg = com.byref(com.VT_BSTR)
         assert arg.value == ""
 
     def test_an_explicit_initial_value_is_kept(self):
-        assert com.out(com.VT_I4, 7).value == 7
+        assert com.byref(com.VT_I4, 7).value == 7
 
-    def test_is_out_recognises_it(self):
-        assert com.is_out(com.out(com.VT_I4)) is True
+    def test_is_byref_recognises_it(self):
+        assert com.is_byref(com.byref(com.VT_I4)) is True
 
-    def test_is_out_rejects_a_plain_value(self):
-        assert com.is_out(0) is False
-        assert com.is_out("C:/part.SLDPRT") is False
-        assert com.is_out(None) is False
+    def test_is_byref_rejects_a_plain_value(self):
+        assert com.is_byref(0) is False
+        assert com.is_byref("C:/part.SLDPRT") is False
+        assert com.is_byref(None) is False
 
 
 class TestFromList:
@@ -205,6 +205,7 @@ class FakeDispatch:
     def __init__(self):
         self.Visible = True
         self.calls = []
+        self.mass_args = None
 
     def GetProcessID(self):
         self.calls.append("GetProcessID")
@@ -213,8 +214,20 @@ class FakeDispatch:
     def OpenDoc6(self, path, doc_type, options, config, errors, warnings):
         self.calls.append("OpenDoc6")
         errors.value = 0
-        warnings.value = 32
+        warnings.value = 128
         return "a-model-doc"
+
+    def GetBuildNumbers2(self, base, current, hotfixes):
+        self.calls.append("GetBuildNumbers2")
+        base.value = "sw2026_SP03"
+        current.value = "d260519.003"
+        hotfixes.value = ""
+
+    def GetMassProperties2(self, accuracy, status, use_selected):
+        self.calls.append("GetMassProperties2")
+        self.mass_args = (accuracy, use_selected)
+        status.value = 0
+        return [0.0, 0.0, 0.0, 5e-05, 0.01, 0.135]
 
     def Explodes(self):
         raise com_error(-2147352567, "", "Nope")
@@ -235,31 +248,92 @@ class TestCall:
 
 
 class TestCallOut:
-    def test_collects_the_out_parameters_in_order(self, monkeypatch):
-        """OpenDoc6's real shape: a return value plus two [out] ints.
+    """`call_out` now builds the [out] arguments itself, from the generated
+    signature table, so these check the interleaving rather than the plumbing.
+    """
 
-        The warning 32 is swFileLoadWarning_NeedsRegen. The one you get
-        opening a file someone else already has open is
-        swFileLoadWarning_ReadOnly, which is 2.
+    def test_it_supplies_the_out_parameters_and_names_them(self, monkeypatch):
+        """OpenDoc6's real shape: four arguments in, two [in,out] codes back.
+
+        The caller passes four; SOLIDWORKS wants six. The warning 128 is
+        swFileLoadWarning_AlreadyOpen, which is what you get opening a file
+        the session already has open.
         """
-        # `call` catches pythoncom.com_error, so the fake must be that type.
         monkeypatch.setattr(com.pythoncom, "com_error", FakeComError, raising=False)
 
         obj = FakeDispatch()
-        result, outs = com.call_out(
-            obj,
-            "OpenDoc6",
-            "C:/parts/bracket.SLDPRT",
-            1,
-            0,
-            "",
-            com.out(com.VT_I4),
-            com.out(com.VT_I4),
+        result, out = com.call_out(
+            obj, "OpenDoc6", "C:/parts/bracket.SLDPRT", 1, 0, ""
         )
         assert result == "a-model-doc"
-        assert outs == [0, 32]
+        assert out == {"Errors": 0, "Warnings": 128}
 
-    def test_no_out_parameters_gives_an_empty_list(self):
-        result, outs = com.call_out(FakeDispatch(), "GetProcessID")
+    def test_a_pure_out_parameter_in_the_middle_is_inserted_not_overwritten(
+        self, monkeypatch
+    ):
+        """IModelDocExtension.GetMassProperties2(Accuracy, Status, UseSelected).
+
+        Status sits between the two real arguments. Overwriting position 1
+        instead of inserting there was a real bug: UseSelected was silently
+        replaced by the output holder.
+        """
+        monkeypatch.setattr(com.pythoncom, "com_error", FakeComError, raising=False)
+
+        obj = FakeDispatch()
+        result, out = com.call_out(
+            obj, "GetMassProperties2", 1, True, interface="IModelDocExtension"
+        )
+        assert out == {"Status": 0}
+        assert result == [0.0, 0.0, 0.0, 5e-05, 0.01, 0.135]
+        # The arguments either side arrived intact.
+        assert obj.mass_args == (1, True)
+
+    def test_no_out_parameters_gives_an_empty_dict(self):
+        result, out = com.call_out(FakeDispatch(), "GetProcessID")
         assert result == 12345
-        assert outs == []
+        assert out == {}
+
+    def test_the_wrong_number_of_arguments_says_what_it_wants(self):
+        from swcomapi.errors import SwAmbiguousMemberError
+
+        with pytest.raises(SwAmbiguousMemberError, match="does not take 2 argument"):
+            com.call_out(FakeDispatch(), "GetBuildNumbers2", 1, 2)
+
+
+class TestNeedsCalling:
+    """Why `call` cannot decide with ``callable()``.
+
+    Late binding hands back an already-evaluated value for some zero-argument
+    members and a method still waiting to be called for others. A CDispatch is
+    callable but must not be called; a str is not callable at all.
+    """
+
+    def test_a_value_does_not_need_calling(self):
+        assert com.needs_calling(True) is False
+        assert com.needs_calling("Part1.SLDPRT") is False
+        assert com.needs_calling(1) is False
+        assert com.needs_calling((1.0, 2.0)) is False
+
+    def test_a_com_object_does_not_either_even_though_it_is_callable(self):
+        class FakeCDispatch:
+            def __call__(self):
+                raise AssertionError("this must never be called")
+
+        obj = FakeCDispatch()
+        assert callable(obj) is True
+        assert com.needs_calling(obj) is False
+
+    def test_a_bound_method_does(self):
+        assert com.needs_calling(FakeDispatch().GetProcessID) is True
+
+    def test_a_builtin_does(self):
+        assert com.needs_calling(len) is True
+
+
+class TestCallWithAnAlreadyEvaluatedMember:
+    def test_passing_arguments_to_one_is_a_clear_error(self):
+        """Rather than "'bool' object is not callable" three frames down."""
+        from swcomapi.errors import SwCallError
+
+        with pytest.raises(SwCallError, match="already evaluated"):
+            com.call(FakeDispatch(), "Visible", 1)

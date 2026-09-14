@@ -1,60 +1,101 @@
 """Drive SOLIDWORKS from Python over its COM API.
 
-Two layers, one package:
+    import swcomapi as swc
 
-* ``swcomapi.generated`` -- the whole API surface, produced by reading the type
-  libraries that ship with SOLIDWORKS. Every enumeration, every interface,
-  every method signature, with a link to the official page for each one.
-* ``swcomapi.api`` -- a hand-written, documented layer over the calls you make
-  every day: connect, open, configurations, features, dimensions, drawings,
-  export.
+    app = swc.connect()                 # the open session, or a new one
+    part = app.open("bracket.SLDPRT")   # a Part, an Assembly or a Drawing
 
-Every wrapper object exposes the raw COM object as ``.com``, so nothing in the
-API is ever out of reach.
+    for name in part.configurations:
+        part.configuration = name
+        part.export(f"{name}.pdf")
 
-Quickstart::
+    part.close()
 
-    import swcomapi as sw
+``swc``, not ``sw``: ``swdesigntables`` already answers to that, and the two
+packages are meant to be used together.
 
-    app = sw.connect()          # attach to the open session, or start one
-    print(app.version)          # 'SOLIDWORKS 2026 (34.3.0.150)'
+Three layers
+------------
 
-Windows only. Connecting needs SOLIDWORKS installed; the enums, the signature
-table and the documentation links are plain data and import anywhere.
+``swcomapi.api``
+    written by hand, documented, with runnable examples: connecting, opening,
+    configurations, features, dimensions, properties, drawings, export. This
+    is where the names above come from.
+``swcomapi.enums`` and ``swcomapi.const``
+    all 1,434 enumerations and 14,889 constants, generated from the type
+    libraries that ship with your SOLIDWORKS.
+``swcomapi.com``
+    the raw COM layer, for anything not wrapped. Every object this package
+    hands you exposes its COM object as ``.com``, so nothing is out of reach::
+
+        part.com.FeatureManager.InsertDeleteBody2(True)
+
+Finding your way around
+-----------------------
+
+19,874 API members is more than anyone remembers, so the package can tell you
+about itself::
+
+    swc.find("flat pattern")            # search names and descriptions
+    print(swc.describe("IPartDoc"))     # what an interface offers
+    print(swc.describe("ISldWorks.OpenDoc6"))
+
+Windows only, and talking to SOLIDWORKS needs it installed. The enumerations,
+the signature table and the documentation links are plain data and import
+anywhere.
 """
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 
-# The COM entry points are resolved lazily, through the module-level
-# __getattr__ below, for one concrete reason: `swcomapi.generated.enums` and
-# the documentation links are pure data that work on any platform, and
-# importing the package must not drag pywin32 in and fail on a machine that
-# has no Windows. `import swcomapi` stays cheap; `sw.connect` is what pulls in
-# the COM layer.
+# Everything below the errors is resolved lazily, through the module-level
+# __getattr__, for one concrete reason: importing this package must stay cheap
+# and must not drag pywin32 in on a machine that has no Windows. The enums and
+# the API index are plain data and work everywhere; only a live connection
+# needs COM.
 #
 # name -> the module it lives in.
 _LAZY = {
+    # connecting
     "attach": "swcomapi.session",
     "connect": "swcomapi.session",
     "launch": "swcomapi.session",
     "wait_until_ready": "swcomapi.session",
+    # the objects the api layer hands back
     "SolidWorks": "swcomapi.api.app",
+    "Document": "swcomapi.api.document",
+    "Part": "swcomapi.api.document",
+    "Assembly": "swcomapi.api.document",
+    "Drawing": "swcomapi.api.document",
+    # finding your way around the API
+    "describe": "swcomapi.apidoc",
+    "find": "swcomapi.apidoc",
+    "find_interface": "swcomapi.apidoc",
+    "doclink": "swcomapi.doclinks",
 }
 
-# Submodules worth having at the top level. These resolve to the module
-# itself, not to something inside it.
+# Submodules worth having at the top level. These resolve to the module itself.
 _LAZY_MODULES = {
+    "api": "swcomapi.api",
+    "apidoc": "swcomapi.apidoc",
+    "com": "swcomapi.com",
     "const": "swcomapi.const",
+    "doclinks": "swcomapi.doclinks",
     "enums": "swcomapi.enums",
     "generated": "swcomapi.generated",
-    "com": "swcomapi.com",
-    "units": "swcomapi.units",
+    "interfaces": "swcomapi.interfaces",
     "session": "swcomapi.session",
+    "signatures": "swcomapi.signatures",
+    "units": "swcomapi.units",
 }
+
+# `doclink` is the friendlier spelling of `doclinks.link`, so the loader has to
+# know it answers to a different name over there.
+_RENAMED = {"doclink": "link"}
 
 # Errors are plain classes with no COM dependency, so they are imported
 # eagerly: catching them must never require a successful connection.
 from .errors import (  # noqa: E402
+    SwAmbiguousMemberError,
     SwBusyError,
     SwCallError,
     SwConnectionError,
@@ -68,21 +109,37 @@ from .errors import (  # noqa: E402
 
 __all__ = [
     "__version__",
-    # entry points
+    # connecting
     "connect",
     "attach",
     "launch",
     "wait_until_ready",
+    # documents
     "SolidWorks",
-    # submodules worth having at the top level
-    "enums",
-    "const",
-    "generated",
+    "Document",
+    "Part",
+    "Assembly",
+    "Drawing",
+    # finding your way around
+    "describe",
+    "find",
+    "find_interface",
+    "doclink",
+    # submodules
+    "api",
+    "apidoc",
     "com",
-    "units",
+    "const",
+    "doclinks",
+    "enums",
+    "generated",
+    "interfaces",
     "session",
+    "signatures",
+    "units",
     # errors
     "SwError",
+    "SwAmbiguousMemberError",
     "SwUnavailableError",
     "SwConnectionError",
     "SwNotRunningError",
@@ -101,7 +158,8 @@ def __getattr__(name):
     if name in _LAZY_MODULES:
         value = importlib.import_module(_LAZY_MODULES[name])
     elif name in _LAZY:
-        value = getattr(importlib.import_module(_LAZY[name]), name)
+        module = importlib.import_module(_LAZY[name])
+        value = getattr(module, _RENAMED.get(name, name))
     else:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
