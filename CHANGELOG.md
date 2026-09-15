@@ -4,7 +4,10 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.0] - 2026-09-15
+
+First release. Generated against SOLIDWORKS 2026 SP3; late binding, so it
+is not tied to that release.
 
 ### Added
 - Project scaffolding: packaging, CI, licence.
@@ -86,4 +89,4 @@ and the project follows [Semantic Versioning](https://semver.org/).
   `CreateDrawViewFromModelView3` wants and what makes the difference between a
   view and a silent None.
 
-[Unreleased]: https://github.com/ivanperezdesigner/swcomapi/compare/main...HEAD
+[0.1.0]: https://github.com/ivanperezdesigner/swcomapi/releases/tag/v0.1.0

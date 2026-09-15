@@ -4,12 +4,11 @@ Drive SOLIDWORKS from Python over its COM API — with the enumerations it never
 gave you, the `[out]` parameters handled, and a pythonic layer over the calls
 you actually make.
 
-> **Status: alpha.** Not published to PyPI yet. The COM core, the generated
-> surface and the pythonic layer are in place and tested against SOLIDWORKS
-> 2026 SP3.
+> **Status: 0.1.0, the first release.** Generated against SOLIDWORKS 2026 SP3
+> and tested against it, 625 tests with it attached and 447 without.
 
 ```bash
-pip install swcomapi     # not yet available
+pip install swcomapi
 ```
 
 Windows only, and it needs SOLIDWORKS installed to *connect*. The
