@@ -99,11 +99,23 @@ class Equations(Sequence):
             return
         com.set_property_at(self.com, "Equation", str(value), int(key))
 
-    def __delitem__(self, index):
-        """Delete a line by index."""
+    def __delitem__(self, key):
+        """Delete a line by index, or by the name on its left.
+
+        ``del equations[0]`` and ``del equations["width"]`` both work, the
+        same way round as `__getitem__` and `__setitem__`.
+        """
+        index = key
+        if isinstance(key, str):
+            index = self.index_of(key)
+            if index is None:
+                raise KeyError(
+                    f"no equation or global variable named {key!r}; "
+                    f"see .names()."
+                )
         if com.call(self.com, "Delete", int(index)) < 0:
             raise SwCallError(
-                f"could not delete equation {index}; the document has "
+                f"could not delete equation {key}; the document has "
                 f"{len(self)}",
                 member="Delete",
             )
@@ -196,6 +208,16 @@ class Equations(Sequence):
         stored as written. Quoting is still the form to use, because a name
         with a space or an ``@`` in it needs it.
 
+        Names SOLIDWORKS keeps for itself
+        ---------------------------------
+
+        ``thickness`` is not available as a global variable: it is what drives
+        sheet metal, and the equation manager refuses it. It refuses the way
+        it refuses everything, by answering -1 with no reason given, so a
+        script that picks an obvious name for an obvious quantity can look
+        like a broken install. If a line that reads perfectly well is
+        rejected, rename the variable before suspecting anything else.
+
         Why ``Add2`` and not ``Add3``
         -----------------------------
 
@@ -220,9 +242,10 @@ class Equations(Sequence):
         if index < 0:
             raise SwCallError(
                 f"SOLIDWORKS would not add {equation!r}. The usual causes "
-                f"are a reference to a name that is not in this document, an "
-                f"expression it cannot parse, and a line with nothing on the "
-                f"right of the equals sign.",
+                f"are a name SOLIDWORKS reserves, such as 'thickness', which "
+                f"drives sheet metal; a reference to a name that is not in "
+                f"this document; an expression it cannot parse; and a line "
+                f"with nothing on the right of the equals sign.",
                 member="Add2",
             )
         return index

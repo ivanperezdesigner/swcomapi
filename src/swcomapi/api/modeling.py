@@ -14,18 +14,30 @@ middle of them::
 So this module gives them defaults that match the dialog's defaults, and
 names the arguments a script actually varies::
 
-    with part.sketch_on("Front Plane") as sketch:
-        sketch.rectangle((0, 0), (60, 40))
-    part.extrude(10)                            # 10 mm, blind, one direction
+    >>> with part.sketch_on("Front Plane", add_to_db=True) as sketch:
+    ...     _ = sketch.rectangle((0, 0), (60, 40))
+    >>> part.extrude(10).name                   # 10 mm, blind, one direction
+    'Boss-Extrude1'
 
-    with part.sketch_on("Front Plane") as sketch:
-        sketch.circle((30, 20), radius=6)
-    part.cut(through_all=True)                  # a hole all the way through
+    >>> _ = part.select("Boss-Extrude1", "FACE")
+    >>> with part.sketch_on(add_to_db=True) as sketch:
+    ...     _ = sketch.circle((30, 20), 6)
+    >>> part.cut(through_all=True).name         # a hole all the way through
+    'Cut-Extrude1'
 
 Depths and offsets in **mm**, angles in **degrees**. The sketch to work from
-is the one that was just closed, which SOLIDWORKS leaves selected - that is
-why `swcomapi.api.sketch.SketchSession` clears the selection on the way out
-and these re-select the sketch by name when you name one.
+is the one that was just closed, which SOLIDWORKS leaves selected - which is
+why `swcomapi.api.sketch.SketchSession` deliberately does *not* clear the
+selection on the way out. Name a sketch and these re-select it instead.
+
+Which way a cut goes
+--------------------
+
+A cut leaves the sketch plane in the direction the plane faces, so a sketch
+on the Front Plane cuts towards you - away from a boss extruded the default
+way, which removes nothing at all. Sketching on the **face** instead, as
+above, always cuts into the material. On a plane behind the solid, pass
+``reverse=True``.
 """
 
 from .. import com
@@ -116,11 +128,16 @@ def cut(
     The same arguments as `extrude`, except that ``depth`` may be left out
     when ``through_all`` is True, and there is no ``merge``.
 
-    Example, a 12 mm hole through a plate::
+    Example, a 12 mm hole through a plate. Sketched on the face, because a
+    cut leaves its sketch plane in the direction the plane faces: from the
+    Front Plane it would go towards you, away from the material, and remove
+    nothing. From a plane behind the solid, pass ``reverse=True``.
 
-        with part.sketch_on("Front Plane") as sketch:
-            sketch.circle((30, 20), radius=6)
-        part.cut(through_all=True)
+        >>> _ = part.select("Boss-Extrude1", "FACE")
+        >>> with part.sketch_on(add_to_db=True) as sketch:
+        ...     _ = sketch.circle((30, 20), 6)
+        >>> part.cut(through_all=True).name
+        'Cut-Extrude1'
     """
     if depth is None and not through_all:
         raise SwCallError(

@@ -461,11 +461,15 @@ class Part(Document):
     def cut(self, depth=None, **options):
         """Cut a sketch out of the body. Returns the new `Feature`.
 
-        Example, a 12 mm hole all the way through::
+        Example, a 12 mm hole all the way through. On the face, because a cut
+        sketched on a plane behind the solid points away from the material and
+        needs ``reverse=True``.
 
-            with part.sketch_on("Front Plane") as sketch:
-                sketch.circle((30, 20), radius=6)
-            part.cut(through_all=True)
+            >>> _ = part.select("Boss-Extrude1", "FACE")     # doctest: +SKIP
+            >>> with part.sketch_on(add_to_db=True) as sketch:   # doctest: +SKIP
+            ...     _ = sketch.circle((30, 20), 6)
+            >>> part.cut(through_all=True).name              # doctest: +SKIP
+            'Cut-Extrude1'
 
         See `swcomapi.api.modeling.cut`.
         """

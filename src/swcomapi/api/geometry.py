@@ -2,16 +2,17 @@
 
 Underneath the feature tree there is geometry, and it answers different
 questions. The tree says how the part was made; the geometry says what it
-came out as::
+came out as, on a 60 by 40 by 10 plate with one 12 mm hole in it:
 
-    part.bodies                     # [<Body 'Boss-Extrude1' solid, 2 faces>]
-    part.bodies[0].faces            # every face
-    part.bodies[0].box              # the bounding box, in mm
-    len(part.bodies[0].edges)       # 12 for a plain block
-
-    for face in part.bodies[0].faces:
-        if face.kind == "cylinder":
-            print(face.area)        # mm2
+    >>> body = part.bodies[0]                   # doctest: +SKIP
+    >>> len(body.faces)                         # doctest: +SKIP
+    7
+    >>> body.box                                # in mm  # doctest: +SKIP
+    (0.0, 0.0, 0.0, 60.0, 40.0, 10.0)
+    >>> len(body.edges)                         # 12 for a plain block  # doctest: +SKIP
+    15
+    >>> [round(f.area) for f in body.faces_of("cylinder")]   # mm2  # doctest: +SKIP
+    [377]
 
 Everything in **mm** and **mm2**, as everywhere in ``swcomapi.api``.
 
