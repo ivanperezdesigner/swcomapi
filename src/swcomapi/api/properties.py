@@ -7,9 +7,12 @@
     del part.properties["Scrap"]
 
 Configuration-specific properties are the same object, asked a different
-question::
+question:
 
-    part.properties.of("BRK-040")["PartNo"] = "BRK-040-A"
+    >>> here = part.properties.of(part.configuration)   # doctest: +SKIP
+    >>> here["PartNo"] = "BRK-040-A"                    # doctest: +SKIP
+    >>> here["PartNo"]                                  # doctest: +SKIP
+    'BRK-040-A'
 
 Two things this gets right
 -------------------------
@@ -152,9 +155,12 @@ class Properties(MutableMapping):
     def of(self, configuration):
         """The properties of one configuration, as another `Properties`.
 
-        Example::
+        Example:
 
-            part.properties.of("BRK-040")["PartNo"] = "BRK-040-A"
+            >>> here = part.properties.of(part.configuration)   # doctest: +SKIP
+            >>> here["PartNo"] = "BRK-040-A"                    # doctest: +SKIP
+            >>> here["PartNo"]                                  # doctest: +SKIP
+            'BRK-040-A'
         """
         if self._owner is None:
             raise SwCallError(

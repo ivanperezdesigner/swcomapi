@@ -13,9 +13,15 @@ solving once:
    ``call_out()`` does all of that for you, from the generated table in
    ``swcomapi.signatures``::
 
-       >>> doc, out = call_out(app, "OpenDoc6", path, 1, 0, "")  # doctest: +SKIP
-       >>> out                                                   # doctest: +SKIP
-       {'Errors': 0, 'Warnings': 0}
+       >>> doc, out = call_out(app.com, "OpenDoc6", path, 1, 0, "")  # doctest: +SKIP
+       >>> sorted(out)                                               # doctest: +SKIP
+       ['Errors', 'Warnings']
+       >>> out["Errors"]                                             # doctest: +SKIP
+       0
+
+   The warning is worth reading rather than ignoring: 128 is
+   ``swFileLoadWarning_AlreadyOpen``, which is what a file that was already
+   on screen answers.
 
    ``byref()`` is there for the rare case the table cannot help with.
 

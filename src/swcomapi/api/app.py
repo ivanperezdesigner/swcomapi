@@ -1,22 +1,23 @@
 """The application object: ``ISldWorks``.
 
 This is the root of everything. You get one from `swcomapi.connect`, and every
-document, every setting and every command hangs off it::
+document, every setting and every command hangs off it:
 
-    import swcomapi as swc
-
-    app = swc.connect()
-    print(app.version)                      # 'SOLIDWORKS 2026 SP3 (34.3.0)'
-
-    part = app.open("bracket.SLDPRT")       # a Part, Assembly or Drawing
-    app.documents                           # everything that is open
-    app.active                              # the one with focus, or None
-    app.close_all()
+    >>> import swcomapi as swc                          # doctest: +SKIP
+    >>> app = swc.connect()                             # doctest: +SKIP
+    >>> app.version                                     # doctest: +SKIP
+    'SOLIDWORKS 2026 SP3 (34.3.0)'
+    >>> opened = app.open(path)     # a Part, Assembly or Drawing  # doctest: +SKIP
+    >>> opened.kind                                     # doctest: +SKIP
+    'part'
+    >>> app.active is None              # the one with focus  # doctest: +SKIP
+    False
 
 The raw ``ISldWorks`` is always on ``.com``, so anything not wrapped is still
-one attribute away::
+one attribute away:
 
-    app.com.SendMsgToUser2("hello", 0, 0)
+    >>> app.com.RevisionNumber      # a property, not a method  # doctest: +SKIP
+    '34.3.0'
 
 and ``swcomapi.describe("ISldWorks")`` lists all 366 of its members.
 """
@@ -89,11 +90,12 @@ class SolidWorks:
         raises "Type mismatch" - which is exactly the trap
         `swcomapi.com.call_out` exists to remove.
 
-        The order is base version, current version, hot fixes::
+        The order is base version, current version, hot fixes:
 
-            ['sw2026_SP03',
-             'd260519.003',
-             ' - Hotfix: #HF-1530816 #HF-1531787 ...']
+            >>> app.build_numbers[0]                    # doctest: +SKIP
+            'sw2026_SP03'
+            >>> len(app.build_numbers)                  # doctest: +SKIP
+            3
         """
         _, out = com.call_out(self.com, "GetBuildNumbers2")
         return [out["BaseVersion"], out["CurrentVersion"], out["HotFixes"]]
@@ -188,9 +190,11 @@ class SolidWorks:
         decoded flag names. Warns `SwWarning` for a warning, since the
         document did open.
 
-        Example::
+        Example:
 
-            part = app.open("parts/bracket.SLDPRT", configuration="BRK-040")
+            >>> opened = app.open(path)                 # doctest: +SKIP
+            >>> opened.kind                             # doctest: +SKIP
+            'part'
         """
         import os
         import warnings
@@ -345,10 +349,10 @@ class SolidWorks:
     def documents(self):
         """Every open document, as a list of `Document` subclasses.
 
-        Example::
+        Example:
 
-            for doc in app.documents:
-                print(doc.kind, doc.name)
+            >>> sorted(set(d.kind for d in app.documents))  # doctest: +SKIP
+            ['part']
         """
         from .document import wrap
 
@@ -399,10 +403,16 @@ class SolidWorks:
         and no API call. It drives the interface, so SOLIDWORKS must be
         visible and nothing modal may be open.
 
-        Example::
+        Example, a command that opens nothing:
 
-            from swcomapi.const import swCommands_Save
-            app.run_command(swCommands_Save)
+            >>> from swcomapi.const import swCommands_ZoomToFit  # doctest: +SKIP
+            >>> _ = app.run_command(swCommands_ZoomToFit)        # doctest: +SKIP
+
+        Pick the command carefully in a script. Anything that would put a
+        dialog on screen - Save on a document that has never been saved, for
+        instance - blocks every COM call until somebody answers it, and a
+        script has nobody to do that. There is no timeout and no error: the
+        session simply stops responding.
         """
         return com.call(self.com, "RunCommand", int(command), str(note))
 

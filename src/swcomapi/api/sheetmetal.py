@@ -125,11 +125,12 @@ class SheetMetal:
         One pass over the feature rather than one per value, which matters
         when reading a folder of parts.
 
-        Example::
+        Example, on a sheet metal part - `swcomapi.api.document.Part.sheet_metal`
+        is None on one that is not:
 
-            part.sheet_metal.as_dict()
-            # {'thickness': 2.0, 'bend_radius': 2.0, 'k_factor': 0.5,
-            #  'bend_allowance': 'k-factor', 'relief_ratio': 0.5}
+            >>> metal = part.sheet_metal                    # doctest: +SKIP
+            >>> sorted(metal.as_dict()) if metal else "not sheet metal"  # doctest: +SKIP
+            'not sheet metal'
         """
         definition = com.call(self.feature.com, "GetDefinition")
         if definition is None:
@@ -170,11 +171,10 @@ def of(part):
     The first sheet metal feature, which is the only one in a part with a
     single body. `features_of` gives them all.
 
-    Example::
+    Example, on a part with no sheet metal in it:
 
-        metal = of(part)
-        if metal:
-            print(metal.thickness, metal.bend_radius)       # 2.0 2.0
+        >>> of(part) is None                            # doctest: +SKIP
+        True
     """
     found = features_of(part)
     return found[0] if found else None

@@ -8,10 +8,13 @@
     part.features["Fillet1"].suppressed          # False
 
 Suppressing per configuration is the useful case, and the one the raw API
-makes awkward::
+makes awkward:
 
-    part.features["HolePattern"].suppress(in_configurations=["BRK-020"])
-    part.features["HolePattern"].suppress(everywhere=True)
+    >>> here = part.configuration                           # doctest: +SKIP
+    >>> part.features["Cut-Extrude1"].suppress(in_configurations=[here])  # doctest: +SKIP
+    True
+    >>> part.features["Cut-Extrude1"].unsuppress(everywhere=True)  # doctest: +SKIP
+    True
 
 What the tree actually contains
 -------------------------------
@@ -120,9 +123,12 @@ class Feature:
         Returns True. Raises `SwCallError` if SOLIDWORKS refuses, which it
         does when suppressing would break a feature that depends on this one.
 
-        Example::
+        Example:
 
-            part.features["HolePattern"].suppress(in_configurations=["BRK-020"])
+            >>> part.features["Cut-Extrude1"].suppress()        # doctest: +SKIP
+            True
+            >>> part.features["Cut-Extrude1"].suppressed        # doctest: +SKIP
+            True
         """
         from ..const import swSuppressFeature
 
@@ -321,9 +327,13 @@ class Features:
 
         As a list of `Feature`.
 
-        Example::
+        Example:
 
-            part.features.of_type("Extrusion")
+            >>> [f.name for f in part.features.of_type("Extrusion")]  # doctest: +SKIP
+            ['Boss-Extrude1']
+
+        A cut is not an ``Extrusion``: ``Cut-Extrude1`` has its own type.
+        `Features.types` lists what a document actually contains.
         """
         return [feature for feature in self if feature.type == type_name]
 

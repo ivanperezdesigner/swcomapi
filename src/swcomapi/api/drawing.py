@@ -1,11 +1,14 @@
 """Drawings: sheets, views, and getting the model onto paper.
 
-The everyday job is four lines::
+The everyday job is four lines:
 
-    drawing = app.new_drawing()
-    drawing.views.add("bracket.SLDPRT", "Front", at=(100, 150))
-    drawing.views.add("bracket.SLDPRT", "Top", at=(100, 80))
-    drawing.export("bracket.pdf")
+    >>> drawing = app.new_drawing()                             # doctest: +SKIP
+    >>> drawing.views.add(path, "Front", at=(100, 150)).kind    # doctest: +SKIP
+    'named'
+    >>> drawing.views.add(path, "Top", at=(100, 80)).kind       # doctest: +SKIP
+    'named'
+    >>> drawing.export(folder + "/plate.pdf").endswith(".pdf")  # doctest: +SKIP
+    True
 
 Positions are in **mm from the bottom-left corner of the sheet**, which is
 how SOLIDWORKS measures them and not how a person reads a drawing. An A3
@@ -169,10 +172,11 @@ class View:
         """The dimensions shown in the view, as a list of raw objects.
 
         ``IDisplayDimension``, one per dimension. The value is on the model
-        dimension inside it::
+        dimension inside it:
 
-            display = view.dimensions[0]
-            dimension = swcomapi.com.call(display, "GetDimension2", 0)
+            >>> display = drawing.views[0].dimensions           # doctest: +SKIP
+            >>> isinstance(display, list)                       # doctest: +SKIP
+            True
 
         `swcomapi.api.dimensions.Dimensions` is the wrapper for reading and
         writing values; these are the ones placed on this view.
@@ -196,11 +200,14 @@ class View:
 class Views(Sequence):
     """The views on the active sheet.
 
-    A sequence, and a lookup by name::
+    A sequence, and a lookup by name:
 
-        drawing.views.names()               # ['Drawing View1', 'Drawing View2']
-        drawing.views["Drawing View1"].scale
-        len(drawing.views)
+        >>> drawing.views.names()                   # doctest: +SKIP
+        ['Drawing View1']
+        >>> drawing.views["Drawing View1"].scale > 0    # doctest: +SKIP
+        True
+        >>> len(drawing.views)                      # doctest: +SKIP
+        1
 
     The first thing ``GetFirstView`` returns is the sheet itself rather than a
     view, and it is dropped here - which is why the count agrees with what the
@@ -261,11 +268,14 @@ class Views(Sequence):
             a float or a ``(numerator, denominator)`` tuple. The sheet's scale
             if omitted
 
-        Example, three views on an A3 sheet::
+        Example, two more views on the sheet:
 
-            drawing.views.add(path, "Front", at=(120, 200))
-            drawing.views.add(path, "Top", at=(120, 100))
-            drawing.views.add(path, "Isometric", at=(300, 200), scale=(1, 2))
+            >>> drawing.views.add(path, "Top", at=(120, 100)).name  # doctest: +SKIP
+            'Drawing View2'
+            >>> added = drawing.views.add(path, "Isometric",
+            ...                           at=(300, 200), scale=(1, 2))  # doctest: +SKIP
+            >>> added.scale                                     # doctest: +SKIP
+            0.5
 
         Raises `SwCallError` when no view appears, which for this call means
         the model is not open, the view name is misspelled, or the position is
@@ -358,9 +368,11 @@ class Sheet:
     def size(self):
         """The paper size, as ``(width, height)`` in mm.
 
-        Example, an A3 sheet::
+        Example, the sheet a new drawing starts on:
 
-            drawing.sheets["Sheet1"].size       # (420.0, 297.0)
+            >>> width, height = drawing.sheets.active.size      # doctest: +SKIP
+            >>> width > height                                  # landscape  # doctest: +SKIP
+            True
         """
         properties = self._properties()
         if len(properties) < 7:
@@ -397,11 +409,14 @@ class Sheet:
 class Sheets(Sequence):
     """The sheets of a drawing.
 
-    A sequence, and a lookup by name::
+    A sequence, and a lookup by name:
 
-        drawing.sheets.names()          # ['Sheet1', 'Sheet2']
-        drawing.sheets["Sheet2"].activate()
-        drawing.sheets.active.size      # (420.0, 297.0)
+        >>> drawing.sheets.names()                  # doctest: +SKIP
+        ['Sheet1']
+        >>> drawing.sheets["Sheet1"].activate()     # doctest: +SKIP
+        True
+        >>> drawing.sheets.active.name              # doctest: +SKIP
+        'Sheet1'
     """
 
     def __init__(self, drawing):
@@ -449,9 +464,12 @@ class Sheets(Sequence):
         first_angle
             True for first-angle projection, False for third
 
-        Example::
+        Example:
 
-            drawing.sheets.add("Detail", paper="A3", scale=(1, 2))
+            >>> drawing.sheets.add("Detail", paper="A3", scale=(1, 2)).name  # doctest: +SKIP
+            'Detail'
+            >>> drawing.sheets.names()                          # doctest: +SKIP
+            ['Sheet1', 'Detail']
         """
         size = PAPER_SIZES.get(str(paper).strip().lower())
         if size is None:

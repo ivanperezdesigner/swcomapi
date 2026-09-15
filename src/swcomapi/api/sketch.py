@@ -2,13 +2,13 @@
 
 Drawing is a session, not a call. You open a sketch on a plane, add geometry
 to it, and close it, and everything in between has to happen while that sketch
-is the one being edited. That is what the context manager is for::
+is the one being edited. That is what the context manager is for:
 
-    with part.sketch_on("Front Plane") as sketch:
-        sketch.rectangle((0, 0), (60, 40))
-        sketch.circle((30, 20), radius=6)
-
-    part.extrude(10)
+    >>> part = app.new_part()                               # doctest: +SKIP
+    >>> with part.sketch_on("Front Plane", add_to_db=True) as sketch:  # doctest: +SKIP
+    ...     _ = sketch.rectangle((0, 0), (60, 40))
+    >>> part.extrude(10).name                               # doctest: +SKIP
+    'Boss-Extrude1'
 
 Everything in **mm**, as everywhere in ``swcomapi.api``. The API itself works
 in metres; the conversion happens here.
@@ -155,11 +155,14 @@ class Segment:
 class Sketches(Sequence):
     """The sketches in a document.
 
-    A sequence, and a lookup by name::
+    A sequence, and a lookup by name:
 
-        part.sketches.names()           # ['Sketch1', 'Sketch2']
-        part.sketches["Sketch1"]        # <Sketch 'Sketch1': 4 segments>
-        len(part.sketches)              # 2
+        >>> part.sketches.names()               # doctest: +SKIP
+        ['Sketch1', 'Sketch2']
+        >>> part.sketches["Sketch1"]            # doctest: +SKIP
+        <Sketch 'Sketch1': 4 segments>
+        >>> len(part.sketches)                  # doctest: +SKIP
+        2
 
     Reached through the feature tree, so the order is the tree's order and a
     sketch absorbed into a feature is still here.
@@ -232,10 +235,12 @@ class SketchSession:
 
     Built by `swcomapi.api.document.Part.sketch_on`; not meant to be created
     directly. Use it as a context manager so the sketch is closed even when
-    something goes wrong::
+    something goes wrong:
 
-        with part.sketch_on("Top Plane") as sketch:
-            sketch.rectangle((-30, -20), (30, 20))
+        >>> with part.sketch_on("Top Plane", add_to_db=True) as sketch:  # doctest: +SKIP
+        ...     _ = sketch.rectangle((-30, -20), (30, 20))
+        >>> part.sketches.names()[-1]                   # doctest: +SKIP
+        'Sketch3'
 
     Coordinates are in mm, in the sketch's own plane: x and y across it, z out
     of it. For a sketch on the Front Plane that means x right, y up and z
@@ -333,10 +338,13 @@ class SketchSession:
 
         Both are ``(x, y)`` or ``(x, y, z)`` tuples in mm.
 
-        Example, a 60 by 40 box drawn the long way::
+        Example, a 60 by 40 box drawn the long way:
 
-            sketch.line((0, 0), (60, 0))
-            sketch.line((60, 0), (60, 40))
+            >>> with part.sketch_on("Top Plane", add_to_db=True) as sk:  # doctest: +SKIP
+            ...     first = sk.line((0, 0), (60, 0))
+            ...     second = sk.line((60, 0), (60, 40))
+            >>> first.length, second.length                 # doctest: +SKIP
+            (60.0, 40.0)
         """
         x1, y1, z1 = _point(start)
         x2, y2, z2 = _point(end)
@@ -364,9 +372,12 @@ class SketchSession:
         radius
             in mm
 
-        Example::
+        Example:
 
-            sketch.circle((30, 20), radius=6)
+            >>> with part.sketch_on("Top Plane", add_to_db=True) as sk:  # doctest: +SKIP
+            ...     drawn = sk.circle((30, 20), 6)
+            >>> drawn.kind                                  # doctest: +SKIP
+            'arc'
         """
         x, y, z = _point(centre)
         return Segment(
@@ -396,9 +407,12 @@ class SketchSession:
 
         Both corners are ``(x, y)`` or ``(x, y, z)`` in mm.
 
-        Example, 60 by 40 from the origin::
+        Example, 60 by 40 from the origin:
 
-            sketch.rectangle((0, 0), (60, 40))
+            >>> with part.sketch_on("Top Plane", add_to_db=True) as sk:  # doctest: +SKIP
+            ...     drawn = sk.rectangle((0, 0), (60, 40))
+            >>> sorted(round(s.length) for s in drawn)      # doctest: +SKIP
+            [40, 40, 60, 60]
         """
         x1, y1, z1 = _point(corner)
         x2, y2, z2 = _point(opposite)

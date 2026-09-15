@@ -1,12 +1,17 @@
 """Equations and global variables.
 
 A part's equations are an ordered list of strings, and SOLIDWORKS keeps them
-that way: index 0 is the first line of the Equations dialog::
+that way: index 0 is the first line of the Equations dialog:
 
-    part.equations                      # ['"width" = 60', '"D1@Sketch1" = "width"']
-    part.equations[0]                   # '"width" = 60'
-    part.equations["width"]             # 60.0
-    part.equations["width"] = 80        # rewrites that line
+    >>> part.equations.add('"width" = 60')      # doctest: +SKIP
+    0
+    >>> part.equations[0]                       # doctest: +SKIP
+    '"width" = 60'
+    >>> part.equations["width"]                 # doctest: +SKIP
+    60.0
+    >>> part.equations["width"] = 80    # rewrites that line  # doctest: +SKIP
+    >>> part.equations["width"]                 # doctest: +SKIP
+    80.0
 
 Global variables and driven dimensions live in the same list, told apart by
 `Equations.is_global`. A global variable's line is ``"name" = value``; a
@@ -42,13 +47,18 @@ from ..errors import SwCallError
 class Equations(Sequence):
     """The equations of a document, in the order the dialog shows them.
 
-    A sequence of the raw lines, and a mapping by name for the values::
+    A sequence of the raw lines, and a mapping by name for the values:
 
-        part.equations.names()              # ['width', 'height']
-        part.equations["width"]             # 60.0
-        part.equations["width"] = 80
-        part.equations.add('"depth" = 12')
-        del part.equations[2]
+        >>> part.equations.add('"width" = 60')      # doctest: +SKIP
+        0
+        >>> part.equations.add('"depth" = 12')      # doctest: +SKIP
+        1
+        >>> part.equations.names()                  # doctest: +SKIP
+        ['width', 'depth']
+        >>> part.equations["width"] = 80            # doctest: +SKIP
+        >>> del part.equations["depth"]             # doctest: +SKIP
+        >>> part.equations.names()                  # doctest: +SKIP
+        ['width']
 
     Attributes:
         com  the raw ``IEquationMgr``
@@ -139,9 +149,12 @@ class Equations(Sequence):
     def globals(self):
         """The global variables only, as a dict of name to value.
 
-        Example::
+        Example:
 
-            part.equations.globals()        # {'width': 60.0, 'height': 40.0}
+            >>> part.equations.add('"width" = 60')      # doctest: +SKIP
+            0
+            >>> part.equations.globals()                # doctest: +SKIP
+            {'width': 60.0}
         """
         found = {}
         for index, line in enumerate(self):

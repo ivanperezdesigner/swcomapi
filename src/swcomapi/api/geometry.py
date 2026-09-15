@@ -10,7 +10,7 @@ came out as, on a 60 by 40 by 10 plate with one 12 mm hole in it:
     >>> body.box                                # in mm  # doctest: +SKIP
     (0.0, 0.0, 0.0, 60.0, 40.0, 10.0)
     >>> len(body.edges)                         # 12 for a plain block  # doctest: +SKIP
-    15
+    14
     >>> [round(f.area) for f in body.faces_of("cylinder")]   # mm2  # doctest: +SKIP
     [377]
 
@@ -125,10 +125,11 @@ class Body:
         Two opposite corners, in the part's own coordinates. Returns None for
         a body with no extent - an empty one, or a wire body.
 
-        Example, the stock a part needs::
+        Example, the stock a part needs:
 
-            x1, y1, z1, x2, y2, z2 = part.bodies[0].box
-            (x2 - x1, y2 - y1, z2 - z1)         # (60.0, 40.0, 10.0)
+            >>> x1, y1, z1, x2, y2, z2 = part.bodies[0].box     # doctest: +SKIP
+            >>> (x2 - x1, y2 - y1, z2 - z1)                     # doctest: +SKIP
+            (60.0, 40.0, 10.0)
         """
         values = com.to_list(com.call(self.com, "GetBodyBox"))
         if len(values) < 6:
@@ -187,10 +188,12 @@ class Body:
         density
             in kg/m3: 7800 for steel, 2700 for aluminium, 1000 for water
 
-        Example, the same part in two materials::
+        Example, the same plate in steel and in aluminium:
 
-            body.mass_at(7800)      # 187.2
-            body.mass_at(2700)      # 64.8
+            >>> round(body.mass_at(7800), 1)        # doctest: +SKIP
+            178.4
+            >>> round(body.mass_at(2700), 1)        # doctest: +SKIP
+            61.7
         """
         return self._mass_properties(density)[5] * 1000.0
 
@@ -241,9 +244,10 @@ class Body:
             one of the values in `SURFACE_TYPES`: ``'plane'``,
             ``'cylinder'``, ``'cone'``...
 
-        Example, counting drilled holes by their cylindrical walls::
+        Example, counting drilled holes by their cylindrical walls:
 
-            len(part.bodies[0].faces_of("cylinder"))
+            >>> len(part.bodies[0].faces_of("cylinder"))    # doctest: +SKIP
+            1
         """
         return [face for face in self.faces if face.kind == kind]
 
@@ -407,10 +411,12 @@ def bodies_of(document, kind="solid", visible_only=False):
     visible_only
         True leaves out the hidden ones
 
-    Example::
+    Example:
 
-        bodies_of(part)                 # the solids
-        bodies_of(part, kind="all")     # surfaces and wires as well
+        >>> len(bodies_of(part))                    # the solids  # doctest: +SKIP
+        1
+        >>> len(bodies_of(part, kind="all"))    # surfaces too  # doctest: +SKIP
+        1
     """
     from ..const import (
         swAllBodies,

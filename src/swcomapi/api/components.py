@@ -2,13 +2,25 @@
 
 An assembly is a tree of instances, not a list of parts. The same part can be
 in it eleven times, each instance with its own name, its own position and its
-own suppression state, and a sub-assembly brings its own children along::
+own suppression state, and a sub-assembly brings its own children along. Here
+with the same plate inserted twice:
 
-    >>> asm = app.open("frame.SLDASM")                  # doctest: +SKIP
-    >>> asm.components.names()                          # doctest: +SKIP
-    ['rail-1', 'rail-2', 'gusset-1', 'fasteners-1']
-    >>> asm.components["rail-2"].path                   # doctest: +SKIP
-    'C:\\\\work\\\\rail.SLDPRT'
+    >>> names = sorted(assembly.components.names())      # doctest: +SKIP
+    >>> [n.split("-")[-1] for n in names]                # doctest: +SKIP
+    ['1', '2']
+    >>> assembly.components[names[1]].path.endswith(".SLDPRT")  # doctest: +SKIP
+    True
+    >>> assembly.components[names[1]].position           # doctest: +SKIP
+    (70.0, -20.0, -5.0)
+
+That second instance was inserted at ``(100, 0, 0)``, and reads back at
+``(70, -20, -5)``. Both numbers are right: `Components.add` lands the
+bounding-box centre on the point it is given, and `Component.position`
+reports the origin, which for a 60 by 40 by 10 plate is half a plate away in
+each direction.
+
+The order is SOLIDWORKS', not the order they went in: ``GetComponents`` does
+not promise insertion order, which is why that first line sorts.
 
 `Components` is the top level; `Component.children` goes down, and
 `Components.all` flattens the whole tree.
@@ -120,9 +132,10 @@ class Component:
         suppressed or lightweight component: there is no model loaded to
         return, which is the point of those states.
 
-        Example, the mass of one instance::
+        Example, the mass of one instance:
 
-            asm.components["rail-2"].document.mass      # 1240.5
+            >>> round(assembly.components[0].document.mass, 1)   # doctest: +SKIP
+            61.7
         """
         from .document import wrap
 
@@ -259,9 +272,16 @@ class Component:
         ``GetTotalTransform``. Returns None for a component with no transform,
         which happens for one that is not loaded.
 
-        Example::
+        Example, the instance inserted at ``(100, 0, 0)``. By name, not by
+        index: ``GetComponents`` does not answer in insertion order.
 
-            asm.components["rail-2"].position       # (0.0, 120.0, 0.0)
+            >>> names = sorted(assembly.components.names())  # doctest: +SKIP
+            >>> assembly.components[names[1]].position       # doctest: +SKIP
+            (70.0, -20.0, -5.0)
+
+        The numbers differ from the ones given to `Components.add` because
+        that lands the bounding-box centre on the point, and this is the
+        origin.
         """
         from ..units import to_mm
 
@@ -312,16 +332,14 @@ class Component:
 class Components(Sequence):
     """The top-level components of an assembly.
 
-    A sequence, and a mapping by name::
+    A sequence, and a mapping by name:
 
-        >>> len(asm.components)                     # doctest: +SKIP
-        4
-        >>> asm.components[0].name                  # doctest: +SKIP
-        'rail-1'
-        >>> asm.components["gusset-1"].path         # doctest: +SKIP
-        'C:\\\\work\\\\gusset.SLDPRT'
-        >>> [c.name for c in asm.components]        # doctest: +SKIP
-        ['rail-1', 'rail-2', 'gusset-1', 'fasteners-1']
+        >>> len(assembly.components)                # doctest: +SKIP
+        2
+        >>> assembly.components[0].path.endswith(".SLDPRT")   # doctest: +SKIP
+        True
+        >>> sorted(c.name[-1] for c in assembly.components)   # doctest: +SKIP
+        ['1', '2']
 
     Top level only, which is what the tree shows. `all` goes all the way
     down.
@@ -394,10 +412,13 @@ class Components(Sequence):
         The match is on the file name, case-insensitively, so a full path and
         a bare ``'rail.SLDPRT'`` both work.
 
-        Example, hiding every instance of one part::
+        Example, hiding every instance of one part:
 
-            for component in asm.components.of_path("gusset.SLDPRT"):
-                component.visible = False
+            >>> found = assembly.components.of_path(path)   # doctest: +SKIP
+            >>> len(found)                                  # doctest: +SKIP
+            2
+            >>> for component in found:                     # doctest: +SKIP
+            ...     component.visible = False
         """
         import os
 
@@ -425,11 +446,13 @@ class Components(Sequence):
             which configuration of it to show, by name; its last-used one if
             omitted
 
-        Example::
+        Example:
 
-            asm.components.add("rail.SLDPRT", at=(0, 80, 0))
-            asm.components.add("rail.SLDPRT", at=(0, 160, 0),
-                               configuration="BRK-040")
+            >>> added = assembly.components.add(path, at=(0, 80, 0))  # doctest: +SKIP
+            >>> added.path == path                          # doctest: +SKIP
+            True
+            >>> len(assembly.components)                    # doctest: +SKIP
+            3
 
         The trap this removes
         ---------------------

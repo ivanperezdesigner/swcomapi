@@ -21,10 +21,14 @@ Per configuration
 
 A dimension driven by a design table has a different value in every
 configuration. ``[]`` reads the active one; `value_in` and `set_in` reach a
-named one without switching::
+named one without switching:
 
-    part.dimensions.value_in("Length@Boss-Extrude1", "BRK-040")
-    part.dimensions.set_in("Length@Boss-Extrude1", "BRK-040", 40)
+    >>> here = part.configuration                           # doctest: +SKIP
+    >>> part.dimensions.value_in("D1@Boss-Extrude1", here)  # doctest: +SKIP
+    10.0
+    >>> part.dimensions.set_in("D1@Boss-Extrude1", here, 12)   # doctest: +SKIP
+    >>> part.dimensions["D1@Boss-Extrude1"]                 # doctest: +SKIP
+    12.0
 """
 
 from collections.abc import MutableMapping
@@ -175,9 +179,11 @@ class Dimensions(MutableMapping):
         ``GetSystemValue3`` answers None and ``SetSystemValue3`` writes
         nothing, neither of them complaining.
 
-        Example::
+        Example:
 
-            part.dimensions.value_in("Length@Boss-Extrude1", "BRK-040")
+            >>> part.dimensions.value_in("D1@Boss-Extrude1",
+            ...                          part.configuration)    # doctest: +SKIP
+            10.0
         """
         from ..const import swSpecifyConfiguration
 
@@ -232,9 +238,11 @@ class Dimensions(MutableMapping):
         configured means. A dimension that *was* configured stops being so:
         the per-configuration values are dropped, not overwritten one by one.
 
-        Example::
+        Example:
 
-            part.dimensions.set_everywhere("Thickness@Boss-Extrude1", 3)
+            >>> part.dimensions.set_everywhere("D1@Boss-Extrude1", 3)  # doctest: +SKIP
+            >>> part.dimensions["D1@Boss-Extrude1"]                    # doctest: +SKIP
+            3.0
         """
         from ..const import swAllConfiguration
 
@@ -252,9 +260,10 @@ class Dimensions(MutableMapping):
     def is_angular(self, name):
         """True if ``name`` is an angle, so its unit is degrees.
 
-        Example::
+        Example:
 
-            part.dimensions.is_angular("Angle@Sketch1")       # True
+            >>> part.dimensions.is_angular("D1@Boss-Extrude1")   # doctest: +SKIP
+            False
         """
         return com.call(self.raw(name), "GetType") in ANGULAR_TYPES
 

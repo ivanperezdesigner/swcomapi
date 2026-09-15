@@ -14,15 +14,14 @@ middle of them::
 So this module gives them defaults that match the dialog's defaults, and
 names the arguments a script actually varies::
 
-    >>> with part.sketch_on("Front Plane", add_to_db=True) as sketch:
+    >>> part = app.new_part()                           # doctest: +SKIP
+    >>> with part.sketch_on("Front Plane", add_to_db=True) as sketch:  # doctest: +SKIP
     ...     _ = sketch.rectangle((0, 0), (60, 40))
-    >>> part.extrude(10).name                   # 10 mm, blind, one direction
+    >>> part.extrude(10).name               # 10 mm, blind, one direction  # doctest: +SKIP
     'Boss-Extrude1'
-
-    >>> _ = part.select("Boss-Extrude1", "FACE")
-    >>> with part.sketch_on(add_to_db=True) as sketch:
+    >>> with part.sketch_on("Front Plane", add_to_db=True) as sketch:  # doctest: +SKIP
     ...     _ = sketch.circle((30, 20), 6)
-    >>> part.cut(through_all=True).name         # a hole all the way through
+    >>> part.cut(through_all=True, reverse=True).name   # doctest: +SKIP
     'Cut-Extrude1'
 
 Depths and offsets in **mm**, angles in **degrees**. The sketch to work from
@@ -33,11 +32,15 @@ selection on the way out. Name a sketch and these re-select it instead.
 Which way a cut goes
 --------------------
 
-A cut leaves the sketch plane in the direction the plane faces, so a sketch
-on the Front Plane cuts towards you - away from a boss extruded the default
-way, which removes nothing at all. Sketching on the **face** instead, as
-above, always cuts into the material. On a plane behind the solid, pass
-``reverse=True``.
+``reverse=True`` above is not decoration. A cut leaves its sketch plane in
+one direction, and from the Front Plane that is towards the viewer - away
+from a boss the default extrude put behind it. Cutting through nothing
+removes nothing, and SOLIDWORKS reports that as a bare ``None``.
+
+The alternative is to sketch on the face, which always cuts into the
+material; `cut` shows it. A face is selected as an object, not by the name
+of the feature that made it - ``select("Boss-Extrude1", "FACE")`` finds
+nothing and returns False.
 """
 
 from .. import com
@@ -85,12 +88,13 @@ def extrude(
     through_all
         True ignores ``depth`` and goes all the way through
 
-    Example, a 60 by 40 plate 10 mm thick::
+    Example, a 60 by 40 plate 10 mm thick:
 
-        with part.sketch_on("Front Plane") as sketch:
-            sketch.rectangle((0, 0), (60, 40))
-        feature = part.extrude(10)
-        feature.name                # 'Boss-Extrude1'
+        >>> blank = app.new_part()                          # doctest: +SKIP
+        >>> with blank.sketch_on("Front Plane", add_to_db=True) as sk:  # doctest: +SKIP
+        ...     _ = sk.rectangle((0, 0), (60, 40))
+        >>> blank.extrude(10).name                          # doctest: +SKIP
+        'Boss-Extrude1'
 
     Raises `SwCallError` when SOLIDWORKS declines, which for an extrusion
     almost always means the profile is not closed, or nothing was selected.
@@ -133,11 +137,17 @@ def cut(
     Front Plane it would go towards you, away from the material, and remove
     nothing. From a plane behind the solid, pass ``reverse=True``.
 
-        >>> _ = part.select("Boss-Extrude1", "FACE")
-        >>> with part.sketch_on(add_to_db=True) as sketch:
-        ...     _ = sketch.circle((30, 20), 6)
-        >>> part.cut(through_all=True).name
-        'Cut-Extrude1'
+        >>> front = [f for f in part.bodies[0].faces
+        ...          if f.normal == (0.0, 0.0, 1.0)][0]   # doctest: +SKIP
+        >>> front.select()                                # doctest: +SKIP
+        True
+        >>> with part.sketch_on(add_to_db=True) as sketch:   # doctest: +SKIP
+        ...     _ = sketch.circle((10, 10), 3)
+        >>> part.cut(through_all=True).name.startswith("Cut-Extrude")  # doctest: +SKIP
+        True
+
+    A face is an object, not a name: ``select("Boss-Extrude1", "FACE")``
+    returns False, because no face is called after the feature that made it.
     """
     if depth is None and not through_all:
         raise SwCallError(

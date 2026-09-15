@@ -44,7 +44,17 @@ FLAGS = doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE
 
 # What a docstring may ask for by name. Anything an example does not mention
 # is not built, so a docstring about dimensions does not pay for an assembly.
-FIXTURES = ("part", "document", "assembly", "drawing", "body", "face", "sketch")
+FIXTURES = (
+    "part",
+    "document",
+    "assembly",
+    "drawing",
+    "body",
+    "face",
+    "sketch",
+    "path",
+    "folder",
+)
 
 
 class Scratch:
@@ -57,7 +67,11 @@ class Scratch:
     def __init__(self, app, folder):
         self.app = app
         self.folder = folder
-        self.opened = []
+
+        self._saved = None
+        # Anything already on screen belongs to whoever is at the machine and
+        # is left exactly as it was found.
+        self.was_open = {document.name for document in app.documents}
 
     def part(self):
         """The plate every example is written against.
@@ -68,29 +82,43 @@ class Scratch:
         fixture geometry and cannot be broken by someone editing it.
         """
         part = self.app.new_part()
-        self.opened.append(part)
         with part.sketch_on("Front Plane", add_to_db=True) as sketch:
             sketch.rectangle((0, 0), (60, 40))
         part.extrude(10)
-        part.select("Boss-Extrude1", "FACE")
-        with part.sketch_on(add_to_db=True) as sketch:
+        with part.sketch_on("Front Plane", add_to_db=True) as sketch:
             sketch.circle((30, 20), 6)
-        part.cut(through_all=True)
+        # reverse, because the boss went towards the viewer and a cut from
+        # the same plane would go the other way, through nothing at all.
+        part.cut(through_all=True, reverse=True)
         part.set_material("6061 Alloy")
         return part
 
     def saved_part(self):
-        """The same plate, written to disk so an assembly can reference it."""
-        part = self.part()
-        path = os.path.join(self.folder, "plate.SLDPRT")
-        part.save_as(path)
-        return part, path
+        """The same plate, written to disk so an assembly can reference it.
+
+        Built once and remembered: a docstring that mentions both ``path`` and
+        ``assembly`` asks for this twice, and saving a second new part over a
+        file the first one already owns fails with swGenericSaveError.
+
+        The name is unique per docstring, taken from the temporary folder
+        pytest already made unique. SOLIDWORKS will not have two documents of
+        the same name open at once, and a part that an assembly referred to
+        can stay loaded after both are closed - so a fixed name collides with
+        the leftovers of an earlier run and the save fails with
+        swGenericSaveError.
+        """
+        if self._saved is None:
+            part = self.part()
+            stamp = os.path.basename(self.folder.rstrip("\\/")) or "plate"
+            path = os.path.join(self.folder, f"swcomapi-{stamp}.SLDPRT")
+            part.save_as(path)
+            self._saved = (part, path)
+        return self._saved
 
     def assembly(self):
         """An assembly with two instances of the plate in it."""
         _, path = self.saved_part()
         assembly = self.app.new_assembly()
-        self.opened.append(assembly)
         assembly.components.add(path, at=(0, 0, 0))
         assembly.components.add(path, at=(100, 0, 0))
         assembly.rebuild()
@@ -100,17 +128,38 @@ class Scratch:
         """A drawing with one front view of the plate on it."""
         _, path = self.saved_part()
         drawing = self.app.new_drawing()
-        self.opened.append(drawing)
         drawing.views.add(path, "Front", at=(100, 100))
         return drawing
 
     def close(self):
-        for document in reversed(self.opened):
+        """Close everything that was not already open before this docstring ran.
+
+        By name, and by asking SOLIDWORKS what is open now, rather than by
+        keeping the wrappers around: an example is at its clearest when it
+        starts from ``app.new_part()`` and closes what it made, and a wrapper
+        for a document that has already gone is a dead COM pointer. Touching
+        one raises ``RPC_E_DISCONNECTED`` (0x80010108), which arrives as a
+        Windows fatal exception rather than something ``except`` can catch.
+        """
+
+        self._saved = None
+
+        for name in self.opened_since():
             try:
-                document.close()
+                self.app.close(name)
             except Exception:
                 pass
-        self.opened = []
+
+    def opened_since(self):
+        """The titles open now that were not open before, as a list of str."""
+        try:
+            return [
+                document.name
+                for document in self.app.documents
+                if document.name not in self.was_open
+            ]
+        except Exception:
+            return []
 
 
 def examples_in(module):
@@ -141,8 +190,10 @@ def globs_for(test, scratch):
     """The names a docstring's examples can use, as a dict."""
     wanted = wanted_by(test)
     globs = dict(test.globs)
-    globs.update({"swc": swc, "app": scratch.app})
+    globs.update({"swc": swc, "app": scratch.app, "folder": scratch.folder})
 
+    if "path" in wanted:
+        _, globs["path"] = scratch.saved_part()
     if {"part", "document", "body", "face", "sketch"} & wanted:
         part = scratch.part()
         globs["part"] = part

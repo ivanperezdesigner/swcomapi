@@ -1,16 +1,17 @@
 """Documents: parts, assemblies and drawings.
 
-    part = app.open("bracket.SLDPRT")
-
-    part.name                       # 'bracket.SLDPRT'
-    part.configurations             # ['BRK-020', 'BRK-040', 'Default']
-    part.configuration = "BRK-040"
-    part.dimensions["Length@Boss-Extrude1"] = 55      # mm
-    part.features["HolePattern"].suppress()
-    part.properties["Revision"] = "B"
-    part.rebuild()
-    part.export("BRK-040.pdf")
-    part.close()
+    >>> part.kind                                   # doctest: +SKIP
+    'part'
+    >>> part.configurations.names()                 # doctest: +SKIP
+    ['Default']
+    >>> part.dimensions["D1@Boss-Extrude1"] = 12    # mm  # doctest: +SKIP
+    >>> part.features["Cut-Extrude1"].suppress()    # doctest: +SKIP
+    True
+    >>> part.properties["Revision"] = "B"           # doctest: +SKIP
+    >>> part.rebuild()                              # doctest: +SKIP
+    True
+    >>> part.export(folder + "/BRK-040.pdf").endswith(".pdf")   # doctest: +SKIP
+    True
 
 ``app.open`` gives you a `Part`, an `Assembly` or a `Drawing` depending on what
 the file is, and each adds what only it can do: mass properties and flat
@@ -20,11 +21,12 @@ Closing
 -------
 
 A document is a context manager, which is the reliable way to not leave files
-open in SOLIDWORKS after a script has crashed::
+open in SOLIDWORKS after a script has crashed:
 
-    with app.open("bracket.SLDPRT") as part:
-        part.export("bracket.step")
-    # closed, even if export raised
+    >>> with app.open(path) as part:                        # doctest: +SKIP
+    ...     written = part.export(folder + "/plate.step")
+    >>> written.endswith(".step")        # closed, even if export raised  # doctest: +SKIP
+    True
 
 Leaving a document open is not harmless: the next run gets
 ``swFileLoadWarning_AlreadyOpen`` and a document that may be in a state the
@@ -163,12 +165,15 @@ class Document:
     def equations(self):
         """The equations and global variables, as an `Equations`.
 
-        A sequence of the lines and a lookup by name::
+        A sequence of the lines and a lookup by name:
 
-            part.equations.names()          # ['width', 'height']
-            part.equations["width"]         # 60.0   (document units)
-            part.equations["width"] = 80
-            part.equations.add('"depth" = 12')
+            >>> part.equations.add('"width" = 60')          # doctest: +SKIP
+            0
+            >>> part.equations.names()                      # doctest: +SKIP
+            ['width']
+            >>> part.equations["width"]         # document units  # doctest: +SKIP
+            60.0
+            >>> part.equations["width"] = 80                # doctest: +SKIP
 
         In the document's own units, not in millimetres: an equation is a
         string SOLIDWORKS parses. See `swcomapi.api.equations`.
@@ -181,10 +186,12 @@ class Document:
     def sketches(self):
         """The sketches, as a `swcomapi.api.sketch.Sketches`.
 
-        A sequence and a lookup by name::
+        A sequence and a lookup by name:
 
-            part.sketches.names()        # ['Sketch1', 'Sketch2']
-            part.sketches["Sketch1"].segments
+            >>> part.sketches.names()                       # doctest: +SKIP
+            ['Sketch1', 'Sketch2']
+            >>> len(part.sketches["Sketch1"].segments)      # doctest: +SKIP
+            4
         """
         from .sketch import Sketches
 
@@ -207,10 +214,12 @@ class Document:
 
         Use it in a ``with`` block, so the sketch is closed even if the block
         raises - a session left in sketch mode makes everything after it
-        behave strangely::
+        behave strangely:
 
-            with part.sketch_on("Front Plane") as sketch:
-                sketch.rectangle((0, 0), (60, 40))
+            >>> with part.sketch_on("Top Plane", add_to_db=True) as sk:  # doctest: +SKIP
+            ...     _ = sk.rectangle((0, 0), (60, 40))
+            >>> part.sketches.names()[-1]                   # doctest: +SKIP
+            'Sketch3'
 
         Everything in mm. See `swcomapi.api.sketch.SketchSession` for what can
         be drawn.
@@ -307,9 +316,10 @@ class Document:
 
         Returns the absolute path written, as a str.
 
-        Example::
+        Example:
 
-            part.export("out/BRK-040.step")
+            >>> part.export(folder + "/BRK-040.step").endswith(".step")  # doctest: +SKIP
+            True
         """
         options.setdefault("copy", True)
         return export_module.save_as(self, path, **options)
@@ -349,9 +359,10 @@ class Document:
         append
             True adds to the selection instead of replacing it
 
-        Example::
+        Example:
 
-            part.select("Front Plane", "PLANE")
+            >>> part.select("Front Plane", "PLANE")         # doctest: +SKIP
+            True
         """
         return bool(
             com.call(
@@ -415,10 +426,12 @@ class Part(Document):
         """The solid bodies, as a list of `swcomapi.api.geometry.Body`.
 
         The geometry rather than the tree: faces, edges, vertices and the
-        bounding box::
+        bounding box:
 
-            part.bodies[0].size             # (60.0, 40.0, 10.0) in mm
-            part.bodies[0].faces_of("cylinder")
+            >>> part.bodies[0].size             # in mm      # doctest: +SKIP
+            (60.0, 40.0, 10.0)
+            >>> len(part.bodies[0].faces_of("cylinder"))    # doctest: +SKIP
+            1
 
         Surfaces and wires are left out; `bodies_of` takes a ``kind``.
         """
@@ -446,11 +459,13 @@ class Part(Document):
         Takes the sketch that was just closed, or one named with
         ``sketch="Sketch1"``. Depth in mm.
 
-        Example, a 60 by 40 plate 10 mm thick::
+        Example, a 60 by 40 plate 10 mm thick:
 
-            with part.sketch_on("Front Plane") as sketch:
-                sketch.rectangle((0, 0), (60, 40))
-            part.extrude(10)
+            >>> blank = app.new_part()                      # doctest: +SKIP
+            >>> with blank.sketch_on("Front Plane", add_to_db=True) as sk:  # doctest: +SKIP
+            ...     _ = sk.rectangle((0, 0), (60, 40))
+            >>> blank.extrude(10).name                      # doctest: +SKIP
+            'Boss-Extrude1'
 
         Every argument is described in `swcomapi.api.modeling.extrude`.
         """
@@ -465,11 +480,14 @@ class Part(Document):
         sketched on a plane behind the solid points away from the material and
         needs ``reverse=True``.
 
-            >>> _ = part.select("Boss-Extrude1", "FACE")     # doctest: +SKIP
+            >>> front = [f for f in part.bodies[0].faces
+            ...          if f.normal == (0.0, 0.0, 1.0)][0]  # doctest: +SKIP
+            >>> front.select()                               # doctest: +SKIP
+            True
             >>> with part.sketch_on(add_to_db=True) as sketch:   # doctest: +SKIP
-            ...     _ = sketch.circle((30, 20), 6)
-            >>> part.cut(through_all=True).name              # doctest: +SKIP
-            'Cut-Extrude1'
+            ...     _ = sketch.circle((10, 10), 3)
+            >>> part.cut(through_all=True).name.startswith("Cut-")  # doctest: +SKIP
+            True
 
         See `swcomapi.api.modeling.cut`.
         """
@@ -505,12 +523,54 @@ class Part(Document):
         ``density``
             grams per cubic millimetre, derived as mass over volume
 
-        One COM call, so read this once and pick out what you need rather than
-        reading `mass` and `volume` separately.
+        One COM call when the document answers, and a walk over the bodies
+        when it does not - see below.
 
-        Example::
+        Example:
 
-            part.mass_properties["mass"]          # 496.033
+            >>> round(part.mass_properties["mass"], 1)      # doctest: +SKIP
+            61.7
+
+        Why there are two ways of getting this
+        --------------------------------------
+
+        ``IModelDocExtension.GetMassProperties2`` is the obvious call, and
+        Dassault's own description of it is "gets mass properties of selected
+        assembly components". On a part it often works and sometimes does not:
+        it answers ``Status`` -1 with no values, for a part that is perfectly
+        solid, depending on the state of the session. ``IBody2`` always
+        answers, so when the document declines, the bodies are asked instead
+        and their results added up. The numbers agree.
+
+        Raises `SwDocumentError` only when there is genuinely nothing to
+        measure: no solid body at all.
+        """
+        values, status = self._mass_properties_from_document()
+        if values is not None:
+            volume = units.to_mm3(values[3])
+            mass = units.to_g(values[5])
+            return {
+                "centre": tuple(units.to_mm_all(values[0:3])),
+                "volume": volume,
+                "area": units.to_mm2(values[4]),
+                "mass": mass,
+                "density": (mass / volume) if volume else 0.0,
+            }
+
+        summed = self._mass_properties_from_bodies()
+        if summed is None:
+            raise SwDocumentError(
+                f"{self.name!r} has no mass properties. It has no solid body "
+                f"to measure; GetMassProperties2 answered status {status}.",
+                path=self.path,
+            )
+        return summed
+
+    def _mass_properties_from_document(self):
+        """``GetMassProperties2``, as ``(values, status)``.
+
+        ``values`` is None when the call declined, which it signals with a
+        non-zero status, an empty array, or both.
         """
         from ..const import swMassPropertyAccuracyLevel_Medium
 
@@ -524,20 +584,40 @@ class Part(Document):
             False,
             interface="IModelDocExtension",
         )
+        status = out.get("Status", 0)
         values = com.to_list(result)
-        if len(values) < 6 or out.get("Status", 0):
-            raise SwDocumentError(
-                f"{self.name!r} has no mass properties. A part with no solid "
-                f"body, or one whose material has no density, reports none.",
-                path=self.path,
-            )
+        if len(values) < 6 or status:
+            return None, status
+        return values, status
 
-        volume = units.to_mm3(values[3])
-        mass = units.to_g(values[5])
+    def _mass_properties_from_bodies(self):
+        """The same dict, added up from the solid bodies. None if there are none.
+
+        The centre of mass is the mass-weighted mean of the bodies', which is
+        what it means; adding the masses and the volumes is simple addition.
+        """
+        from .geometry import bodies_of
+
+        bodies = bodies_of(self)
+        if not bodies:
+            return None
+
+        mass = sum(body.mass for body in bodies)
+        volume = sum(body.volume for body in bodies)
+        area = sum(body.area for body in bodies)
+
+        if mass:
+            centre = tuple(
+                sum(body.centre_of_mass[axis] * body.mass for body in bodies) / mass
+                for axis in range(3)
+            )
+        else:
+            centre = bodies[0].centre_of_mass
+
         return {
-            "centre": tuple(units.to_mm_all(values[0:3])),
+            "centre": centre,
             "volume": volume,
-            "area": units.to_mm2(values[4]),
+            "area": area,
             "mass": mass,
             "density": (mass / volume) if volume else 0.0,
         }

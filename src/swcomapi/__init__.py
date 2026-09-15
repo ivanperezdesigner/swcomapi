@@ -26,19 +26,22 @@ Three layers
     libraries that ship with your SOLIDWORKS.
 ``swcomapi.com``
     the raw COM layer, for anything not wrapped. Every object this package
-    hands you exposes its COM object as ``.com``, so nothing is out of reach::
+    hands you exposes its COM object as ``.com``, so nothing is out of reach:
 
-        part.com.FeatureManager.InsertDeleteBody2(True)
+        >>> part.com.FeatureManager.InsertDeleteBody2(True)     # doctest: +SKIP
+        True
 
 Finding your way around
 -----------------------
 
 19,874 API members is more than anyone remembers, so the package can tell you
-about itself::
+about itself:
 
-    swc.find("flat pattern")            # search names and descriptions
-    print(swc.describe("IPartDoc"))     # what an interface offers
-    print(swc.describe("ISldWorks.OpenDoc6"))
+    >>> import swcomapi as swc
+    >>> swc.find("GetMassProperties")[:2]   # names and descriptions
+    ['IBody.GetMassProperties', 'IBody2.GetMassProperties']
+    >>> print(swc.describe("ISldWorks.OpenDoc6").splitlines()[0])
+    ISldWorks.OpenDoc6(FileName, Type, Options, Configuration, Errors, Warnings) -> Any
 
 Windows only, and talking to SOLIDWORKS needs it installed. The enumerations,
 the signature table and the documentation links are plain data and import

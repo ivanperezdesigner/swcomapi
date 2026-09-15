@@ -60,7 +60,7 @@ def attach(visible=None, timeout=DEFAULT_TIMEOUT):
 
         >>> app = attach()                      # doctest: +SKIP
         >>> app.version                         # doctest: +SKIP
-        'SOLIDWORKS 2026 (34.3.0.150)'
+        'SOLIDWORKS 2026 SP3 (34.3.0)'
     """
     try:
         raw = com.active_object(PROGID)
@@ -103,8 +103,8 @@ def connect(visible=True, timeout=DEFAULT_TIMEOUT):
 
     Example::
 
-        >>> import swcomapi as sw                       # doctest: +SKIP
-        >>> app = sw.connect()                          # doctest: +SKIP
+        >>> import swcomapi as swc                      # doctest: +SKIP
+        >>> app = swc.connect()                         # doctest: +SKIP
         >>> app.year                                    # doctest: +SKIP
         2026
     """

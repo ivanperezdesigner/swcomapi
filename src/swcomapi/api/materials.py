@@ -49,10 +49,12 @@ def material_of(part, configuration=None):
 
     Returns ``''`` when the configuration has no material.
 
-    Example::
+    Example:
 
-        material_of(part)                   # 'Stainless Steel (ferritic)'
-        material_of(part, "BRK-040")        # '6061 Alloy'
+        >>> material_of(part)                       # doctest: +SKIP
+        '6061 Alloy'
+        >>> material_of(part, part.configuration)   # doctest: +SKIP
+        '6061 Alloy'
     """
     name, _ = com.call_out(
         part.com,
@@ -93,11 +95,14 @@ def set_material(part, name, configuration=None, database=None):
         the ``.sldmat`` file, or its name without the extension.
         ``"SOLIDWORKS Materials"`` if omitted
 
-    Examples::
+    Examples:
 
-        set_material(part, "6061 Alloy")
-        set_material(part, "AISI 304", configuration="BRK-040")
-        set_material(part, "")                      # no material
+        >>> set_material(part, "AISI 304")          # doctest: +SKIP
+        'AISI 304'
+        >>> set_material(part, "")                  # no material  # doctest: +SKIP
+        ''
+        >>> part.material                           # doctest: +SKIP
+        ''
 
     Raises `SwCallError` when the material does not end up applied, which
     happens for a name the database does not contain: ``SetMaterialPropertyName2``
@@ -133,11 +138,10 @@ def databases(app):
     ``solidworks materials.sldmat``; anything else is a custom library
     somebody added.
 
-    Example::
+    Example:
 
-        databases(app)
-        # ['C:\\\\Program Files\\\\...\\\\sldmaterials\\\\SOLIDWORKS Materials.sldmat',
-        #  'C:\\\\Program Files\\\\...\\\\sldmaterials\\\\SOLIDWORKS DIN Materials.sldmat']
+        >>> all(p.lower().endswith(".sldmat") for p in databases(app))  # doctest: +SKIP
+        True
     """
     return com.to_list(com.call(app.com, "GetMaterialDatabases"))
 
@@ -152,10 +156,10 @@ def database_names(app):
     when a material is applied is not case sensitive, so either spelling works
     in `set_material`.
 
-    Example::
+    Example:
 
-        database_names(app)
-        # ['custom materials', 'solidworks din materials', 'solidworks materials']
+        >>> "solidworks materials" in database_names(app)    # doctest: +SKIP
+        True
     """
     return [
         os.path.splitext(os.path.basename(path))[0] for path in databases(app)

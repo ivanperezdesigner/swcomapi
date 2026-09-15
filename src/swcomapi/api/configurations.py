@@ -153,10 +153,16 @@ class Configurations(Sequence):
         there is no ``AddDerivedConfiguration`` anywhere despite the name
         appearing in older examples.
 
-        Example::
+        Example:
 
-            part.configurations.add("BRK-080", description="Long bracket")
-            part.configurations.add("BRK-080-ANOD", parent="BRK-080")
+            >>> part.configurations.add("BRK-080",
+            ...                         description="Long bracket")  # doctest: +SKIP
+            'BRK-080'
+            >>> part.configurations.add("BRK-080-ANOD",
+            ...                         parent="BRK-080")            # doctest: +SKIP
+            'BRK-080-ANOD'
+            >>> part.configurations.parent_of("BRK-080-ANOD")        # doctest: +SKIP
+            'BRK-080'
         """
         from ..const import swConfigOption_DontActivate
 

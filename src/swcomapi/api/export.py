@@ -1,11 +1,16 @@
 """Saving a document, in any format SOLIDWORKS can write.
 
-One call, and the extension decides the format::
+One call, and the extension decides the format:
 
-    part.export("bracket.pdf")
-    part.export("bracket.step")
-    part.export("bracket.stl")
-    part.export("bracket.dxf")
+    >>> for suffix in ("pdf", "step", "stl"):               # doctest: +SKIP
+    ...     written = part.export(folder + "/bracket." + suffix)
+    >>> written.endswith(".stl")                            # doctest: +SKIP
+    True
+
+DXF and DWG are not in that list on purpose: from a part they mean the flat
+pattern, which goes through a different call. See
+`swcomapi.api.document.Part.export_flat_pattern`. Asked for here, SOLIDWORKS
+answers ``swFileSaveAsInvalidFileExtension``.
 
 That works because ``IModelDocExtension.SaveAs3`` dispatches on the extension
 itself. This module's job is the part it does not do: telling you plainly when
@@ -89,10 +94,11 @@ def save_as(document, path, silent=True, copy=False, save_references=False):
     flag names. Warns `SwWarning` for a warning, since the file did get
     written.
 
-    Examples::
+    Examples:
 
-        >>> save_as(part, "out/bracket.step")           # doctest: +SKIP
-        'C:\\\\work\\\\out\\\\bracket.step'
+        >>> written = save_as(part, folder + "/bracket.step")   # doctest: +SKIP
+        >>> written.endswith("bracket.step")                    # doctest: +SKIP
+        True
     """
     from ..const import (
         swSaveAsCurrentVersion,
