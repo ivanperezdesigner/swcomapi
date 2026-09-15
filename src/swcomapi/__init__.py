@@ -48,7 +48,7 @@ the signature table and the documentation links are plain data and import
 anywhere.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 # Everything below the errors is resolved lazily, through the module-level
 # __getattr__, for one concrete reason: importing this package must stay cheap

@@ -4,6 +4,51 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-09-15
+
+The documentation started being executed, and it turned out to be making
+claims. Every worked example in a docstring now runs against a real
+SOLIDWORKS, which is how the fixes below were found.
+
+### Added
+- `docs/reference/cheatsheet.md` — every call in the pythonic layer on one
+  page, with its signature and what it does. Generated from the installed
+  package by `python -m swcomapi.tools cheatsheet`, so it cannot drift from
+  the code, and checked against the committed copy by the test suite.
+- `tests/live/test_doctests_live.py` — runs the docstring examples that need
+  SOLIDWORKS, by stripping their `+SKIP` flag and building each docstring its
+  own plate, assembly or drawing. 89 docstrings, and it closes what it opens.
+- 170 executable examples, up from 57. The reStructuredText literal blocks
+  that nothing could run are doctests now.
+
+### Fixed
+- `Part.mass` and the rest of `mass_properties` raised for a perfectly solid
+  part. `IModelDocExtension.GetMassProperties2` answers status -1 and no
+  values depending on the state of the session — Dassault describe it as
+  getting "mass properties of selected assembly components", a call meant for
+  assemblies. `IBody2` always answers, so the bodies are asked instead and
+  added up when the document declines.
+- `del part.equations["width"]` works. It took a name everywhere except
+  `__delitem__`, where it reached `int()` and raised ValueError.
+- `equations.add()` names the cause it was missing: a name SOLIDWORKS keeps
+  for itself. `"thickness"` drives sheet metal and is refused, reported as
+  -1 with no reason, which looks like a broken install.
+- The `cut` examples in `modeling` and `document` sketched on the Front Plane
+  and cut towards the viewer, removing nothing. They cut into the material
+  now, and both modules say which way a cut goes.
+- `run_command` warns that a command which opens a dialog blocks every COM
+  call until somebody answers it. Its own example used to be `Save`.
+- Examples that claimed a face can be selected by the name of the feature
+  that made it, that `RevisionNumber` is a method, that a part exports to
+  DXF, that a cut is an `Extrusion`, that `GetComponents` answers in
+  insertion order, and that `components.add` puts a component's origin where
+  you asked rather than centring its bounding box.
+- The stale comment in `modeling` claiming `SketchSession` clears the
+  selection on the way out, which it deliberately does not.
+
+### Changed
+- The GitHub Actions are on their current majors, off the deprecated Node 20.
+
 ## [0.1.0] - 2026-09-15
 
 First release. Generated against SOLIDWORKS 2026 SP3; late binding, so it
@@ -89,4 +134,5 @@ is not tied to that release.
   `CreateDrawViewFromModelView3` wants and what makes the difference between a
   view and a silent None.
 
+[0.1.1]: https://github.com/ivanperezdesigner/swcomapi/releases/tag/v0.1.1
 [0.1.0]: https://github.com/ivanperezdesigner/swcomapi/releases/tag/v0.1.0

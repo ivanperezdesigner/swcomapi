@@ -4,8 +4,9 @@ Drive SOLIDWORKS from Python over its COM API — with the enumerations it never
 gave you, the `[out]` parameters handled, and a pythonic layer over the calls
 you actually make.
 
-> **Status: 0.1.0, the first release.** Generated against SOLIDWORKS 2026 SP3
-> and tested against it, 625 tests with it attached and 447 without.
+> **Status: 0.1.1.** Generated against SOLIDWORKS 2026 SP3 and tested against
+> it, 736 tests with it attached and 469 without. Every worked example in the
+> documentation is one of those tests.
 
 ```bash
 pip install swcomapi
@@ -76,6 +77,9 @@ been bitten by and fixed:
 | a plain `"Front"` view name | no view, no error |
 | a tuple where a SafeArray is wanted | the call succeeds and does the wrong thing |
 | `IDimension.SystemValue` | writes every configuration at once |
+| `GetMassProperties2` on a part | status -1 and no values, some of the time |
+| a global variable called `thickness` | refused; it is reserved for sheet metal |
+| `run_command` with a command that opens a dialog | every later call blocks, with no error |
 | `SetSuppression2` | returns True for a change it did not make |
 | `GetMassProperties(0.0)` | a density of 1, so mass equals volume |
 | `swThisConfiguration` with a name list | reads the active one and ignores the names |
@@ -145,6 +149,11 @@ cleans up after itself:
 set SWCOMAPI_LIVE=1
 .venv\Scripts\python -m pytest tests -q
 ```
+
+That includes the documentation. Every worked example in a docstring is run
+against a real SOLIDWORKS, on a document built for it, by
+`tests/live/test_doctests_live.py` — because an example nothing executes is a
+claim nobody checked, and several of them turned out to be wrong.
 
 ## Regenerating
 
