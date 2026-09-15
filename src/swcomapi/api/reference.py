@@ -106,10 +106,15 @@ def plane(
             member="InsertRefPlane",
         )
 
+    # The references go in under marks 0, 1 and 2, in order. Not under one
+    # mark, and not in plain selection order: with both references under
+    # mark 0 - which is what selecting them normally gives you -
+    # InsertRefPlane answers a bare None for every constraint pair there is.
+    # Nothing in the documentation says so.
     references = [thing for thing in (reference, second, third) if thing is not None]
     document.clear_selection()
     for position, thing in enumerate(references):
-        select(document, thing, append=position > 0)
+        select(document, thing, mark=position, append=position > 0)
 
     flip = swRefPlaneReferenceConstraint_OptionFlip if reverse else 0
     coincident = swRefPlaneReferenceConstraint_Coincident

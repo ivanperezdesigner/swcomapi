@@ -424,8 +424,13 @@ def fillet(
         'Fillet'
 
     Raises `SwCallError` when SOLIDWORKS declines, which nearly always means
-    the radius does not fit: a fillet bigger than half the thinnest wall it
-    touches has nowhere to go.
+    nothing suitable was selected.
+
+    **A radius that is far too big does not raise.** SOLIDWORKS makes the
+    feature anyway and lets it eat the model: a 200 mm fillet on one edge of
+    a 60 by 40 by 10 plate leaves a 2,156 mm3 sliver with five faces, and
+    reports success. Check the volume afterwards if the radius is coming from
+    somewhere you do not control.
     """
     from ..const import (
         swFeatureFilletAttachEdges,

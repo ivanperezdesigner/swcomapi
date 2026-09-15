@@ -84,12 +84,15 @@ class TestFillet:
         assert made.type == "Fillet"
         assert len(block.bodies[0].faces) == 7
 
-    def test_a_radius_that_does_not_fit_raises(self, block):
-        from swcomapi.errors import SwCallError
+    def test_a_radius_that_is_far_too_big_eats_the_part(self, block):
+        """It does not raise. SOLIDWORKS makes the feature and reports success.
 
+        This is here because the docstring used to promise the opposite.
+        """
         longest = max(block.bodies[0].edges, key=lambda e: e.length)
-        with pytest.raises(SwCallError, match="would not fillet"):
-            block.fillet(200, edges=[longest])
+        made = block.fillet(200, edges=[longest])
+        assert made.type == "Fillet"
+        assert block.bodies[0].volume < 0.2 * 60 * 40 * 10
 
     def test_the_volume_drops(self, block):
         before = block.bodies[0].volume

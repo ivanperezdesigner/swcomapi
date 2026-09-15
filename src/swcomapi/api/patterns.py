@@ -37,6 +37,7 @@ from .selection import select, select_all
 DIRECTION_1 = 1
 DIRECTION_2 = 2
 MIRROR_ABOUT = 2
+MIRROR_FEATURES = 1
 FEATURES = 4
 
 
@@ -256,8 +257,11 @@ def mirror(document, features, about, merge=True, geometry_pattern=False):
     to_mirror = _as_list(features)
     mirror_body = any(isinstance(thing, Body) for thing in to_mirror)
 
+    # Mark 1, not 4. Every other call in this module reads what to repeat
+    # from mark 4; InsertMirrorFeature2 reads it from mark 1, and answers a
+    # bare None to anything else.
     document.clear_selection()
-    select_all(document, to_mirror, mark=FEATURES if not mirror_body else 1)
+    select_all(document, to_mirror, mark=MIRROR_FEATURES)
     select(document, about, mark=MIRROR_ABOUT)
 
     manager = com.call(document.com, "FeatureManager")
