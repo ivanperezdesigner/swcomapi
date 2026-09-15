@@ -36,6 +36,7 @@ from collections.abc import Sequence
 from .. import com
 from ..errors import SwCallError
 from ..units import mm, to_mm
+from .selection import select
 
 # swSketchSegments_e, as readable names.
 SEGMENT_TYPES = {
@@ -45,6 +46,28 @@ SEGMENT_TYPES = {
     3: "spline",
     4: "text",
     5: "parabola",
+}
+
+
+# What ``SketchAddConstraints`` calls each relation. The identifiers are the
+# names of ``swConstraintType_e`` with an ``sg`` in front, which is a
+# convention nothing states and everything relies on.
+RELATIONS = {
+    "horizontal": "sgHORIZONTAL2D",
+    "vertical": "sgVERTICAL2D",
+    "coincident": "sgCOINCIDENT",
+    "collinear": "sgCOLINEAR",
+    "concentric": "sgCONCENTRIC",
+    "parallel": "sgPARALLEL",
+    "perpendicular": "sgPERPENDICULAR",
+    "tangent": "sgTANGENT",
+    "equal": "sgSAMELENGTH",
+    "fixed": "sgFIXED",
+    "symmetric": "sgSYMMETRIC",
+    "midpoint": "sgATMIDDLE",
+    "merge": "sgMERGEPOINTS",
+    "pierce": "sgPIERCE",
+    "intersection": "sgATINTERSECT",
 }
 
 
@@ -449,6 +472,176 @@ class SketchSession:
         """
         return bool(com.call(self.manager, "SketchUseEdge3", chain, inner_loops))
 
+    # --------------------------------------------------------- constraining
+
+    def dimension(self, entities, at, value=None, name=None):
+        """Add a driving dimension. Returns its full name, as a str.
+
+        entities
+            what to measure: one `Segment` for its own length or diameter,
+            two for the distance or angle between them. Sketch points work
+            too, as `point` returns them
+        at
+            where the dimension sits, as ``(x, y)`` or ``(x, y, z)`` in mm.
+            Away from the geometry, or SOLIDWORKS puts the text on top of it
+        value
+            what to drive it to, in mm - or degrees for an angle. None
+            leaves it at whatever was drawn
+        name
+            rename it, so later code can say ``part.dimensions["width@..."]``
+            instead of ``D1``
+
+        Returns the name to use with `swcomapi.api.dimensions.Dimensions`:
+        ``'width@Sketch1@plate.SLDPRT'``.
+
+        Example, a rectangle driven to 60 by 30:
+
+            >>> blank = app.new_part()                       # doctest: +SKIP
+            >>> with blank.sketch_on("Front Plane") as sk:   # doctest: +SKIP
+            ...     sides = sk.rectangle((0, 0), (50, 25))
+            ...     wide = sk.dimension(sides[0], (25, -12), 60, name="width")
+            >>> blank.dimensions["width@Sketch1"]            # doctest: +SKIP
+            60.0
+
+        **Do not pass ``add_to_db=True`` when you mean to dimension.** That
+        mode exists to keep SOLIDWORKS from inventing relations, and a
+        dimension is a relation: in database mode the geometry goes in
+        unattached and the dimension has nothing to hold.
+        """
+        for position, entity in enumerate(_as_list(entities)):
+            select(self.document, entity, append=position > 0)
+
+        x, y, z = _point(at)
+        display = com.call(self.document.com, "AddDimension2", x, y, z)
+        if display is None:
+            raise SwCallError(
+                "SOLIDWORKS would not dimension that. One entity gives a "
+                "length or a diameter, two give a distance or an angle; "
+                "anything else it declines. In a sketch opened with "
+                "add_to_db=True there is nothing to attach a dimension to.",
+                member="AddDimension2",
+            )
+
+        measured = com.call(display, "GetDimension")
+        if name is not None:
+            com.set_property(measured, "Name", str(name))
+        full = com.call(measured, "FullName")
+
+        if value is not None:
+            self.document.dimensions[full] = value
+        return full
+
+    def relate(self, entities, kind):
+        """Add a geometric relation. Returns True.
+
+        entities
+            the segments or points to relate, as a list
+        kind
+            what to make it: one of the keys of `RELATIONS`
+            - ``'horizontal'``, ``'vertical'``, ``'coincident'``,
+            ``'collinear'``, ``'concentric'``, ``'parallel'``,
+            ``'perpendicular'``, ``'tangent'``, ``'equal'``, ``'fixed'``,
+            ``'symmetric'``, ``'midpoint'``, ``'merge'``, ``'pierce'`` -
+            or the raw id SOLIDWORKS uses, such as ``'sgHORIZONTAL2D'``
+
+        Example, two lines made equal:
+
+            >>> blank = app.new_part()                       # doctest: +SKIP
+            >>> with blank.sketch_on("Front Plane") as sk:   # doctest: +SKIP
+            ...     a = sk.line((0, 0), (40, 0))
+            ...     b = sk.line((40, 0), (40, 25))
+            ...     _ = sk.relate([a, b], "equal")
+            >>> len(blank.sketches["Sketch1"].segments)      # doctest: +SKIP
+            2
+
+        A relation that cannot hold - two lines already perpendicular made
+        parallel - is refused by the solver, not by this call, and shows up
+        as an over-defined sketch rather than an exception.
+        """
+        identifier = RELATIONS.get(str(kind).lower(), str(kind))
+        for position, entity in enumerate(_as_list(entities)):
+            select(self.document, entity, append=position > 0)
+        com.call(self.document.com, "SketchAddConstraints", identifier)
+        return True
+
+    def offset(
+        self,
+        distance,
+        entities=None,
+        both_directions=False,
+        chain=True,
+        construction=False,
+        dimension=False,
+    ):
+        """Offset the selected geometry. Returns True.
+
+        distance
+            how far, in mm. Negative goes the other way
+        entities
+            what to offset. None offsets whatever is selected already
+        both_directions
+            True offsets to each side
+        chain
+            True follows the chain of connected segments
+        construction
+            True makes the result construction geometry
+        dimension
+            True adds a driving dimension for the offset
+
+        Example, a 3 mm inset round a rectangle:
+
+            >>> blank = app.new_part()                       # doctest: +SKIP
+            >>> with blank.sketch_on("Front Plane") as sk:   # doctest: +SKIP
+            ...     sides = sk.rectangle((0, 0), (60, 30))
+            ...     _ = sk.offset(-3, entities=sides)
+            >>> len(blank.sketches["Sketch1"].segments) > 4  # doctest: +SKIP
+            True
+        """
+        if entities is not None:
+            for position, entity in enumerate(_as_list(entities)):
+                select(self.document, entity, append=position > 0)
+        return bool(
+            com.call(
+                self.manager,
+                "SketchOffset2",
+                mm(distance),
+                bool(both_directions),
+                bool(chain),
+                0,                      # CapEnds: none
+                1 if construction else 0,
+                bool(dimension),
+            )
+        )
+
+    def mirror(self, entities, about):
+        """Mirror sketch geometry about a centreline. Returns True.
+
+        entities
+            the segments to mirror
+        about
+            the centreline to mirror across, as the `Segment` that
+            `centreline` returned
+
+        Example, half a profile made whole:
+
+            >>> blank = app.new_part()                       # doctest: +SKIP
+            >>> with blank.sketch_on("Front Plane") as sk:   # doctest: +SKIP
+            ...     spine = sk.centreline((0, -20), (0, 20))
+            ...     side = sk.line((10, -20), (10, 20))
+            ...     _ = sk.mirror([side], about=spine)
+            >>> len(blank.sketches["Sketch1"].segments)      # doctest: +SKIP
+            3
+
+        The centreline goes in last, which is what ``SketchMirror`` reads it
+        from, and it has to be construction geometry - a plain line is not a
+        mirror line however it is drawn.
+        """
+        for position, entity in enumerate(_as_list(entities)):
+            select(self.document, entity, append=position > 0)
+        select(self.document, about, append=True)
+        com.call(self.document.com, "SketchMirror")
+        return True
+
     def __repr__(self):
         where = f" on {self.plane!r}" if self.plane else ""
         return f"<SketchSession{where}>"
@@ -477,3 +670,18 @@ def _point(value):
             f"a point is (x, y) or (x, y, z) in mm, not {values!r}"
         )
     return mm(x), mm(y), mm(z)
+
+
+def _as_list(value):
+    """One thing or many, always as a list.
+
+    Examples::
+
+        >>> _as_list(1)
+        [1]
+        >>> _as_list([1, 2])
+        [1, 2]
+    """
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    return [value]

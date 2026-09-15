@@ -99,7 +99,7 @@ An open SOLIDWORKS document.
 | `.save_as(path, **options)` | Save to `path`. The extension picks the format. |
 | `.export(path, **options)` | Save a copy to `path`, leaving this document where it is. |
 | `.close(save=False)` | Close the document. |
-| `.select(name, kind, mark=0, append=False)` | Select something by name. Returns True if it got selected. |
+| `.select(name, kind, mark=0, append=False, at=None)` | Select something by name. Returns True if it got selected. |
 | `.clear_selection()` | Deselect everything. Returns None. |
 | `.selection_count` | [get] How many things are selected, as an int. |
 
@@ -114,6 +114,16 @@ A part document. Adds modelling, mass properties and sheet metal.
 | `.extrude(depth, **options)` | Extrude a sketch into a boss. Returns the new `Feature`. |
 | `.cut(depth=None, **options)` | Cut a sketch out of the body. Returns the new `Feature`. |
 | `.revolve(angle=360.0, **options)` | Revolve a sketch into a boss. Returns the new `Feature`. |
+| `.sweep(profile=None, path=None, **options)` | Sweep a profile along a path. Returns the new `Feature`. |
+| `.loft(profiles=None, **options)` | Loft between two or more profiles. Returns the new `Feature`. |
+| `.fillet(radius, edges=None, **options)` | Round edges or faces. Returns the new `Feature`. |
+| `.chamfer(distance, edges=None, **options)` | Break edges at an angle. Returns the new `Feature`. |
+| `.shell(thickness, faces=None, **options)` | Hollow the body out. Returns the new `Feature`. |
+| `.hole(diameter, at, **options)` | Drill a plain round hole. Returns the new `Feature`. |
+| `.patterns` | [get] The pattern calls, as a `swcomapi.api.patterns.Patterns`. |
+| `.mirror(features, about, **options)` | Mirror features or a body about a plane. Returns the new `Feature`. |
+| `.plane(reference, distance=None, **options)` | Make a reference plane. Returns the new `Feature`. |
+| `.axis(reference, second=None)` | Make a reference axis. Returns the new `Feature`. |
 | `.mass_properties` | [get] Mass, volume, area and centre of mass, as a dict. |
 | `.mass` | [get] Mass in grams, as a float. |
 | `.volume` | [get] Volume in cubic millimetres, as a float. |
@@ -136,6 +146,11 @@ An assembly document. Adds components.
 | `.components` | [get] The top-level components, as a `swcomapi.api.components.Components`. |
 | `.component_count` | [get] How many components the assembly has, counting sub-assemblies. |
 | `.component_paths()` | The file path of every top-level component, as a list of str. |
+| `.mates` | [get] The mates, as a `swcomapi.api.mates.Mates`. |
+| `.patterns` | [get] The pattern calls, as a `swcomapi.api.patterns.Patterns`. |
+| `.plane(reference, distance=None, **options)` | Make a reference plane in the assembly. Returns the new `Feature`. |
+| `.axis(reference, second=None)` | Make a reference axis in the assembly. Returns the new `Feature`. |
+| `.interferences(coincident_is_interference=False)` | Every interference between components, as a list of dicts. |
 
 ### `Drawing`
 
@@ -203,6 +218,10 @@ A sketch open for editing, with the drawing methods on it.
 | `.center_rectangle(centre, corner)` | A rectangle centred on `centre`. Returns four `Segment`. |
 | `.point(at)` | A sketch point. Returns the raw `ISketchPoint`. |
 | `.use_edges(chain=True, inner_loops=False)` | Convert the selected edges into sketch geometry. Returns True. |
+| `.dimension(entities, at, value=None, name=None)` | Add a driving dimension. Returns its full name, as a str. |
+| `.relate(entities, kind)` | Add a geometric relation. Returns True. |
+| `.offset(distance, entities=None, both_directions=False, chain=True, construction=False, dimension=False)` | Offset the selected geometry. Returns True. |
+| `.mirror(entities, about)` | Mirror sketch geometry about a centreline. Returns True. |
 
 ## `modeling`
 
@@ -219,6 +238,82 @@ Cut a sketch out of the body. Returns the new `Feature`.
 ### `revolve(document, angle=360.0, sketch=None, axis=None, reverse=False, merge=True)`
 
 Revolve a sketch into a boss. Returns the new `Feature`.
+
+### `fillet(document, radius, edges=None, propagate=True, keep_features=True, constant_width=False, round_corners=False)`
+
+Round edges or faces. Returns the new `Feature`.
+
+### `chamfer(document, distance, edges=None, angle=45.0, other_distance=None, propagate=True, flip=False)`
+
+Break edges or faces at an angle. Returns the new `Feature`.
+
+### `shell(document, thickness, faces=None, outward=False)`
+
+Hollow the body out, opening the given faces. Returns the new `Feature`.
+
+### `hole(document, diameter, at, depth=None, face=None, through_all=False, reverse=False)`
+
+Put a plain round hole through a face. Returns the new `Feature`.
+
+### `sweep(document, profile=None, path=None, merge=True, keep_tangency=True)`
+
+Sweep a profile along a path. Returns the new `Feature`.
+
+### `loft(document, profiles=None, closed=False, merge=True, keep_tangency=True)`
+
+Loft between two or more profiles. Returns the new `Feature`.
+
+## `patterns`
+
+### `linear(document, features, direction, count, spacing, second_direction=None, second_count=1, second_spacing=0.0, reverse=False, reverse_second=False, geometry_pattern=False)`
+
+Repeat features along one or two directions. Returns the new `Feature`.
+
+### `circular(document, features, axis, count, angle=360.0, equal_spacing=True, reverse=False, geometry_pattern=False, symmetric=False)`
+
+Repeat features round an axis. Returns the new `Feature`.
+
+### `mirror(document, features, about, merge=True, geometry_pattern=False)`
+
+Mirror features about a plane or a face. Returns the new `Feature`.
+
+### `Patterns`
+
+The pattern calls, hanging off a document.
+
+| call | what it does |
+|---|---|
+| `.linear(features, direction, count, spacing, **options)` | Repeat along a direction. See `swcomapi.api.patterns.linear`. |
+| `.circular(features, axis, count, angle=360.0, **options)` | Repeat round an axis. See `swcomapi.api.patterns.circular`. |
+| `.mirror(features, about, **options)` | Mirror across a plane. See `swcomapi.api.patterns.mirror`. |
+
+## `reference`
+
+### `plane(document, reference, distance=None, angle=None, second=None, third=None, reverse=False, midplane=False)`
+
+Make a reference plane. Returns the new `Feature`.
+
+### `axis(document, reference, second=None)`
+
+Make a reference axis. Returns the new `Feature`.
+
+## `selection`
+
+### `select(document, thing, mark=0, append=True)`
+
+Select one thing, with a mark. Returns True.
+
+### `select_all(document, things, mark=0, append=False)`
+
+Select several things under one mark. Returns how many, as an int.
+
+### `selection_data(document, mark)`
+
+An `ISelectData` carrying `mark`, or None for mark 0.
+
+### `selected(document, mark=-1)`
+
+How many things are selected under `mark`, as an int.
 
 ## `features`
 
@@ -454,11 +549,16 @@ One instance in an assembly tree.
 | `.make_lightweight()` | Load the instance lightweight. Returns True. |
 | `.visible` | [get/set] Whether the instance is shown, as a bool. |
 | `.excluded_from_bom` | [get/set] Whether the instance is left out of the bill of materials, a bool. |
-| `.fixed` | [get] True if the instance is fixed rather than floating, as a bool. |
+| `.fixed` | [get/set] True if the instance is fixed rather than floating, as a bool. |
 | `.flexible` | [get] True if a sub-assembly is solved flexible rather than rigid. |
 | `.position` | [get] Where the instance sits, as an `(x, y, z)` tuple in mm. |
 | `.box` | [get] The bounding box in mm, as `(x1, y1, z1, x2, y2, z2)`. |
 | `.children` | [get] The instances directly inside this one, as a list of `Component`. |
+| `.body` | [get] The instance's solid body, as a `swcomapi.api.geometry.Body`, or None. |
+| `.faces` | [get] The instance's faces, as a list of `swcomapi.api.geometry.Face`. |
+| `.edges` | [get] The instance's edges, as a list of `swcomapi.api.geometry.Edge`. |
+| `.plane(name='Front Plane')` | One of the instance's planes, ready to select or mate. |
+| `.move(to=None, by=None)` | Put the instance somewhere. Returns its new position, in mm. |
 | `.select(append=False)` | Select the instance in the assembly. Returns True. |
 
 ### `Components`
@@ -468,11 +568,45 @@ The top-level components of an assembly.
 | call | what it does |
 |---|---|
 | `.names()` | Every top-level instance name, as a list of str. |
+| `.in_order()` | Every top-level instance sorted by name, as a list of `Component`. |
 | `.paths()` | The file behind every top-level instance, as a list of str. |
 | `.all()` | Every component at every level, as a list of `Component`. |
 | `.of_path(path)` | Every instance that comes from `path`, as a list of `Component`. |
 | `.suppressed()` | The instances that are suppressed, as a list of `Component`. |
 | `.add(path, at=(0.0, 0.0, 0.0), configuration=None)` | Insert a part or sub-assembly. Returns the new `Component`. |
+
+## `mates`
+
+### `Mate`
+
+One mate in an assembly.
+
+| call | what it does |
+|---|---|
+| `.name` | [get] The mate's name as the tree shows it, as a str: `'Coincident1'`. |
+| `.kind` | [get] What sort of mate it is, as a str: `'coincident'`, `'distance'`. |
+| `.alignment` | [get] How the two halves face each other, as a str. |
+| `.distance` | [get] The mate's distance in mm, as a float, or None if it has none. |
+| `.angle` | [get] The mate's angle in degrees, as a float, or None if it has none. |
+| `.delete()` | Remove the mate. Returns True. |
+
+### `Mates`
+
+The mates of an assembly, and the calls that add more.
+
+| call | what it does |
+|---|---|
+| `.names()` | Every mate name, in tree order. As a list of str. |
+| `.of_kind(kind)` | Every mate of one sort, as a list of `Mate`. |
+| `.add(first, second, kind, distance=None, angle=None, align='closest', flip=False, lock_rotation=False)` | Add a mate between two things. Returns the new `Mate`. |
+| `.coincident(first, second, **options)` | Make two faces, edges or points touch. Returns the new `Mate`. |
+| `.concentric(first, second, **options)` | Line two round things up on the same axis. Returns the new `Mate`. |
+| `.distance(first, second, value, **options)` | Hold two things a fixed distance apart, in mm. Returns a `Mate`. |
+| `.parallel(first, second, **options)` | Keep two things parallel. Returns the new `Mate`. |
+| `.perpendicular(first, second, **options)` | Keep two things square to each other. Returns the new `Mate`. |
+| `.tangent(first, second, **options)` | Keep a round thing touching a flat or round one. Returns a `Mate`. |
+| `.angle(first, second, value, **options)` | Hold two things at a fixed angle, in degrees. Returns a `Mate`. |
+| `.lock(first, second, **options)` | Freeze one component relative to another. Returns the new `Mate`. |
 
 ## `drawing`
 
@@ -493,6 +627,10 @@ One view on a sheet.
 | `.dimension_count` | [get] How many dimensions are shown in the view, as an int. |
 | `.dimensions` | [get] The dimensions shown in the view, as a list of raw objects. |
 | `.activate()` | Make this the active view. Returns True. |
+| `.insert_dimensions(all_views=False, duplicates=False, hidden=False)` | Bring the model's dimensions onto the drawing. Returns True. |
+| `.add_note(text, at, height=None)` | Put a note on the sheet. Returns the raw `INote`. |
+| `.add_balloons(style=None, layout=None)` | Balloon every component in the view. Returns True. |
+| `.add_bom(at=(300.0, 250.0), kind='top level', template='', anchored=False)` | Put a bill of materials on the sheet. Returns the raw table. |
 
 ### `Views`
 
@@ -503,6 +641,8 @@ The views on the active sheet.
 | `.names()` | Every view name on the active sheet, as a list of str. |
 | `.add(model, view='Front', at=(100.0, 100.0), scale=None)` | Put a model view on the sheet. Returns the new `View`. |
 | `.add_standard(model)` | Put front, top and right views on the sheet. Returns True. |
+| `.add_section(parent, through, at, label='A', aligned=True, flip=False, partial=False)` | Cut a section through a view. Returns the new `View`. |
+| `.add_detail(parent, centre, radius, at, label='B', scale=None, style='standard', full_outline=False)` | Blow up part of a view. Returns the new `View`. |
 | `.of_kind(kind)` | Every view of one sort, as a list of `View`. |
 
 ### `Sheet`
@@ -557,4 +697,4 @@ A readable name for the format `path`'s extension implies, or None.
 
 ---
 
-207 members across 15 modules.
+258 members across 19 modules.

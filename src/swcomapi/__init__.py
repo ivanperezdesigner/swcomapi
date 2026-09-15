@@ -18,9 +18,12 @@ Three layers
 ------------
 
 ``swcomapi.api``
-    written by hand, documented, with runnable examples: connecting, opening,
-    configurations, features, dimensions, properties, drawings, export. This
-    is where the names above come from.
+    written by hand, documented, with runnable examples: connecting and
+    opening; sketching, dimensioning and relating; extrude, cut, revolve,
+    sweep, loft, fillet, chamfer, shell, hole; patterns, mirrors, reference
+    planes and axes; components and mates; sheets, views, sections, details,
+    notes and the parts list; configurations, dimensions, properties,
+    materials and export. This is where the names above come from.
 ``swcomapi.enums`` and ``swcomapi.const``
     all 1,434 enumerations and 14,889 constants, generated from the type
     libraries that ship with your SOLIDWORKS.
@@ -48,7 +51,7 @@ the signature table and the documentation links are plain data and import
 anywhere.
 """
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 # Everything below the errors is resolved lazily, through the module-level
 # __getattr__, for one concrete reason: importing this package must stay cheap

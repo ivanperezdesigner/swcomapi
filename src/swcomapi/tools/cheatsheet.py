@@ -21,6 +21,9 @@ ORDER = [
     "document",
     "sketch",
     "modeling",
+    "patterns",
+    "reference",
+    "selection",
     "features",
     "dimensions",
     "configurations",
@@ -30,6 +33,7 @@ ORDER = [
     "geometry",
     "sheetmetal",
     "components",
+    "mates",
     "drawing",
     "export",
 ]

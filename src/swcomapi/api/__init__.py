@@ -26,6 +26,24 @@ What each module covers:
     dimensions by full name, in millimetres and degrees.
 `swcomapi.api.properties`
     custom properties as a dict, per file and per configuration.
+`swcomapi.api.sketch`
+    drawing a sketch, dimensioning it and relating it.
+`swcomapi.api.modeling`
+    extrude, cut, revolve, sweep, loft, fillet, chamfer, shell, hole.
+`swcomapi.api.patterns`
+    linear and circular patterns, and mirrors.
+`swcomapi.api.reference`
+    reference planes and axes.
+`swcomapi.api.geometry`
+    bodies, faces, edges and vertices.
+`swcomapi.api.components`
+    the instances in an assembly, and where they sit.
+`swcomapi.api.mates`
+    what holds an assembly together.
+`swcomapi.api.drawing`
+    sheets, views, sections, details, dimensions, notes and the parts list.
+`swcomapi.api.selection`
+    selecting what a feature call works from, marks and all.
 `swcomapi.api.export`
     saving in any format, with the error bitmasks decoded.
 
@@ -41,6 +59,8 @@ from .configurations import Configurations
 from .dimensions import Dimensions
 from .document import Assembly, Document, Drawing, Part, wrap
 from .features import Feature, Features
+from .mates import Mate, Mates
+from .patterns import Patterns
 from .properties import Properties
 
 __all__ = [
@@ -55,4 +75,7 @@ __all__ = [
     "Feature",
     "Dimensions",
     "Properties",
+    "Mate",
+    "Mates",
+    "Patterns",
 ]

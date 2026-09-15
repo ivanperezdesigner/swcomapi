@@ -47,6 +47,7 @@ from collections.abc import Sequence
 
 from .. import com
 from ..errors import SwCallError
+from ..units import mm
 
 # The suppression states a component can be in, as readable strings.
 # swComponentSuppressionState_e, which has two names for the same idea:
@@ -257,6 +258,14 @@ class Component:
         """True if the instance is fixed rather than floating, as a bool."""
         return bool(com.call(self.com, "IsFixed"))
 
+    @fixed.setter
+    def fixed(self, value):
+        """Fix the instance where it is, or float it."""
+        self._owner().clear_selection()
+        self.select()
+        com.call(self._owner().com, "FixComponent" if value else "UnfixComponent")
+        self._owner().clear_selection()
+
     @property
     def flexible(self):
         """True if a sub-assembly is solved flexible rather than rigid."""
@@ -320,6 +329,137 @@ class Component:
         """
         children = com.to_list(com.call(self.com, "GetChildren"))
         return [Component(child, self._assembly) for child in children]
+
+    # ---------------------------------------------------- what can be mated
+
+    @property
+    def body(self):
+        """The instance's solid body, as a `swcomapi.api.geometry.Body`, or None.
+
+        The body **in the assembly**, not in the part file. That distinction
+        is the one that makes mates work: a face read from
+        ``component.document.bodies`` belongs to the part and SOLIDWORKS will
+        not mate it, while a face read from here belongs to the instance and
+        will.
+
+        None for a component that is suppressed or not loaded.
+        """
+        from .geometry import Body
+
+        raw = com.call(self.com, "GetBody")
+        if raw is None:
+            return None
+        return Body(raw, self._owner())
+
+    @property
+    def faces(self):
+        """The instance's faces, as a list of `swcomapi.api.geometry.Face`.
+
+        Empty for a component with no body loaded.
+
+        Example, the faces of the first instance:
+
+            >>> first, second = assembly.components.in_order()  # doctest: +SKIP
+            >>> len(first.faces)                             # doctest: +SKIP
+            7
+        """
+        body = self.body
+        return body.faces if body is not None else []
+
+    @property
+    def edges(self):
+        """The instance's edges, as a list of `swcomapi.api.geometry.Edge`."""
+        body = self.body
+        return body.edges if body is not None else []
+
+    def plane(self, name="Front Plane"):
+        """One of the instance's planes, ready to select or mate.
+
+        Returns a ``(name, kind)`` tuple, which is what
+        `swcomapi.api.selection.select` and every mate call accept:
+
+            >>> first, second = assembly.components.in_order()  # doctest: +SKIP
+            >>> first.plane("Right Plane")[1]                # doctest: +SKIP
+            'PLANE'
+            >>> assembly.mates.coincident(first.plane("Top Plane"),
+            ...                           second.plane("Top Plane")).kind
+            ... # doctest: +SKIP
+            'coincident'
+
+        Mating planes rather than faces is what a person does when the part
+        may change shape later, and it is the only thing to mate on a
+        component whose body is not loaded.
+        """
+        return (f"{name}@{self.select_id}", "PLANE")
+
+    # ------------------------------------------------------------- moving
+
+    def move(self, to=None, by=None):
+        """Put the instance somewhere. Returns its new position, in mm.
+
+        to
+            an ``(x, y, z)`` point in mm, in assembly coordinates
+        by
+            an ``(x, y, z)`` offset in mm, added to where it is now
+
+        Exactly one of the two. Only the position changes; the orientation is
+        left as it was.
+
+        Example, nudging the second plate 30 mm along x:
+
+            >>> first, second = assembly.components.in_order()  # doctest: +SKIP
+            >>> second.move(by=(30, 0, 0))[0] - second.position[0]  # doctest: +SKIP
+            0.0
+
+        A component held by mates moves and springs back, because the mates
+        are solved afterwards - which is deliberate: it is how you check that
+        a mate really holds. To move a mated component for good, delete the
+        mate or use `fix`.
+        """
+        if (to is None) == (by is None):
+            raise SwCallError(
+                "move takes either to= (an absolute point in mm) or by= "
+                "(an offset in mm), not both and not neither",
+                member="SetTransformAndSolve2",
+            )
+
+        transform = com.call(self.com, "Transform2")
+        if transform is None:
+            raise SwCallError(
+                f"{self.name!r} has no transform, so it cannot be moved. "
+                f"A suppressed or unloaded component has none.",
+                member="Transform2",
+            )
+        data = list(com.to_list(com.call(transform, "ArrayData")))
+
+        if to is not None:
+            data[9], data[10], data[11] = (mm(value) for value in to)
+        else:
+            for offset, index in zip(by, (9, 10, 11), strict=False):
+                data[index] += mm(offset)
+
+        com.set_property(transform, "ArrayData", com.from_list(data))
+        if not com.call(self.com, "SetTransformAndSolve2", transform):
+            raise SwCallError(
+                f"SOLIDWORKS would not move {self.name!r}. A fixed component "
+                f"does not move: float it first with .fixed = False.",
+                member="SetTransformAndSolve2",
+            )
+        return self.position
+
+    def _owner(self):
+        """The assembly this instance belongs to, as an `Assembly`.
+
+        Raises `SwCallError` when the component was built without one, which
+        happens only if something bypassed ``assembly.components``.
+        """
+        if self._assembly is None:
+            raise SwCallError(
+                f"{self.name!r} was reached without its assembly, so there "
+                f"is nothing to move it in; get it from assembly.components",
+                member="Transform2",
+            )
+        return self._assembly
 
     def select(self, append=False):
         """Select the instance in the assembly. Returns True."""
@@ -388,6 +528,22 @@ class Components(Sequence):
     def names(self):
         """Every top-level instance name, as a list of str."""
         return [component.name for component in self]
+
+    def in_order(self):
+        """Every top-level instance sorted by name, as a list of `Component`.
+
+        ``GetComponents`` does not answer in the order the components were
+        inserted, and it does not answer in the same order twice, so anything
+        that picks a component by position has to sort first:
+
+            >>> first, second = assembly.components.in_order()   # doctest: +SKIP
+            >>> first.name.endswith("-1")                        # doctest: +SKIP
+            True
+
+        This caught two examples in 0.1.1 that passed one run and failed the
+        next.
+        """
+        return sorted(self, key=lambda component: component.name)
 
     def paths(self):
         """The file behind every top-level instance, as a list of str.

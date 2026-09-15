@@ -14,22 +14,25 @@ already answers to that, and the two are meant to be used together.
 - [1. Connecting](#1-connecting)
 - [2. Documents](#2-documents)
 - [3. Sketching](#3-sketching)
-- [4. Features](#4-features)
-- [5. Dimensions](#5-dimensions)
-- [6. Custom properties](#6-custom-properties)
-- [7. Configurations](#7-configurations)
-- [8. Mass, material and geometry](#8-mass-material-and-geometry)
-- [9. Equations](#9-equations)
-- [10. Sheet metal](#10-sheet-metal)
-- [11. Assemblies](#11-assemblies)
-- [12. Drawings](#12-drawings)
-- [13. Exporting](#13-exporting)
-- [14. Enumerations and constants](#14-enumerations-and-constants)
-- [15. Finding out what exists](#15-finding-out-what-exists)
-- [16. Units](#16-units)
-- [17. The escape hatch](#17-the-escape-hatch)
-- [18. Errors](#18-errors)
-- [19. What this package does not do](#19-what-this-package-does-not-do)
+- [4. Dress-up: fillet, chamfer, shell, hole](#4-dress-up-fillet-chamfer-shell-hole)
+- [5. Patterns and mirrors](#5-patterns-and-mirrors)
+- [6. Reference geometry](#6-reference-geometry)
+- [7. Features](#7-features)
+- [8. Dimensions](#8-dimensions)
+- [9. Custom properties](#9-custom-properties)
+- [10. Configurations](#10-configurations)
+- [11. Mass, material and geometry](#11-mass-material-and-geometry)
+- [12. Equations](#12-equations)
+- [13. Sheet metal](#13-sheet-metal)
+- [14. Assemblies](#14-assemblies)
+- [15. Drawings](#15-drawings)
+- [16. Exporting](#16-exporting)
+- [17. Enumerations and constants](#17-enumerations-and-constants)
+- [18. Finding out what exists](#18-finding-out-what-exists)
+- [19. Units](#19-units)
+- [20. The escape hatch](#20-the-escape-hatch)
+- [21. Errors](#21-errors)
+- [22. What this package does not do](#22-what-this-package-does-not-do)
 
 ---
 
@@ -188,9 +191,191 @@ part.cut(through_all=True)
 # cuts towards you unless you pass reverse=True.
 ```
 
+### Dimensions and relations
+
+A sketch drawn with `add_to_db=True` has no relations and no dimensions: the
+geometry goes straight into the database, unattached. That is what you want
+when a script is placing everything itself. When the sketch has to stay
+parametric, leave `add_to_db` off and drive it:
+
+```python
+part = app.new_part()
+with part.sketch_on("Front Plane") as sketch:
+    sides = sketch.rectangle((0, 0), (50, 25))
+    sketch.dimension(sides[0], at=(25, -12), value=60, name="width")
+    sketch.dimension(sides[1], at=(-12, 12), value=30, name="height")
+
+part.dimensions["width@Sketch1"]
+# 60.0
+```
+
+`dimension` returns the full name `part.dimensions` wants, so the dimension it
+just made is drivable from then on — including from a design table.
+
+Relations by their English names:
+
+```python
+with part.sketch_on("Front Plane") as sketch:
+    first = sketch.line((0, 0), (40, 0))
+    second = sketch.line((40, 0), (40, 25))
+    sketch.relate([first, second], "equal")
+    sketch.relate([first], "horizontal")
+```
+
+`horizontal`, `vertical`, `coincident`, `collinear`, `concentric`, `parallel`,
+`perpendicular`, `tangent`, `equal`, `fixed`, `symmetric`, `midpoint`,
+`merge`, `pierce`, `intersection` — and the raw `sg` identifier for anything
+else. There is also `sketch.offset(...)` and `sketch.mirror(...)`.
+
+Trim and extend are not wrapped: both are pick-point operations whose
+enumeration is not in every install, and a script that knows where its
+geometry is has no reason to trim.
+
+
 ---
 
-## 4. Features
+## 4. Dress-up: fillet, chamfer, shell, hole
+
+None of these takes geometry as an argument in the raw API: they work from
+what is selected. Here the geometry is the argument, and the selecting happens
+for you.
+
+```python
+part = app.new_part()
+with part.sketch_on("Front Plane", add_to_db=True) as sketch:
+    sketch.rectangle((0, 0), (60, 40))
+part.extrude(10)
+
+part.fillet(2, edges=part.bodies[0].edges)
+# <Feature 'Fillet1' (Fillet)>
+
+part.chamfer(2, edges=part.bodies[0].edges)
+# <Feature 'Chamfer1' (Chamfer)>
+```
+
+A chamfer takes an angle, or a second distance. `angle=` is ignored the moment
+`other_distance=` is given, because SOLIDWORKS switches to a different chamfer
+type:
+
+```python
+top = [f for f in part.bodies[0].faces if f.normal == (0.0, 0.0, 1.0)][0]
+part.chamfer(3, edges=[top], other_distance=1)
+```
+
+Shell opens the faces you name and leaves a wall behind:
+
+```python
+part.shell(2, faces=[top])
+```
+
+`InsertFeatureShell` answers nothing at all — not the feature, not a bool — so
+the feature comes back from the end of the tree, and a shell that failed is a
+tree that did not grow. That is what `shell` checks.
+
+A plain hole goes at a point **on the face**, in model coordinates:
+
+```python
+part.hole(6, at=(15, 10, 10), through_all=True)
+```
+
+That is the point the mouse would be over. There is no sketch: `SimpleHole2`
+places the hole from the selection, and the selection is the face under that
+point. A point that is not on a face raises rather than drilling somewhere
+else.
+
+The Hole Wizard is not wrapped. It takes thirty-one arguments and a standard
+you have to name exactly; drive it through `part.com.FeatureManager` when you
+need it.
+
+---
+
+## 5. Patterns and mirrors
+
+A pattern is what to repeat, which way, and how many. The API takes only the
+last as arguments; the first two are selections, filed under *marks*:
+
+| mark | what goes in it |
+| --- | --- |
+| 1 | the direction, or the axis |
+| 2 | the second direction, or the mirror plane |
+| 4 | the features to repeat |
+
+A mark in the wrong place does not fail. It makes a feature that is quietly
+wrong — which is why the marking is not left to the caller.
+
+```python
+along = max(part.bodies[0].edges, key=lambda edge: edge.length)
+part.patterns.linear("Cut-Extrude1", along, count=3, spacing=15)
+# <Feature 'LPattern1' (LPattern)>
+```
+
+`count` is the total, including the original, the way the dialog means it:
+`count=3` gives the original and two copies.
+
+Round an axis, where a cylindrical face is its own axis:
+
+```python
+bore = part.bodies[0].faces_of("cylinder")[0]
+part.patterns.circular("Cut-Extrude1", bore, count=4)
+# <Feature 'CirPattern1' (CirPattern)>
+```
+
+And a mirror, about a plane or a flat face:
+
+```python
+part.mirror("Boss-Extrude1", about="Right Plane")
+```
+
+Pass a body instead of a feature name and the whole body is mirrored:
+
+```python
+part.mirror(part.bodies[0], about="Right Plane")
+```
+
+---
+
+## 6. Reference geometry
+
+Nothing is modelled on a reference plane, and almost everything needs one.
+
+```python
+above = part.plane("Top Plane", distance=25)
+# <Feature 'Plane1' (RefPlane)>
+
+with part.sketch_on(above.name, add_to_db=True) as sketch:
+    sketch.rectangle((0, 0), (20, 20))
+```
+
+Halfway between two faces, which is the one people reach for most:
+
+```python
+faces = part.bodies[0].faces_of("plane")
+part.plane(faces[0], second=faces[1], midplane=True)
+```
+
+An angled plane needs the line it hinges on as well — a plane and an angle
+alone do not place one, and `plane` says so rather than letting SOLIDWORKS
+refuse:
+
+```python
+part.plane(face, angle=30, second=edge)
+```
+
+Axes the same way: one cylindrical face is enough, two planes give the line
+where they cross.
+
+```python
+part.axis("Front Plane", "Right Plane")
+# <Feature 'Axis1' (RefAxis)>
+part.axis(bore)
+```
+
+A cylindrical face already has a temporary axis a pattern can turn about, so
+make a real one only when it has to be selectable by name later.
+
+---
+
+## 7. Features
 
 ```python
 part.features.names()
@@ -245,7 +430,7 @@ success, and the tree does not move. This package reads the state back:
 
 ---
 
-## 5. Dimensions
+## 8. Dimensions
 
 In **millimetres and degrees**, both ways. The API works in metres and
 radians; the conversion happens here.
@@ -268,7 +453,7 @@ types in that list and would have converted every length through radians.
 
 ---
 
-## 6. Custom properties
+## 9. Custom properties
 
 A `MutableMapping`, so it behaves like a dict.
 
@@ -307,7 +492,7 @@ part.properties["Mass"]                     # '65'
 
 ---
 
-## 7. Configurations
+## 10. Configurations
 
 ```python
 part.configurations                 # <Configurations: 1 - active 'Default'>
@@ -328,7 +513,7 @@ list, silently.
 
 ---
 
-## 8. Mass, material and geometry
+## 11. Mass, material and geometry
 
 ```python
 part.mass               # 137.21415986824604      grams
@@ -415,7 +600,7 @@ wrong:
 
 ---
 
-## 9. Equations
+## 12. Equations
 
 ```python
 part.equations.add('"width" = 60')
@@ -449,7 +634,7 @@ Two things worth knowing:
 
 ---
 
-## 10. Sheet metal
+## 13. Sheet metal
 
 ```python
 part.is_sheet_metal             # True
@@ -472,7 +657,7 @@ nothing, and nothing says why. Every read here releases.
 
 ---
 
-## 11. Assemblies
+## 14. Assemblies
 
 ```python
 asm = app.new_assembly()
@@ -531,9 +716,74 @@ something closed it inserts nothing, complains about nothing and returns
 front — because `AddComponent5` inserts into whatever document is *active*,
 not into the one it was called on.
 
+### Mates
+
+Inserting a component puts it somewhere. A mate is what stops it moving.
+
+```python
+rail, gusset = assembly.components.in_order()
+
+assembly.mates.coincident(rail.plane("Top Plane"), gusset.plane("Top Plane"))
+assembly.mates.distance(rail.plane("Right Plane"),
+                        gusset.plane("Right Plane"), 80)
+assembly.mates.names()
+# ['Coincident1', 'Distance1']
+```
+
+`in_order()` is not decoration: `GetComponents` does not answer in insertion
+order, and does not answer in the same order twice. Two examples in 0.1.1
+passed one run and failed the next for exactly that reason.
+
+What can be mated is geometry **of the instance**, not of the part file:
+
+```python
+rail.plane("Right Plane")
+# ('Right Plane@rail-1@frame', 'PLANE')
+
+rail.faces          # the faces of this instance
+rail.document.bodies[0].faces   # the faces of the part file - not mateable
+```
+
+That distinction is the one that wastes an afternoon. A face read through
+`component.document` belongs to the part, and `AddMate5` refuses it with a
+status code rather than an error.
+
+The named calls are `coincident`, `concentric`, `distance`, `parallel`,
+`perpendicular`, `tangent`, `angle` and `lock`; `mates.add(first, second,
+kind)` reaches the rest by name or by `swMateType_e` number. Distances are in
+mm and angles in degrees, and a mate that fails says why:
+
+```python
+assembly.mates.concentric(rail.plane("Top Plane"), gusset.plane("Top Plane"))
+# SwCallError: SOLIDWORKS would not add a concentric mate in 'frame.SLDASM':
+# the two things cannot be mated that way.
+```
+
+Components move, and can be fixed where they are:
+
+```python
+gusset.move(by=(30, 0, 0))
+gusset.fixed = True
+```
+
+A component held by mates moves and springs back, because the mates are
+solved afterwards. That is deliberate — it is how you check that a mate
+really holds.
+
+And the interference check, run headless:
+
+```python
+assembly.interferences()
+# [{'volume': 24000.0, 'components': ['rail-1', 'rail-2']}]
+```
+
+It loads every component fully, so it is slow on a big assembly and worth
+doing once at the end rather than after every mate.
+
+
 ---
 
-## 12. Drawings
+## 15. Drawings
 
 ```python
 drawing = app.new_drawing()
@@ -591,9 +841,40 @@ Three traps, all of them silent through the raw API:
 A view made from a model view reports its kind as `'named'`, not
 `'standard'`; `'standard'` is what `Create3rdAngleViews2` lays out.
 
+### Sections, details and annotations
+
+A section view is cut along a line, and a detail view is blown up out of a
+circle. Neither can be handed to the API as an argument, so both are drawn on
+the sheet first — which is what these two do for you:
+
+```python
+front = drawing.views.add(path, "Front", at=(100, 100))
+
+drawing.views.add_section(front, through=((100, 60), (100, 140)), at=(220, 100))
+drawing.views.add_detail(front, centre=(100, 100), radius=12, at=(260, 160))
+```
+
+Everything is in mm on the sheet, measured from the bottom-left corner, for
+the line and the circle as much as for the view. The line has to cross the
+view; if SOLIDWORKS puts up a dialog asking about the section, it missed.
+
+Then the annotations:
+
+```python
+front.insert_dimensions()           # the model's own dimensions
+front.add_note("BREAK ALL EDGES 0.5", at=(20, 20))
+front.add_balloons()                # assemblies only
+front.add_bom(at=(280, 240), kind="top level")
+```
+
+`insert_dimensions` brings across the dimensions the model already has — the
+same ones `part.dimensions` drives. A dimension changed on the sheet changes
+the model.
+
+
 ---
 
-## 13. Exporting
+## 16. Exporting
 
 One call, and the extension decides the format:
 
@@ -632,7 +913,7 @@ format_of("plate.dxf")      # 'DXF'
 
 ---
 
-## 14. Enumerations and constants
+## 17. Enumerations and constants
 
 Every enumeration in the API, generated from the type libraries of the
 SOLIDWORKS on this machine — 1,434 of them, 14,889 constants.
@@ -679,7 +960,7 @@ SOLIDWORKS mixes flags and plain values inside the same enumeration, and an
 
 ---
 
-## 15. Finding out what exists
+## 18. Finding out what exists
 
 The package ships an index of the whole API: 729 interfaces, 19,874 members,
 17,097 of them with the vendor's own one-line description.
@@ -772,7 +1053,7 @@ is there when you want to know why a call behaves as it does.
 
 ---
 
-## 16. Units
+## 19. Units
 
 The API works in **metres and radians, always**, whatever the document's own
 units are set to. Everything in `swcomapi.api` converts; `swcomapi.com` does
@@ -799,7 +1080,7 @@ parses in the document's own units.
 
 ---
 
-## 17. The escape hatch
+## 20. The escape hatch
 
 Every wrapper exposes the raw COM object as `.com`, so nothing in the API is
 out of reach for want of a wrapper:
@@ -848,7 +1129,7 @@ Four things `com.call` gets right that a straight `getattr` does not:
 
 ---
 
-## 18. Errors
+## 21. Errors
 
 ```
 SwError
@@ -885,7 +1166,7 @@ from `getattr` keeps working. `SwDocumentError` carries `.path`, `.errors`,
 
 ---
 
-## 19. What this package does not do
+## 22. What this package does not do
 
 - **Design tables.** That is
   [`swdesigntables`](https://github.com/ivanperezdesigner/swdesigntables),
@@ -900,3 +1181,24 @@ from `getattr` keeps working. `SwDocumentError` carries `.path`, `.errors`,
 - **Hide the API.** Every wrapper is a thin layer over calls you could make
   yourself, and `.com` is always there. The wrapper exists to remove the
   traps, not to replace the API.
+
+### Not wrapped yet
+
+Reachable through `.com`, with `swc.find` and `swc.describe` for the
+signature, but without the unit conversion and the selection marks done for
+you:
+
+- the Hole Wizard, threads, and every hole that is not a plain round one
+- draft, rib, dome, wrap, combine, split, move/copy body, scale
+- surfacing and weldments
+- sketch trim and extend, sketch patterns, slots, polygons, text
+- mates beyond the eight named ones — width, cam, gear, slot, path, screw —
+  which `mates.add(first, second, kind)` still reaches by name or number
+- exploded views, configurations of a mate
+- geometric tolerances, datums, surface finish and weld symbols on a drawing
+- appearances, colours, layers and camera views
+- PDM
+
+The pattern for all of them is the same as the code here: find the member,
+read what it wants, pass metres and radians. If one of them turns into
+everyday work, it belongs in the package instead.

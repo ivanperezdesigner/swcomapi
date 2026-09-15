@@ -16,6 +16,10 @@ from swcomapi.api import (
     drawing,
     equations,
     export,
+    mates,
+    patterns,
+    reference,
+    selection,
     sketch,
 )
 from swcomapi.api import dimensions as dimensions_module
@@ -45,6 +49,10 @@ MODULES = [
     sketch,
     drawing,
     equations,
+    patterns,
+    reference,
+    selection,
+    mates,
 ]
 
 

@@ -46,11 +46,14 @@ FLAGS = doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE
 # is not built, so a docstring about dimensions does not pay for an assembly.
 FIXTURES = (
     "part",
+    "block",
     "document",
     "assembly",
     "drawing",
     "body",
     "face",
+    "edge",
+    "bore",
     "sketch",
     "path",
     "folder",
@@ -92,6 +95,20 @@ class Scratch:
         part.cut(through_all=True, reverse=True)
         part.set_material("6061 Alloy")
         return part
+
+    def block(self):
+        """A plain 60 by 40 by 10 plate, with no hole in it.
+
+        What the dress-up examples run against. `part` has a hole through the
+        middle, and a fillet or a chamfer that runs into a hole comes out
+        with a face count nobody can predict from the docstring - so the
+        examples that count faces get a block with nothing in it.
+        """
+        block = self.app.new_part()
+        with block.sketch_on("Front Plane", add_to_db=True) as sketch:
+            sketch.rectangle((0, 0), (60, 40))
+        block.extrude(10)
+        return block
 
     def saved_part(self):
         """The same plate, written to disk so an assembly can reference it.
@@ -194,7 +211,7 @@ def globs_for(test, scratch):
 
     if "path" in wanted:
         _, globs["path"] = scratch.saved_part()
-    if {"part", "document", "body", "face", "sketch"} & wanted:
+    if {"part", "document", "body", "face", "edge", "bore", "sketch"} & wanted:
         part = scratch.part()
         globs["part"] = part
         globs["document"] = part
@@ -202,8 +219,14 @@ def globs_for(test, scratch):
             globs["body"] = part.bodies[0]
         if "face" in wanted:
             globs["face"] = part.bodies[0].faces[0]
+        if "edge" in wanted:
+            globs["edge"] = max(part.bodies[0].edges, key=lambda e: e.length)
+        if "bore" in wanted:
+            globs["bore"] = part.bodies[0].faces_of("cylinder")[0]
         if "sketch" in wanted:
             globs["sketch"] = part.sketches["Sketch1"]
+    if "block" in wanted:
+        globs["block"] = scratch.block()
     if "assembly" in wanted:
         globs["assembly"] = scratch.assembly()
     if "drawing" in wanted:

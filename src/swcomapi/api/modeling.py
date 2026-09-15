@@ -1,4 +1,21 @@
-"""Making features: extrude, cut, revolve.
+"""Making features: extrude, cut, revolve, and the dress-up on top of them.
+
+What is here:
+
+============  ================================================================
+`extrude`     a sketch into a boss
+`cut`         a sketch out of the body
+`revolve`     a sketch round an axis
+`sweep`       a profile along a path
+`loft`        between two or more profiles
+`fillet`      rounds edges and faces
+`chamfer`     breaks them at an angle
+`shell`       hollows the body out
+`hole`        a plain round hole, straight through a face
+============  ================================================================
+
+Patterns and mirrors are next door in `swcomapi.api.patterns`, reference
+planes and axes in `swcomapi.api.reference`.
 
 The feature calls are the widest in the API. ``FeatureExtrusion3`` takes
 twenty-four arguments, most of which are about draft and start conditions
@@ -46,6 +63,7 @@ nothing and returns False.
 from .. import com
 from ..errors import SwCallError
 from ..units import deg, mm
+from .selection import select, select_all
 
 
 def extrude(
@@ -357,3 +375,511 @@ def _select_sketch(document, name):
             f"see part.sketches.names()",
             member="SelectByID2",
         )
+
+
+# --------------------------------------------------------------------- dress-up
+# Fillet, chamfer and shell take no geometry of their own: they work from what
+# is selected. So every one of them takes the geometry as an argument and
+# selects it here, and leaves the selection alone when nothing is passed, for
+# the caller who has already selected by hand.
+
+
+def fillet(
+    document,
+    radius,
+    edges=None,
+    propagate=True,
+    keep_features=True,
+    constant_width=False,
+    round_corners=False,
+):
+    """Round edges or faces. Returns the new `Feature`.
+
+    document
+        the `swcomapi.api.document.Part`
+    radius
+        the fillet radius in mm
+    edges
+        what to round: a list of `swcomapi.api.geometry.Edge`, of
+        `swcomapi.api.geometry.Face`, of names, or a single one of those.
+        None uses whatever is selected already
+    propagate
+        True carries the fillet round tangent edges, as the dialog does
+    keep_features
+        True keeps features that the fillet would otherwise swallow
+    constant_width
+        True holds the width constant rather than the radius
+    round_corners
+        True rounds where three fillets meet instead of mitring them
+
+    Example, breaking every edge of a plate at 2 mm:
+
+        >>> block.fillet(2, edges=block.bodies[0].edges).name   # doctest: +SKIP
+        'Fillet1'
+
+    Example, one edge only:
+
+        >>> longest = max(block.bodies[0].edges, key=lambda e: e.length)  # doctest: +SKIP
+        >>> block.fillet(3, edges=[longest]).type           # doctest: +SKIP
+        'Fillet'
+
+    Raises `SwCallError` when SOLIDWORKS declines, which nearly always means
+    the radius does not fit: a fillet bigger than half the thinnest wall it
+    touches has nowhere to go.
+    """
+    from ..const import (
+        swFeatureFilletAttachEdges,
+        swFeatureFilletConstantWidth,
+        swFeatureFilletCornerType,
+        swFeatureFilletKeepFeatures,
+        swFeatureFilletPropagate,
+        swFeatureFilletType_Simple,
+        swFeatureFilletUniformRadius,
+        swFilletOverFlowType_Default,
+    )
+    from .features import Feature
+
+    if edges is not None:
+        select_all(document, _as_list(edges))
+
+    options = swFeatureFilletUniformRadius | swFeatureFilletAttachEdges
+    if propagate:
+        options |= swFeatureFilletPropagate
+    if keep_features:
+        options |= swFeatureFilletKeepFeatures
+    if constant_width:
+        options |= swFeatureFilletConstantWidth
+    if round_corners:
+        options |= swFeatureFilletCornerType
+
+    manager = com.call(document.com, "FeatureManager")
+    feature = com.call(
+        manager,
+        "FeatureFillet3",
+        options,
+        mm(radius),                     # R1
+        0.0,                            # R2, the second radius of an asymmetric
+        0.0,                            # Rho, for a conic fillet
+        swFeatureFilletType_Simple,     # Ftyp
+        swFilletOverFlowType_Default,   # OverflowType
+        0,                              # ConicRhoType
+        None,                           # Radii, for a variable radius
+        None,                           # Dist2Arr
+        None,                           # RhoArr
+        None,                           # SetBackDistances
+        None,                           # PointRadiusArray
+        None,                           # PointDist2Array
+        None,                           # PointRhoArray
+    )
+    if feature is None:
+        raise SwCallError(
+            f"SOLIDWORKS would not fillet in {document.name!r} at "
+            f"{radius} mm. Either nothing suitable was selected, or the "
+            f"radius does not fit - a fillet cannot be larger than the "
+            f"material beside the edge it rounds.",
+            member="FeatureFillet3",
+        )
+    return Feature(feature, document)
+
+
+def chamfer(
+    document,
+    distance,
+    edges=None,
+    angle=45.0,
+    other_distance=None,
+    propagate=True,
+    flip=False,
+):
+    """Break edges or faces at an angle. Returns the new `Feature`.
+
+    document
+        the `swcomapi.api.document.Part`
+    distance
+        the chamfer distance in mm
+    edges
+        what to break, the same as `fillet` takes. None uses the selection
+    angle
+        the angle in degrees, used only when ``other_distance`` is None.
+        45 with a single distance is the everyday chamfer
+    other_distance
+        the second distance in mm, for a distance-distance chamfer. Given
+        this, ``angle`` is ignored
+    propagate
+        True carries the chamfer round tangent edges
+    flip
+        True swaps which face the distance is measured on, which matters
+        only when the two distances differ
+
+    Example, a 2 mm break on every edge:
+
+        >>> block.chamfer(2, edges=block.bodies[0].edges).name  # doctest: +SKIP
+        'Chamfer1'
+
+    Example, 3 by 1 rather than 45 degrees, on one face:
+
+        >>> top = [f for f in block.bodies[0].faces
+        ...        if f.normal == (0.0, 0.0, 1.0)][0]       # doctest: +SKIP
+        >>> block.chamfer(3, edges=[top], other_distance=1).type  # doctest: +SKIP
+        'Chamfer'
+
+    `Part.chamfer` is the same call. Raises `SwCallError` when SOLIDWORKS
+    declines, which means the chamfer does not fit or nothing was selected.
+    """
+    from ..const import (
+        swChamferAngleDistance,
+        swChamferDistanceDistance,
+        swFeatureChamferFlipDirection,
+        swFeatureChamferTangentPropagation,
+    )
+    from .features import Feature
+
+    if edges is not None:
+        select_all(document, _as_list(edges))
+
+    options = 0
+    if propagate:
+        options |= swFeatureChamferTangentPropagation
+    if flip:
+        options |= swFeatureChamferFlipDirection
+
+    if other_distance is None:
+        kind = swChamferAngleDistance
+        second = 0.0
+    else:
+        kind = swChamferDistanceDistance
+        second = mm(other_distance)
+
+    manager = com.call(document.com, "FeatureManager")
+    feature = com.call(
+        manager,
+        "InsertFeatureChamfer",
+        options,
+        kind,
+        mm(distance),       # Width
+        deg(angle),         # Angle
+        second,             # OtherDist
+        0.0,                # VertexChamDist1, for a vertex chamfer only
+        0.0,                # VertexChamDist2
+        0.0,                # VertexChamDist3
+    )
+    if feature is None:
+        raise SwCallError(
+            f"SOLIDWORKS would not chamfer in {document.name!r} at "
+            f"{distance} mm. Either nothing suitable was selected, or the "
+            f"chamfer is bigger than the material beside the edge.",
+            member="InsertFeatureChamfer",
+        )
+    return Feature(feature, document)
+
+
+def shell(document, thickness, faces=None, outward=False):
+    """Hollow the body out, opening the given faces. Returns the new `Feature`.
+
+    document
+        the `swcomapi.api.document.Part`
+    thickness
+        the wall thickness in mm
+    faces
+        the faces to remove, as `swcomapi.api.geometry.Face` objects or
+        names. None shells to a closed hollow, with no opening
+    outward
+        True adds the wall outside the existing surface instead of inside
+
+    Example, a 2 mm box open at the top:
+
+        >>> top = [f for f in block.bodies[0].faces
+        ...        if f.normal == (0.0, 0.0, 1.0)][0]       # doctest: +SKIP
+        >>> block.shell(2, faces=[top]).name                # doctest: +SKIP
+        'Shell1'
+
+    ``InsertFeatureShell`` answers nothing at all - not the feature, not even
+    a bool - so the feature comes back from the end of the tree, and a shell
+    that failed shows up as a tree that did not grow.
+    """
+    from .features import Feature
+
+    if faces is not None:
+        select_all(document, _as_list(faces))
+
+    before = len(document.features)
+    com.call(document.com, "InsertFeatureShell", mm(thickness), bool(outward))
+    if len(document.features) == before:
+        raise SwCallError(
+            f"SOLIDWORKS would not shell {document.name!r} at {thickness} mm. "
+            f"A shell needs a solid body, and a wall thinner than the "
+            f"smallest radius in it.",
+            member="InsertFeatureShell",
+        )
+    return Feature(document.features[-1].com, document)
+
+
+def hole(
+    document,
+    diameter,
+    at,
+    depth=None,
+    face=None,
+    through_all=False,
+    reverse=False,
+):
+    """Put a plain round hole through a face. Returns the new `Feature`.
+
+    document
+        the `swcomapi.api.document.Part`
+    diameter
+        across, in mm
+    at
+        where the hole goes, as an ``(x, y, z)`` point in mm **on the face**.
+        Model coordinates, not sketch coordinates: this is the point the
+        mouse would be over
+    depth
+        how deep, in mm. Ignored when ``through_all`` is True
+    face
+        the face to start from, as a `swcomapi.api.geometry.Face`. None picks
+        whatever face lies under ``at``, which is what you want nearly always
+    through_all
+        True goes all the way through instead of ``depth``
+    reverse
+        True drills the other way
+
+    Example, a 6 mm hole through a 10 mm plate at (15, 10):
+
+        >>> block.hole(6, at=(15, 10, 10), through_all=True).name  # doctest: +SKIP
+        'Hole1'
+
+    This is the plain hole, not the Hole Wizard: no counterbore, no thread,
+    no standard. For those, drive the Hole Wizard through ``part.com`` - the
+    call takes thirty-one arguments and is not worth wrapping until somebody
+    needs it.
+    """
+    from ..const import swEndCondBlind, swEndCondThroughAll
+    from .features import Feature
+
+    if depth is None and not through_all:
+        raise SwCallError(
+            "a hole needs either depth= in mm or through_all=True",
+            member="SimpleHole2",
+        )
+
+    document.clear_selection()
+    if face is not None:
+        select(document, face)
+    elif not document.select("", "FACE", at=at):
+        raise SwCallError(
+            f"no face of {document.name!r} lies at {tuple(at)} mm, so there "
+            f"is nowhere to start the hole. The point is in model "
+            f"coordinates and has to be on the face, not above it.",
+            member="SelectByID2",
+        )
+
+    end = swEndCondThroughAll if through_all else swEndCondBlind
+    manager = com.call(document.com, "FeatureManager")
+    feature = com.call(
+        manager,
+        "SimpleHole2",
+        mm(diameter),           # Dia
+        True,                   # Sd: single direction
+        False,                  # Flip
+        reverse,                # Dir
+        end,                    # T1
+        0,                      # T2
+        mm(depth or 0.0),       # D1
+        0.0,                    # D2
+        False, False,           # Dchk1, Dchk2
+        False, False,           # Ddir1, Ddir2
+        0.0, 0.0,               # Dang1, Dang2
+        False, False,           # OffsetReverse1, OffsetReverse2
+        False, False,           # TranslateSurface1, TranslateSurface2
+        True,                   # UseFeatScope
+        True,                   # UseAutoSelect
+        False,                  # AssemblyFeatureScope
+        False,                  # AutoSelectComponents
+        False,                  # PropagateFeatureToParts
+    )
+    if feature is None:
+        raise SwCallError(
+            f"SOLIDWORKS would not drill a {diameter} mm hole in "
+            f"{document.name!r}. A blind hole needs depth=; a hole wider "
+            f"than the face it starts on is refused.",
+            member="SimpleHole2",
+        )
+    return Feature(feature, document)
+
+
+def sweep(document, profile=None, path=None, merge=True, keep_tangency=True):
+    """Sweep a profile along a path. Returns the new `Feature`.
+
+    document
+        the `swcomapi.api.document.Part`
+    profile
+        the profile sketch, by name or as a `swcomapi.api.sketch.Sketch`
+    path
+        the path sketch, the same way
+    merge
+        True merges into the existing body
+    keep_tangency
+        True keeps the result tangent where the path is
+
+    The profile goes in under mark 1 and the path under mark 4; pass both, or
+    select them yourself with those marks and pass neither.
+
+    Example, a 20 mm square swept along an L:
+
+        >>> blank = app.new_part()                          # doctest: +SKIP
+        >>> with blank.sketch_on("Front Plane", add_to_db=True) as sk:  # doctest: +SKIP
+        ...     _ = sk.line((0, 0), (0, 60))
+        ...     _ = sk.line((0, 60), (40, 60))
+        >>> with blank.sketch_on("Top Plane", add_to_db=True) as sk:  # doctest: +SKIP
+        ...     _ = sk.centre_rectangle((0, 0), (10, 10))
+        >>> blank.sweep(profile="Sketch2", path="Sketch1").type     # doctest: +SKIP
+        'Sweep'
+
+    The profile has to be closed and the path has to start on it, which is
+    the one thing SOLIDWORKS will not do for you.
+    """
+    from .features import Feature
+
+    if profile is not None or path is not None:
+        document.clear_selection()
+    if profile is not None:
+        select(document, _sketch_name(profile), mark=1)
+    if path is not None:
+        select(document, _sketch_name(path), mark=4)
+
+    manager = com.call(document.com, "FeatureManager")
+    feature = com.call(
+        manager,
+        "InsertProtrusionSwept4",
+        False,              # Propagate
+        False,              # Alignment
+        0,                  # TwistCtrlOption
+        keep_tangency,      # KeepTangency
+        False,              # BAdvancedSmoothing
+        0,                  # StartMatchingType
+        0,                  # EndMatchingType
+        False,              # IsThinBody
+        0.0, 0.0,           # Thickness1, Thickness2
+        0,                  # ThinType
+        0,                  # PathAlign
+        merge,              # Merge
+        True,               # UseFeatScope
+        True,               # UseAutoSelect
+        0.0,                # TwistAngle
+        False,              # BMergeSmoothFaces
+        False,              # CircularProfile
+        0.0,                # CircularProfileDiameter
+        0,                  # Direction
+    )
+    if feature is None:
+        raise SwCallError(
+            f"SOLIDWORKS would not sweep in {document.name!r}. The profile "
+            f"must be a closed sketch, the path a separate one, and the path "
+            f"has to touch the profile.",
+            member="InsertProtrusionSwept4",
+        )
+    return Feature(feature, document)
+
+
+def loft(document, profiles=None, closed=False, merge=True, keep_tangency=True):
+    """Loft between two or more profiles. Returns the new `Feature`.
+
+    document
+        the `swcomapi.api.document.Part`
+    profiles
+        the sketches to run through, in order, by name or as
+        `swcomapi.api.sketch.Sketch`. None uses the selection
+    closed
+        True closes the loft back round to the first profile
+    merge
+        True merges into the existing body
+    keep_tangency
+        True keeps tangency where the profiles allow it
+
+    Order matters: the loft runs through the profiles in the order given, and
+    a list in the wrong order comes out twisted rather than failing.
+
+        >>> blank = app.new_part()                          # doctest: +SKIP
+        >>> with blank.sketch_on("Front Plane", add_to_db=True) as sk:  # doctest: +SKIP
+        ...     _ = sk.centre_rectangle((0, 0), (30, 20))
+        >>> above = blank.plane("Front Plane", distance=40)  # doctest: +SKIP
+        >>> with blank.sketch_on(above.name, add_to_db=True) as sk:  # doctest: +SKIP
+        ...     _ = sk.centre_rectangle((0, 0), (10, 8))
+        >>> blank.loft(profiles=["Sketch1", "Sketch2"]).type  # doctest: +SKIP
+        'Loft'
+    """
+    from .features import Feature
+
+    if profiles is not None:
+        names = [_sketch_name(profile) for profile in _as_list(profiles)]
+        if len(names) < 2:
+            raise SwCallError(
+                f"a loft needs at least two profiles, not {len(names)}",
+                member="InsertProtrusionBlend2",
+            )
+        select_all(document, names, mark=1)
+
+    manager = com.call(document.com, "FeatureManager")
+    feature = com.call(
+        manager,
+        "InsertProtrusionBlend2",
+        closed,             # Closed
+        keep_tangency,      # KeepTangency
+        False,              # ForceNonRational
+        1.0,                # TessToleranceFactor
+        0,                  # StartMatchingType
+        0,                  # EndMatchingType
+        1.0, 1.0,           # StartTangentLength, EndTangentLength
+        False, False,       # StartTangentDir, EndTangentDir
+        False,              # IsThinBody
+        0.0, 0.0,           # Thickness1, Thickness2
+        0,                  # ThinType
+        merge,              # Merge
+        True,               # UseFeatScope
+        True,               # UseAutoSelect
+        0,                  # GuideCurveInfluence
+    )
+    if feature is None:
+        raise SwCallError(
+            f"SOLIDWORKS would not loft in {document.name!r}. Every profile "
+            f"has to be a separate sketch, and they have to be selected in "
+            f"the order the loft runs through them.",
+            member="InsertProtrusionBlend2",
+        )
+    return Feature(feature, document)
+
+
+def _as_list(value):
+    """One thing or many, always as a list.
+
+    Examples::
+
+        >>> _as_list("Front Plane")
+        ['Front Plane']
+        >>> _as_list(["a", "b"])
+        ['a', 'b']
+        >>> _as_list(("a", "EDGE"))
+        [('a', 'EDGE')]
+    """
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, tuple) and len(value) == 2 and isinstance(value[1], str):
+        return [value]
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    return [value]
+
+
+def _sketch_name(value):
+    """A sketch given as a name, a `Sketch` or a `Feature`, as a name.
+
+    Sweep and loft select their sketches by name, because a ``Sketch``
+    absorbed into a feature has no entity to select.
+    """
+    name = getattr(value, "name", value)
+    if not name:
+        raise SwCallError(
+            "a sketch being edited has no name yet; close it first",
+            member="SelectByID2",
+        )
+    return (str(name), "SKETCH")

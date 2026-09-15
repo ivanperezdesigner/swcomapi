@@ -4,9 +4,8 @@ Drive SOLIDWORKS from Python over its COM API — with the enumerations it never
 gave you, the `[out]` parameters handled, and a pythonic layer over the calls
 you actually make.
 
-> **Status: 0.1.1.** Generated against SOLIDWORKS 2026 SP3 and tested against
-> it, 736 tests with it attached and 469 without. Every worked example in the
-> documentation is one of those tests.
+> **Status: 0.2.0.** Generated against SOLIDWORKS 2026 SP3 and tested against
+> it. Every worked example in the documentation is one of those tests.
 
 ```bash
 pip install swcomapi
@@ -99,8 +98,12 @@ swcomapi/
 ├─ api/              the pythonic layer
 │  ├─ app.py         SolidWorks
 │  ├─ document.py    Document, Part, Assembly, Drawing
-│  ├─ sketch.py      sketching, as a context manager
-│  ├─ modeling.py    extrude, cut, revolve
+│  ├─ sketch.py      sketching, dimensioning, relating
+│  ├─ modeling.py    extrude, cut, revolve, sweep, loft, fillet, chamfer,
+│  │                 shell, hole
+│  ├─ patterns.py    linear, circular, mirror
+│  ├─ reference.py   reference planes and axes
+│  ├─ selection.py   what a feature call works from, marks and all
 │  ├─ geometry.py    bodies, faces, edges, vertices
 │  ├─ features.py    the tree, and suppression
 │  ├─ dimensions.py  in mm and degrees, per configuration
@@ -109,8 +112,9 @@ swcomapi/
 │  ├─ equations.py   equations and global variables
 │  ├─ materials.py   read and apply a material
 │  ├─ sheetmetal.py  thickness, bend radius, K-factor
-│  ├─ components.py  the components of an assembly
-│  ├─ drawing.py     sheets and views
+│  ├─ components.py  the components of an assembly, and moving them
+│  ├─ mates.py       what holds an assembly together
+│  ├─ drawing.py     sheets, views, sections, details, notes, parts list
 │  └─ export.py      pdf, step, dxf, stl, and the error codes decoded
 └─ tools/            the generator: type libraries -> generated/
 ```
@@ -121,6 +125,64 @@ as `.com`.
 ```python
 part.com.FeatureManager.InsertDeleteBody2(True)
 ```
+
+## Modelling
+
+The pythonic layer builds geometry as well as reading it. Everything in
+millimetres and degrees; the API's metres and radians never reach you.
+
+```python
+import swcomapi as swc
+
+app = swc.connect()
+part = app.new_part()
+
+with part.sketch_on("Front Plane") as sketch:
+    sides = sketch.rectangle((0, 0), (50, 25))
+    sketch.dimension(sides[0], at=(25, -12), value=60, name="width")
+    sketch.dimension(sides[1], at=(-12, 12), value=30, name="height")
+
+part.extrude(10)
+part.chamfer(2, edges=part.bodies[0].edges)
+part.hole(6, at=(15, 10, 10), through_all=True)
+
+along = max(part.bodies[0].edges, key=lambda edge: edge.length)
+part.patterns.linear("Hole1", along, count=3, spacing=15)
+```
+
+An assembly is components and mates:
+
+```python
+assembly = app.new_assembly()
+assembly.components.add("rail.SLDPRT", at=(0, 0, 0))
+assembly.components.add("gusset.SLDPRT", at=(150, 0, 0))
+
+rail, gusset = assembly.components.in_order()
+assembly.mates.coincident(rail.plane("Top Plane"), gusset.plane("Top Plane"))
+assembly.mates.distance(rail.plane("Right Plane"),
+                        gusset.plane("Right Plane"), 80)
+
+assembly.interferences()            # []
+```
+
+And a drawing is sheets, views and annotations:
+
+```python
+drawing = app.new_drawing()
+front = drawing.views.add("rail.SLDPRT", "Front", at=(100, 100))
+front.insert_dimensions()
+
+drawing.views.add_section(front, through=((100, 60), (100, 140)), at=(220, 100))
+drawing.views.add_detail(front, centre=(100, 100), radius=12, at=(260, 160))
+front.add_note("BREAK ALL EDGES 0.5", at=(20, 20))
+
+drawing.export("rail.pdf")
+```
+
+What is not wrapped - the Hole Wizard, weldments, surfacing, configurations of
+a mate - is still reachable through `.com`, and
+[`docs/reference/cheatsheet.md`](docs/reference/cheatsheet.md) lists
+everything that is.
 
 ## Documentation
 

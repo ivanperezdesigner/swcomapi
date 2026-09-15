@@ -62,6 +62,23 @@ VIEW_TYPES = {
 # a custom view saved in the model works too - but the six orthographic ones
 # and the three axonometric ones are what a script asks for, and a typo in
 # one of them is otherwise silent.
+# swDetViewStyle_e, by the name the dialog uses for the circle.
+DETAIL_STYLES = {
+    "standard": 0,
+    "broken": 1,
+    "leader": 2,
+    "no leader": 3,
+    "connected": 4,
+}
+
+# swBomType_e, by what the table is called in the dialog.
+BOM_TYPES = {
+    "parts only": 1,
+    "top level": 2,
+    "indented": 3,
+    "flattened": 4,
+}
+
 STANDARD_VIEWS = (
     "Front",
     "Back",
@@ -193,6 +210,161 @@ class View:
             return False
         return bool(com.call(self.drawing.com, "ActivateView", self.name))
 
+    # --------------------------------------------------------- annotations
+
+    def insert_dimensions(self, all_views=False, duplicates=False, hidden=False):
+        """Bring the model's dimensions onto the drawing. Returns True.
+
+        all_views
+            True puts them on every view, sharing them out the way the
+            interface does. False does this view only
+        duplicates
+            True lets the same dimension appear in more than one view
+        hidden
+            True brings in dimensions of features that are hidden
+
+        Example, dimensioning a front view from the model:
+
+            >>> drawing.views[0].insert_dimensions()        # doctest: +SKIP
+            True
+            >>> drawing.views[0].dimension_count > 0        # doctest: +SKIP
+            True
+
+        These are the model's own dimensions, moved onto the sheet - the same
+        ones ``part.dimensions`` drives. A dimension changed here changes the
+        model.
+        """
+        from ..const import swInsertDimensions
+
+        self.activate()
+        com.call(
+            self.drawing.com,
+            "InsertModelAnnotations3",
+            0,                      # Option: the whole model
+            swInsertDimensions,     # Types
+            bool(all_views),
+            bool(duplicates),
+            bool(hidden),
+            False,                  # UsePlacementInSketch
+        )
+        return True
+
+    def add_note(self, text, at, height=None):
+        """Put a note on the sheet. Returns the raw ``INote``.
+
+        text
+            what it says. ``\\n`` starts a new line
+        at
+            where it goes, as ``(x, y)`` in mm on the sheet
+        height
+            the text height in mm, or None for the sheet's default
+
+        Example:
+
+            >>> note = drawing.views[0].add_note("BREAK ALL EDGES 0.5",
+            ...                                  at=(20, 20))    # doctest: +SKIP
+            >>> note is None                                     # doctest: +SKIP
+            False
+
+        The note belongs to the sheet, not to the view, even though it is
+        added through one - which is why moving the view leaves it behind.
+        """
+        self.activate()
+        note = com.call(self.drawing.com, "InsertNote", str(text))
+        if note is None:
+            raise SwCallError(
+                "SOLIDWORKS would not add the note. An empty string is the "
+                "usual cause.",
+                member="InsertNote",
+            )
+        annotation = com.call(note, "GetAnnotation")
+        x, y = at
+        com.call(annotation, "SetPosition2", mm(x), mm(y), 0.0)
+        if height is not None:
+            com.set_property(
+                com.call(note, "GetTextFormat", 0), "CharHeight", mm(height)
+            )
+        return note
+
+    def add_balloons(self, style=None, layout=None):
+        """Balloon every component in the view. Returns True.
+
+        style
+            the balloon shape, by ``swBalloonStyle_e`` number, or None for
+            whatever the document is set to
+        layout
+            how to lay them out, by ``swBalloonLayoutType_e`` number, or None
+            for the square layout the dialog offers
+
+        Example, ballooning an assembly view before adding the parts list:
+
+            >>> drawing.views[0].add_balloons()             # doctest: +SKIP
+            True
+
+        Only for a view of an assembly: a view of a part has nothing to
+        balloon, and SOLIDWORKS answers by doing nothing rather than by
+        complaining.
+        """
+        self.activate()
+        options = com.call(self.drawing.com, "CreateAutoBalloonOptions")
+        if style is not None:
+            com.set_property(options, "Style", int(style))
+        if layout is not None:
+            com.set_property(options, "Layout", int(layout))
+        com.call(self.drawing.com, "AutoBalloon5", options)
+        return True
+
+    def add_bom(self, at=(300.0, 250.0), kind="top level", template="", anchored=False):
+        """Put a bill of materials on the sheet. Returns the raw table.
+
+        at
+            where the table's corner goes, as ``(x, y)`` in mm on the sheet.
+            Ignored when ``anchored`` is True
+        kind
+            ``'parts only'``, ``'top level'`` or ``'indented'``
+        template
+            a ``.sldbomtbt`` template, or ``''`` for the default
+        anchored
+            True snaps the table to the sheet format's BOM anchor instead of
+            using ``at``
+
+        Example, a top-level parts list:
+
+            >>> table = drawing.views[0].add_bom(at=(280, 240))  # doctest: +SKIP
+            >>> table is None                                    # doctest: +SKIP
+            False
+
+        The table hangs off the view, so it lists what that view shows. A
+        view of a part gives a table with one row in it.
+        """
+        from ..const import swBOMConfigurationAnchor_TopLeft
+
+        x, y = at
+        table = com.call(
+            self.com,
+            "InsertBomTable6",
+            bool(anchored),
+            mm(x),
+            mm(y),
+            swBOMConfigurationAnchor_TopLeft,
+            BOM_TYPES.get(str(kind).lower(), 2),
+            "",                     # Configuration: the view's own
+            str(template),
+            False,                  # Hidden
+            1,                      # IndentedNumberingType: flat
+            False,                  # DetailedCutList
+            False,                  # DissolvePartLevelRows
+            False,                  # DisplayAsOneItem
+        )
+        if table is None:
+            raise SwCallError(
+                "SOLIDWORKS would not insert the bill of materials. The view "
+                "has to be of an assembly, and a named template has to exist "
+                "at the path given.",
+                member="InsertBomTable6",
+            )
+        return table
+
     def __repr__(self):
         return f"<View {self.name!r} {self.kind} at {_as_ratio(self.scale)}>"
 
@@ -318,6 +490,187 @@ class Views(Sequence):
                 member="Create3rdAngleViews2",
             )
         return True
+
+    def add_section(
+        self,
+        parent,
+        through,
+        at,
+        label="A",
+        aligned=True,
+        flip=False,
+        partial=False,
+    ):
+        """Cut a section through a view. Returns the new `View`.
+
+        parent
+            the view to cut, as a `View` or by name
+        through
+            the section line, as ``((x1, y1), (x2, y2))`` in mm on the sheet.
+            Sheet coordinates, not view coordinates: the line has to cross
+            the view where you want the cut
+        at
+            where to put the section view, as ``(x, y)`` in mm on the sheet
+        label
+            the letter, as a str. ``'A'`` gives ``SECTION A-A``
+        aligned
+            True keeps the view aligned with the cut, as the dialog does
+        flip
+            True looks the other way down the section line
+        partial
+            True cuts only part of the way across
+
+        Example, a section straight down the middle of the front view:
+
+            >>> cut = drawing.views.add_section("Drawing View1",
+            ...                                 through=((100, 60), (100, 140)),
+            ...                                 at=(220, 100))   # doctest: +SKIP
+            >>> cut.kind                                         # doctest: +SKIP
+            'section'
+
+        The line is drawn on the sheet first, because that is what
+        ``CreateSectionViewAt5`` cuts along - there is no way to give it the
+        line as an argument. If SOLIDWORKS puts up a dialog asking about the
+        section, the line missed the view.
+        """
+        from ..const import (
+            swCreateSectionView_ChangeDirection,
+            swCreateSectionView_NotAligned,
+            swCreateSectionView_Partial,
+        )
+
+        name = parent.name if isinstance(parent, View) else str(parent)
+        if not com.call(self.drawing.com, "ActivateView", name):
+            raise SwCallError(
+                f"no view called {name!r} on this sheet; "
+                f"see drawing.views.names()",
+                member="ActivateView",
+            )
+
+        (x1, y1), (x2, y2) = through
+        self.drawing.clear_selection()
+        line = com.call(
+            self.drawing.com, "CreateLine2", mm(x1), mm(y1), 0.0, mm(x2), mm(y2), 0.0
+        )
+        if line is None:
+            raise SwCallError(
+                f"the section line from {through[0]} to {through[1]} could "
+                f"not be drawn on the sheet",
+                member="CreateLine2",
+            )
+
+        options = 0
+        if not aligned:
+            options |= swCreateSectionView_NotAligned
+        if flip:
+            options |= swCreateSectionView_ChangeDirection
+        if partial:
+            options |= swCreateSectionView_Partial
+
+        x, y = at
+        created = com.call(
+            self.drawing.com,
+            "CreateSectionViewAt5",
+            mm(x),
+            mm(y),
+            0.0,
+            str(label),
+            options,
+            None,
+            0.0,
+        )
+        if created is None:
+            raise SwCallError(
+                f"SOLIDWORKS would not cut a section of {name!r}. The line "
+                f"has to cross the view, and {at!r} has to be on the sheet.",
+                member="CreateSectionViewAt5",
+            )
+        return View(created, self.drawing)
+
+    def add_detail(
+        self,
+        parent,
+        centre,
+        radius,
+        at,
+        label="B",
+        scale=None,
+        style="standard",
+        full_outline=False,
+    ):
+        """Blow up part of a view. Returns the new `View`.
+
+        parent
+            the view to detail, as a `View` or by name
+        centre
+            the middle of the detail circle, as ``(x, y)`` in mm on the sheet
+        radius
+            the circle's radius in mm on the sheet
+        at
+            where to put the detail view, as ``(x, y)`` in mm on the sheet
+        label
+            the letter, as a str
+        scale
+            a float or a ``(numerator, denominator)`` tuple. Twice the
+            parent's scale if omitted, which is what the dialog offers
+        style
+            the circle style: ``'standard'``, ``'broken'``, ``'leader'``,
+            ``'no leader'`` or ``'connected'``
+        full_outline
+            True outlines the detail view itself as well as the circle
+
+        Example, a 2:1 detail of a corner:
+
+            >>> close = drawing.views.add_detail("Drawing View1",
+            ...                                  centre=(110, 110), radius=12,
+            ...                                  at=(260, 160))   # doctest: +SKIP
+            >>> close.kind                                        # doctest: +SKIP
+            'detail'
+        """
+        name = parent.name if isinstance(parent, View) else str(parent)
+        if not com.call(self.drawing.com, "ActivateView", name):
+            raise SwCallError(
+                f"no view called {name!r} on this sheet; "
+                f"see drawing.views.names()",
+                member="ActivateView",
+            )
+
+        cx, cy = centre
+        self.drawing.clear_selection()
+        circle = com.call(
+            self.drawing.com, "CreateCircleByRadius2", mm(cx), mm(cy), 0.0, mm(radius)
+        )
+        if circle is None:
+            raise SwCallError(
+                f"the detail circle at {centre} could not be drawn on the sheet",
+                member="CreateCircleByRadius2",
+            )
+
+        numerator, denominator = _ratio(scale) if scale is not None else (0.0, 0.0)
+        x, y = at
+        created = com.call(
+            self.drawing.com,
+            "CreateDetailViewAt4",
+            mm(x),
+            mm(y),
+            0.0,
+            DETAIL_STYLES.get(str(style).lower(), 0),
+            numerator,
+            denominator,
+            str(label),
+            1,                          # Showtype: the label and the scale
+            bool(full_outline),
+            False,                      # JaggedOutline
+            False,                      # NoOutline
+            0,                          # ShapeIntensity
+        )
+        if created is None:
+            raise SwCallError(
+                f"SOLIDWORKS would not detail {name!r}. The circle has to be "
+                f"inside the view, and {at!r} has to be on the sheet.",
+                member="CreateDetailViewAt4",
+            )
+        return View(created, self.drawing)
 
     def of_kind(self, kind):
         """Every view of one sort, as a list of `View`.
@@ -573,3 +926,19 @@ PAPER_SIZES = {
     "a1": 10,
     "a0": 11,
 }
+
+
+def _ratio(scale):
+    """A scale as the ``(numerator, denominator)`` pair the API wants.
+
+    Examples::
+
+        >>> _ratio((1, 2))
+        (1.0, 2.0)
+        >>> _ratio(0.5)
+        (0.5, 1.0)
+    """
+    if isinstance(scale, (tuple, list)):
+        numerator, denominator = scale
+        return float(numerator), float(denominator)
+    return float(scale), 1.0

@@ -345,7 +345,7 @@ class Document:
 
     # ------------------------------------------------------------ selecting
 
-    def select(self, name, kind, mark=0, append=False):
+    def select(self, name, kind, mark=0, append=False, at=None):
         """Select something by name. Returns True if it got selected.
 
         name
@@ -358,21 +358,33 @@ class Document:
             tell one selection from another
         append
             True adds to the selection instead of replacing it
+        at
+            an ``(x, y, z)`` point in mm to pick at, for the things that have
+            no name. A face is the usual one: pass ``name=""`` and the point
+            the mouse would be over
 
         Example:
 
             >>> part.select("Front Plane", "PLANE")         # doctest: +SKIP
             True
+
+        Example, the face under a point:
+
+            >>> part.select("", "FACE", at=(15, 10, 10))    # doctest: +SKIP
+            True
         """
+        from ..units import mm
+
+        x, y, z = (mm(value) for value in at) if at is not None else (0.0, 0.0, 0.0)
         return bool(
             com.call(
                 self.extension,
                 "SelectByID2",
                 str(name),
                 str(kind),
-                0.0,
-                0.0,
-                0.0,
+                x,
+                y,
+                z,
                 bool(append),
                 int(mark),
                 None,
@@ -503,6 +515,129 @@ class Part(Document):
         from .modeling import revolve
 
         return revolve(self, angle, **options)
+
+    def sweep(self, profile=None, path=None, **options):
+        """Sweep a profile along a path. Returns the new `Feature`.
+
+        Both are sketches, by name. See `swcomapi.api.modeling.sweep`.
+        """
+        from .modeling import sweep
+
+        return sweep(self, profile=profile, path=path, **options)
+
+    def loft(self, profiles=None, **options):
+        """Loft between two or more profiles. Returns the new `Feature`.
+
+        In the order given. See `swcomapi.api.modeling.loft`.
+        """
+        from .modeling import loft
+
+        return loft(self, profiles=profiles, **options)
+
+    # ------------------------------------------------------------- dress-up
+
+    def fillet(self, radius, edges=None, **options):
+        """Round edges or faces. Returns the new `Feature`.
+
+        Radius in mm. ``edges`` takes `swcomapi.api.geometry.Edge` or
+        `swcomapi.api.geometry.Face` objects, or names; None rounds whatever
+        is selected.
+
+        Example, breaking every edge of a plate:
+
+            >>> part.fillet(2, edges=part.bodies[0].edges).name  # doctest: +SKIP
+            'Fillet1'
+
+        See `swcomapi.api.modeling.fillet`.
+        """
+        from .modeling import fillet
+
+        return fillet(self, radius, edges=edges, **options)
+
+    def chamfer(self, distance, edges=None, **options):
+        """Break edges at an angle. Returns the new `Feature`.
+
+        Distance in mm, ``angle`` in degrees and 45 by default. Pass
+        ``other_distance=`` for a chamfer that is not symmetric.
+
+        Example, a 2 mm break all round:
+
+            >>> part.chamfer(2, edges=part.bodies[0].edges).name  # doctest: +SKIP
+            'Chamfer1'
+
+        See `swcomapi.api.modeling.chamfer`.
+        """
+        from .modeling import chamfer
+
+        return chamfer(self, distance, edges=edges, **options)
+
+    def shell(self, thickness, faces=None, **options):
+        """Hollow the body out. Returns the new `Feature`.
+
+        Thickness in mm; ``faces`` are the ones to open. See
+        `swcomapi.api.modeling.shell`.
+        """
+        from .modeling import shell
+
+        return shell(self, thickness, faces=faces, **options)
+
+    def hole(self, diameter, at, **options):
+        """Drill a plain round hole. Returns the new `Feature`.
+
+        Diameter in mm, ``at`` an ``(x, y, z)`` point on the face in model
+        coordinates. See `swcomapi.api.modeling.hole`.
+        """
+        from .modeling import hole
+
+        return hole(self, diameter, at, **options)
+
+    # ------------------------------------------------------------- repeating
+
+    @property
+    def patterns(self):
+        """The pattern calls, as a `swcomapi.api.patterns.Patterns`.
+
+            >>> part.patterns.linear("Cut-Extrude1", edge, 3, 15).name
+            ... # doctest: +SKIP
+            'LPattern1'
+        """
+        from .patterns import Patterns
+
+        return Patterns(self)
+
+    def mirror(self, features, about, **options):
+        """Mirror features or a body about a plane. Returns the new `Feature`.
+
+        See `swcomapi.api.patterns.mirror`.
+        """
+        from .patterns import mirror
+
+        return mirror(self, features, about, **options)
+
+    # --------------------------------------------------- reference geometry
+
+    def plane(self, reference, distance=None, **options):
+        """Make a reference plane. Returns the new `Feature`.
+
+        Distance in mm, angle in degrees.
+
+            >>> part.plane("Top Plane", distance=25).type    # doctest: +SKIP
+            'RefPlane'
+
+        See `swcomapi.api.reference.plane`.
+        """
+        from .reference import plane
+
+        return plane(self, reference, distance=distance, **options)
+
+    def axis(self, reference, second=None):
+        """Make a reference axis. Returns the new `Feature`.
+
+        See `swcomapi.api.reference.axis`.
+        """
+        from .reference import axis
+
+        return axis(self, reference, second)
 
     # ------------------------------------------------------ mass properties
 
@@ -824,6 +959,95 @@ class Assembly(Document):
         which is what a count of parts needs.
         """
         return self.components.paths()
+
+
+    @property
+    def mates(self):
+        """The mates, as a `swcomapi.api.mates.Mates`.
+
+        A sequence to read, and the calls that add more:
+
+            >>> first, second = assembly.components.in_order()  # doctest: +SKIP
+            >>> assembly.mates.coincident(first.plane("Top Plane"),
+            ...                           second.plane("Top Plane")).kind
+            ... # doctest: +SKIP
+            'coincident'
+            >>> assembly.mates.names()                      # doctest: +SKIP
+            ['Coincident1']
+        """
+        from .mates import Mates
+
+        return Mates(self)
+
+    @property
+    def patterns(self):
+        """The pattern calls, as a `swcomapi.api.patterns.Patterns`.
+
+        Components pattern the same way features do: pass the components
+        instead of the features.
+        """
+        from .patterns import Patterns
+
+        return Patterns(self)
+
+    def plane(self, reference, distance=None, **options):
+        """Make a reference plane in the assembly. Returns the new `Feature`.
+
+        See `swcomapi.api.reference.plane`.
+        """
+        from .reference import plane
+
+        return plane(self, reference, distance=distance, **options)
+
+    def axis(self, reference, second=None):
+        """Make a reference axis in the assembly. Returns the new `Feature`.
+
+        See `swcomapi.api.reference.axis`.
+        """
+        from .reference import axis
+
+        return axis(self, reference, second)
+
+    def interferences(self, coincident_is_interference=False):
+        """Every interference between components, as a list of dicts.
+
+        Each entry is ``{'volume': mm3, 'components': [name, name]}``, and an
+        empty list means the assembly is clean.
+
+        coincident_is_interference
+            True counts two faces that merely touch as an interference, which
+            is off in the dialog too
+
+        Example, after mating two plates face to face:
+
+            >>> assembly.interferences()                    # doctest: +SKIP
+            []
+
+        This is the interference detection of the interface, run headless. It
+        loads every component fully, so it is slow on a big assembly and
+        worth doing once at the end rather than after every mate.
+        """
+        from ..units import to_mm3
+
+        manager = com.call(self.com, "InterferenceDetectionManager")
+        com.set_property(manager, "TreatCoincidenceAsInterference",
+                         bool(coincident_is_interference))
+        com.set_property(manager, "IncludeMultibodyPartInterferences", True)
+
+        found = com.to_list(com.call(manager, "GetInterferences"))
+        results = []
+        for interference in found or []:
+            components = com.to_list(com.call(interference, "Components"))
+            results.append(
+                {
+                    "volume": to_mm3(com.call(interference, "Volume")),
+                    "components": sorted(
+                        com.call(component, "Name2") for component in components or []
+                    ),
+                }
+            )
+        com.call(manager, "Done")
+        return results
 
 
 class Drawing(Document):

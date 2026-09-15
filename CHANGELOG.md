@@ -4,6 +4,74 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-09-15
+
+The release that makes the package do the everyday work. Up to 0.1.1 the
+pythonic layer could read and edit a document that already existed, and could
+extrude, cut and revolve. Everything else - rounding an edge, patterning a
+hole, mating a component, cutting a section on a drawing - meant dropping to
+raw COM and remembering that the API is metres and radians. It does not any
+more.
+
+### Added
+
+Solid features, in `swcomapi.api.modeling`:
+- `fillet` and `chamfer`, on edges, faces or whatever is selected. Distances
+  in mm, angles in degrees, and a chamfer takes either an angle or a second
+  distance.
+- `shell`, opening the faces you name.
+- `hole`, the plain round one, at a point on a face.
+- `sweep` and `loft`, which take their profiles by name and mark them for you.
+
+Repeats, in the new `swcomapi.api.patterns`:
+- `linear`, `circular` and `mirror`, reached as `part.patterns.linear(...)`
+  and `part.mirror(...)`. `count` is the total number of instances, the way
+  the dialog means it.
+
+Reference geometry, in the new `swcomapi.api.reference`:
+- `plane` - parallel at a distance, angled, midway between two things, or
+  through three points - and `axis`. Both reached as `part.plane(...)` and
+  `part.axis(...)`.
+
+Sketches that hold their shape, on `SketchSession`:
+- `dimension`, which adds a driving dimension, names it if you ask, and
+  returns the name `part.dimensions` wants.
+- `relate`, for the fifteen everyday relations by their English names.
+- `offset` and `mirror`.
+
+Assemblies, in the new `swcomapi.api.mates`:
+- `assembly.mates` reads the mates and adds them: `coincident`, `concentric`,
+  `distance`, `parallel`, `perpendicular`, `tangent`, `angle` and `lock`, plus
+  `add` for the rest by name or number.
+- `Component.body`, `.faces`, `.edges` and `.plane(name)` - the geometry of
+  the *instance*, which is the half of mating that is easy to get wrong: a
+  face read from `component.document` belongs to the part file and cannot be
+  mated.
+- `Component.move`, and `Component.fixed` is now settable.
+- `Components.in_order()`, because `GetComponents` does not answer in
+  insertion order, or twice in the same order.
+- `Assembly.interferences()`, the interference check run headless.
+
+Drawings, in `swcomapi.api.drawing`:
+- `views.add_section` and `views.add_detail`, which draw the section line or
+  the detail circle for you - there is no way to hand either to the API as an
+  argument.
+- `view.insert_dimensions`, `view.add_note`, `view.add_balloons` and
+  `view.add_bom`.
+
+And underneath all of it, the new `swcomapi.api.selection`:
+- `select` and `select_all` take a wrapper, a raw COM object, a `(name, kind)`
+  pair or a bare name, and file it under the mark the call expects. The marks
+  are documented in one table there, which is more than they are anywhere
+  else: a linear pattern reads its direction from mark 1 and its features from
+  mark 4, and a mark in the wrong place does not fail - it makes a feature
+  that is quietly wrong.
+
+### Changed
+- `Document.select` takes a pick point, so a face can be selected where the
+  mouse would be rather than by name.
+- The cheat sheet covers 257 calls across 19 modules, up from 207 across 15.
+
 ## [0.1.1] - 2026-09-15
 
 The documentation started being executed, and it turned out to be making
@@ -134,5 +202,6 @@ is not tied to that release.
   `CreateDrawViewFromModelView3` wants and what makes the difference between a
   view and a silent None.
 
+[0.2.0]: https://github.com/ivanperezdesigner/swcomapi/releases/tag/v0.2.0
 [0.1.1]: https://github.com/ivanperezdesigner/swcomapi/releases/tag/v0.1.1
 [0.1.0]: https://github.com/ivanperezdesigner/swcomapi/releases/tag/v0.1.0
