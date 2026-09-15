@@ -122,6 +122,8 @@ part.com.FeatureManager.InsertDeleteBody2(True)
 
 - **[`DOCUMENTATION.md`](DOCUMENTATION.md)** — the reference, with every
   example run against a real SOLIDWORKS and its real output beside it.
+- **[`docs/reference/cheatsheet.md`](docs/reference/cheatsheet.md)** — every
+  call in the pythonic layer on one page, generated from the package itself.
 - **[`docs/reference/enums.md`](docs/reference/enums.md)** — all 1,434
   enumerations with links to the official pages.
 - **[`examples/`](examples/)** — six runnable scripts, from connecting to
@@ -154,6 +156,7 @@ another release:
 python -m swcomapi.tools survey       # what is installed, and how big it is
 python -m swcomapi.tools generate     # rebuild swcomapi/generated
 python -m swcomapi.tools enumdoc      # rebuild docs/reference/enums.md
+python -m swcomapi.tools cheatsheet   # rebuild docs/reference/cheatsheet.md
 ```
 
 Generation is deterministic: running it twice leaves `git status` clean.

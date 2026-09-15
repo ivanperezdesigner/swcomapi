@@ -4,6 +4,7 @@
     python -m swcomapi.tools survey -v   # plus the per-interface breakdown
     python -m swcomapi.tools generate    # rebuild swcomapi/generated
     python -m swcomapi.tools enumdoc     # rebuild docs/reference/enums.md
+    python -m swcomapi.tools cheatsheet  # rebuild docs/reference/cheatsheet.md
 """
 
 import argparse
@@ -60,6 +61,11 @@ def main(argv=None):
         help="rebuild docs/reference/enums.md from the generated data",
     )
 
+    sub.add_parser(
+        "cheatsheet",
+        help="rebuild docs/reference/cheatsheet.md from the package itself",
+    )
+
     args = parser.parse_args(argv)
     if args.command == "survey":
         return _survey(args)
@@ -67,7 +73,18 @@ def main(argv=None):
         return _generate(args)
     if args.command == "enumdoc":
         return _enumdoc()
+    if args.command == "cheatsheet":
+        return _cheatsheet()
     return 1
+
+
+def _cheatsheet():
+    """Needs no SOLIDWORKS: it reads the installed package itself."""
+    from . import cheatsheet as cheatsheet_module
+
+    path, size = cheatsheet_module.write_cheatsheet()
+    print(f"{size / 1024:.0f} KB  {path}")
+    return 0
 
 
 def _enumdoc():
