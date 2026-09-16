@@ -16,12 +16,13 @@ solving once:
        >>> doc, out = call_out(app.com, "OpenDoc6", path, 1, 0, "")  # doctest: +SKIP
        >>> sorted(out)                                               # doctest: +SKIP
        ['Errors', 'Warnings']
-       >>> out["Errors"]                                             # doctest: +SKIP
-       0
 
-   The warning is worth reading rather than ignoring: 128 is
-   ``swFileLoadWarning_AlreadyOpen``, which is what a file that was already
-   on screen answers.
+   Both are worth reading rather than ignoring, and neither is a plain
+   success flag. ``out["Errors"]`` is a ``swFileLoadError_e``: 0 when the
+   file opened cleanly, and 65536 - ``swFileWithSameTitleAlreadyOpen`` - when
+   a document of that name was already on screen, which is what opening the
+   same path twice in one session gives you. ``out["Warnings"]`` is a
+   ``swFileLoadWarning_e``, where 128 is ``swFileLoadWarning_AlreadyOpen``.
 
    ``byref()`` is there for the rare case the table cannot help with.
 
