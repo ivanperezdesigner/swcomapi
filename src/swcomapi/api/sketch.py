@@ -507,7 +507,23 @@ class SketchSession:
         mode exists to keep SOLIDWORKS from inventing relations, and a
         dimension is a relation: in database mode the geometry goes in
         unattached and the dimension has nothing to hold.
+
+        **The Modify box.** ``AddDimension2`` is the call behind the Smart
+        Dimension tool, and it obeys the same option: with Tools > Options >
+        General > "Input dimension value" on - which is the default - it opens
+        the Modify dialog and waits for somebody to type a number. A dialog
+        blocks every COM call in the session, with no error and no timeout, so
+        a script that dimensions anything simply stops. This turns the option
+        off for the length of the call and puts it back afterwards.
         """
+        toggle = _suppress_modify_box(self.document)
+        try:
+            return self._dimension(entities, at, value, name)
+        finally:
+            _restore_modify_box(self.document, toggle)
+
+    def _dimension(self, entities, at, value, name):
+        """`dimension`, with the Modify box already suppressed."""
         for position, entity in enumerate(_as_list(entities)):
             select(self.document, entity, append=position > 0)
 
@@ -685,3 +701,32 @@ def _as_list(value):
     if isinstance(value, (list, tuple)):
         return list(value)
     return [value]
+
+
+def _suppress_modify_box(document):
+    """Turn off "Input dimension value". Returns what it was, as a bool.
+
+    ``swInputDimValOnCreate`` is what makes the Smart Dimension tool open the
+    Modify box. The API call behind it obeys the same option, and a dialog
+    stops every COM call in the session dead - no error, no timeout, nothing
+    to catch. See `SketchSession.dimension`.
+    """
+    from ..const import swInputDimValOnCreate
+
+    app = document.app.com if getattr(document, "app", None) else None
+    if app is None:
+        return None
+    was = bool(com.call(app, "GetUserPreferenceToggle", swInputDimValOnCreate))
+    com.call(app, "SetUserPreferenceToggle", swInputDimValOnCreate, False)
+    return was
+
+
+def _restore_modify_box(document, was):
+    """Put "Input dimension value" back the way the person had it."""
+    from ..const import swInputDimValOnCreate
+
+    if was is None:
+        return
+    app = document.app.com if getattr(document, "app", None) else None
+    if app is not None:
+        com.call(app, "SetUserPreferenceToggle", swInputDimValOnCreate, was)
