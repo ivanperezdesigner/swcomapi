@@ -67,6 +67,34 @@ And underneath all of it, the new `swcomapi.api.selection`:
   mark 4, and a mark in the wrong place does not fail - it makes a feature
   that is quietly wrong.
 
+### Fixed, before anyone saw it
+
+All six found by running the new code against SOLIDWORKS 2026 SP3 rather than
+by reading the documentation, which says none of it.
+
+- `AddDimension2` obeys Tools > Options > General > "Input dimension value",
+  which is on by default. With it on, the call opens the Modify box and waits
+  for a person — and a dialog blocks every COM call in the session, with no
+  error and no timeout. `SketchSession.dimension` turns the option off for
+  the length of the call and puts it back. It cost this release two hung runs
+  before it was understood.
+- `swAddMateError_NoError` is **1**, and `swAddMateError_ErrorUknown`
+  (Dassault's spelling) is **0** — backwards from every other status in the
+  API. The obvious `if status:` rejects every mate that worked.
+- `InsertMirrorFeature2` reads the features to mirror from mark 1. Every
+  other pattern call in the API reads what to repeat from mark 4, and with
+  mark 4 this one answers a bare `None`.
+- `InsertRefPlane` gives each reference its own mark — 0, then 1, then 2.
+  With both references on mark 0, which is what selecting two things normally
+  gives you, no constraint pair in `swRefPlaneReferenceConstraints_e` makes a
+  plane at all.
+- `CreateDetailViewAt4` refuses a zero scale outright instead of falling back
+  to the parent view's; a detail view with no scale given now asks for 2:1.
+- A fillet whose radius cannot possibly fit does not fail. SOLIDWORKS makes
+  the feature, reports success, and lets it eat the model — 200 mm on one
+  edge of a 60 by 40 by 10 plate leaves a 2,156 mm3 sliver with five faces.
+  The docstring promised the opposite; now it says what happens.
+
 ### Changed
 - `Document.select` takes a pick point, so a face can be selected where the
   mouse would be rather than by name.

@@ -79,6 +79,12 @@ been bitten by and fixed:
 | `GetMassProperties2` on a part | status -1 and no values, some of the time |
 | a global variable called `thickness` | refused; it is reserved for sheet metal |
 | `run_command` with a command that opens a dialog | every later call blocks, with no error |
+| `AddDimension2` with "Input dimension value" on | opens the Modify box and waits for a person |
+| `swAddMateError_NoError` | it is **1**, not 0, so `if status:` rejects every mate that worked |
+| `InsertMirrorFeature2` with the features on mark 4 | a bare `None`; it wants them on mark 1 |
+| `InsertRefPlane` with both references on mark 0 | no plane, for any constraint pair there is |
+| a fillet radius that cannot possibly fit | no error: it makes the feature and eats the body |
+| `CreateDetailViewAt4` with no scale | refused outright; there is no falling back to the parent |
 | `SetSuppression2` | returns True for a change it did not make |
 | `GetMassProperties(0.0)` | a density of 1, so mass equals volume |
 | `swThisConfiguration` with a name list | reads the active one and ignores the names |

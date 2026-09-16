@@ -13,7 +13,7 @@ So this module is the one place that knows how to select something:
     >>> select(part, part.bodies[0].edges[0])                  # doctest: +SKIP
     True
     >>> select_all(part, part.bodies[0].edges)                 # doctest: +SKIP
-    12
+    14
     >>> select_all(part, [part.features["Cut-Extrude1"]], mark=4)  # doctest: +SKIP
     1
 
@@ -46,8 +46,18 @@ call                         mark  what goes in it
 ``InsertMirrorFeature2``      2    the face or plane to mirror about
 ``InsertProtrusionSwept4``    1    the profile sketch
 ``InsertProtrusionSwept4``    4    the path sketch
-``InsertRefPlane``            0    the references, in order
+``InsertRefPlane``          0,1,2  the references, one mark each, in order
 ===========================  ====  ==========================================
+
+Two of those are worth saying out loud, because both were wrong in this
+package until a live run caught them:
+
+* ``InsertMirrorFeature2`` takes the features on **mark 1**, not mark 4. It
+  is the only call here that does.
+* ``InsertRefPlane`` gives every reference **its own mark** - 0, then 1, then
+  2. Put two references on mark 0, which is what selecting two things
+  normally gives you, and no constraint pair in
+  ``swRefPlaneReferenceConstraints_e`` makes a plane at all.
 """
 
 from .. import com
@@ -106,7 +116,7 @@ def select_all(document, things, mark=0, append=False):
     Example, every edge of a block, ready for a fillet:
 
         >>> select_all(part, part.bodies[0].edges)          # doctest: +SKIP
-        12
+        14
     """
     count = 0
     for position, thing in enumerate(things):
