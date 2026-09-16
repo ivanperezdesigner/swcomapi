@@ -611,8 +611,9 @@ class Views(Sequence):
         label
             the letter, as a str
         scale
-            a float or a ``(numerator, denominator)`` tuple. Twice the
-            parent's scale if omitted, which is what the dialog offers
+            a float or a ``(numerator, denominator)`` tuple. 2:1 if omitted,
+            which is what the dialog offers. It cannot be left at zero:
+            ``CreateDetailViewAt4`` refuses a zero scale outright
         style
             the circle style: ``'standard'``, ``'broken'``, ``'leader'``,
             ``'no leader'`` or ``'connected'``
@@ -646,7 +647,10 @@ class Views(Sequence):
                 member="CreateCircleByRadius2",
             )
 
-        numerator, denominator = _ratio(scale) if scale is not None else (0.0, 0.0)
+        # 2:1 when none is given, which is what the dialog offers. Not 0:0:
+        # CreateDetailViewAt4 rejects a zero scale with a bare None rather
+        # than falling back to the parent view.
+        numerator, denominator = _ratio(scale) if scale is not None else (2.0, 1.0)
         x, y = at
         created = com.call(
             self.drawing.com,

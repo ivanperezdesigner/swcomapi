@@ -36,6 +36,11 @@ Why a mate fails
 ``AddMate5`` answers a status from ``swAddMateError_e`` and returns an
 ``IMate2`` anyway in some of the failure cases, so a caller that only checks
 for None sees success. This module reads the status and raises.
+
+And the status reads backwards. ``swAddMateError_NoError`` is **1**;
+``swAddMateError_ErrorUknown`` - Dassault's spelling - is **0**. Every other
+status in the API is zero for success, so the obvious ``if status:`` rejects
+every mate that worked. `NO_MATE_ERROR` is here so that is written down once.
 """
 
 from collections.abc import Sequence
@@ -73,13 +78,23 @@ MATE_TYPES = {
 ALIGNMENTS = {"aligned": 0, "anti": 1, "closest": 2}
 
 # swAddMateError_e, in the words the dialog uses.
+#
+# Read the numbers twice. This enumeration does not follow the convention
+# every other status in the API follows: **1 is success** and **0 is an
+# unknown failure**. Treating 0 as "no error" - which is what anyone who has
+# used the rest of the API will do - means every mate that worked is reported
+# as broken, and every mate that failed for a reason SOLIDWORKS could not name
+# is reported as fine.
+NO_MATE_ERROR = 1
+
 MATE_ERRORS = {
-    0: "no error",
-    1: "the two things cannot be mated that way",
-    2: "the mate is over-defining the assembly",
-    3: "one of the selections is not something that can be mated",
-    4: "the mate type does not match what was selected",
-    5: "the assembly is already fully defined",
+    0: "SOLIDWORKS did not say why",
+    1: "no error",
+    2: "the mate type does not match what was selected",
+    3: "the alignment is wrong for that mate",
+    4: "one of the selections is not something that can be mated",
+    5: "the mate would over-define the assembly",
+    6: "the gear ratio is not usable",
 }
 
 
@@ -300,8 +315,8 @@ class Mates(Sequence):
             bool(lock_rotation),            # LockRotation
             0,                              # WidthMateOption
         )
-        status = int(out.get("ErrorStatus", 0) or 0)
-        if made is None or status:
+        status = int(out.get("ErrorStatus", NO_MATE_ERROR))
+        if made is None or status != NO_MATE_ERROR:
             raise SwCallError(
                 f"SOLIDWORKS would not add a {kind} mate in "
                 f"{self.document.name!r}: "
