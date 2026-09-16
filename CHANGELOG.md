@@ -90,6 +90,9 @@ by reading the documentation, which says none of it.
   plane at all.
 - `CreateDetailViewAt4` refuses a zero scale outright instead of falling back
   to the parent view's; a detail view with no scale given now asks for 2:1.
+- `GetTypeName2` on a loft answers `'Blend'`, the name the call had before
+  the interface renamed it, so `features.of_type("Loft")` finds nothing. The
+  docstring said `'Loft'`.
 - A fillet whose radius cannot possibly fit does not fail. SOLIDWORKS makes
   the feature, reports success, and lets it eat the model — 200 mm on one
   edge of a 60 by 40 by 10 plate leaves a 2,156 mm3 sliver with five faces.
