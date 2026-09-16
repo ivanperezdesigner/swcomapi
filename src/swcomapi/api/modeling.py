@@ -417,10 +417,12 @@ def fillet(
         >>> block.fillet(2, edges=block.bodies[0].edges).name   # doctest: +SKIP
         'Fillet1'
 
-    Example, one edge only:
+    Example, one edge only. On a different part, because the fillet above
+    already rounded every edge of that one - which is the everyday version of
+    the same mistake: a fillet needs an edge that is still there.
 
-        >>> longest = max(block.bodies[0].edges, key=lambda e: e.length)  # doctest: +SKIP
-        >>> block.fillet(3, edges=[longest]).type           # doctest: +SKIP
+        >>> longest = max(part.bodies[0].edges, key=lambda e: e.length)  # doctest: +SKIP
+        >>> part.fillet(3, edges=[longest]).type            # doctest: +SKIP
         'Fillet'
 
     Raises `SwCallError` when SOLIDWORKS declines, which nearly always means
@@ -521,11 +523,12 @@ def chamfer(
         >>> block.chamfer(2, edges=block.bodies[0].edges).name  # doctest: +SKIP
         'Chamfer1'
 
-    Example, 3 by 1 rather than 45 degrees, on one face:
+    Example, 3 by 1 rather than 45 degrees, on one face. On a different part,
+    because the chamfer above already broke every edge of that one.
 
-        >>> top = [f for f in block.bodies[0].faces
+        >>> top = [f for f in part.bodies[0].faces
         ...        if f.normal == (0.0, 0.0, 1.0)][0]       # doctest: +SKIP
-        >>> block.chamfer(3, edges=[top], other_distance=1).type  # doctest: +SKIP
+        >>> part.chamfer(3, edges=[top], other_distance=1).type  # doctest: +SKIP
         'Chamfer'
 
     `Part.chamfer` is the same call. Raises `SwCallError` when SOLIDWORKS
@@ -811,7 +814,12 @@ def loft(document, profiles=None, closed=False, merge=True, keep_tangency=True):
         >>> with blank.sketch_on(above.name, add_to_db=True) as sk:  # doctest: +SKIP
         ...     _ = sk.centre_rectangle((0, 0), (10, 8))
         >>> blank.loft(profiles=["Sketch1", "Sketch2"]).type  # doctest: +SKIP
-        'Loft'
+        'Blend'
+
+    ``'Blend'``, not ``'Loft'``: the tree calls the feature ``Loft1`` and
+    ``GetTypeName2`` calls its type ``Blend``, which is what the call was
+    named before the interface renamed it. ``features.of_type("Loft")``
+    therefore finds nothing.
     """
     from .features import Feature
 
