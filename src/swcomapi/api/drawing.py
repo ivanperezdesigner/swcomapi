@@ -223,25 +223,45 @@ class View:
         hidden
             True brings in dimensions of features that are hidden
 
-        Example, dimensioning a front view from the model:
+        Example, on a plate whose sketch was drawn but never dimensioned:
 
             >>> drawing.views[0].insert_dimensions()        # doctest: +SKIP
             True
-            >>> drawing.views[0].dimension_count > 0        # doctest: +SKIP
-            True
+            >>> drawing.views[0].dimension_count            # doctest: +SKIP
+            0
+
+        Nothing arrives, and nothing complains. Dimension the sketch when it
+        is drawn and they do::
+
+            with part.sketch_on("Front Plane", add_to_db=True) as sketch:
+                lines = sketch.rectangle((0, 0), (60, 40))
+                sketch.dimension(lines[0], at=(30, -15), value=60,
+                                 name="width")
+            part.extrude(10)
+            part.save_as(path)
+            view.insert_dimensions()        # dimension_count is now 1
 
         These are the model's own dimensions, moved onto the sheet - the same
         ones ``part.dimensions`` drives. A dimension changed here changes the
         model.
+
+        **Only the dimensions marked for drawing arrive**, which is what the
+        Model Items dialog does too. Asking for ``swInsertDimensions`` alone -
+        the constant whose name says "dimensions" - brings in nothing at all,
+        silently: no error, no annotation, and a call that answers None either
+        way. The flag that works is ``swInsertDimensionsMarkedForDrawing``, so
+        both are passed. A sketch dimension is marked when it is made; the
+        ``D1`` of an extrude is not, so a part built by this package brings
+        its sketch dimensions onto the sheet and nothing else.
         """
-        from ..const import swInsertDimensions
+        from ..const import swInsertDimensions, swInsertDimensionsMarkedForDrawing
 
         self.activate()
         com.call(
             self.drawing.com,
             "InsertModelAnnotations3",
             0,                      # Option: the whole model
-            swInsertDimensions,     # Types
+            swInsertDimensions | swInsertDimensionsMarkedForDrawing,
             bool(all_views),
             bool(duplicates),
             bool(hidden),
@@ -330,12 +350,15 @@ class View:
 
         Example, a top-level parts list:
 
-            >>> table = drawing.views[0].add_bom(at=(280, 240))  # doctest: +SKIP
+            >>> view = assembly_drawing.views[0]                 # doctest: +SKIP
+            >>> table = view.add_bom(at=(280, 240))              # doctest: +SKIP
             >>> table is None                                    # doctest: +SKIP
             False
 
-        The table hangs off the view, so it lists what that view shows. A
-        view of a part gives a table with one row in it.
+        The table hangs off the view, so it lists what that view shows, and
+        **the view has to be of an assembly**. A view of a part does not give
+        a one-row table: ``InsertBomTable6`` answers a bare None and this
+        raises, which is the only way to find out.
         """
         from ..const import swBOMConfigurationAnchor_TopLeft
 

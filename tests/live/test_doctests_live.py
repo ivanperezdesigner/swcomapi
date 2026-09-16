@@ -23,6 +23,7 @@ import doctest
 import importlib
 import os
 import pkgutil
+import re
 
 import pytest
 
@@ -50,6 +51,7 @@ FIXTURES = (
     "document",
     "assembly",
     "drawing",
+    "assembly_drawing",
     "body",
     "face",
     "edge",
@@ -148,6 +150,21 @@ class Scratch:
         drawing.views.add(path, "Front", at=(100, 100))
         return drawing
 
+    def assembly_drawing(self):
+        """A drawing with one front view of the two-plate assembly on it.
+
+        A bill of materials needs a view of an assembly. A view of a part
+        makes InsertBomTable6 answer None, so the plain `drawing` fixture
+        cannot stand in for this one.
+        """
+        assembly = self.assembly()
+        stamp = os.path.basename(self.folder.rstrip("\\/")) or "plates"
+        path = os.path.join(self.folder, f"swcomapi-{stamp}.SLDASM")
+        assembly.save_as(path)
+        drawing = self.app.new_drawing()
+        drawing.views.add(path, "Front", at=(100, 100))
+        return drawing
+
     def close(self):
         """Close everything that was not already open before this docstring ran.
 
@@ -198,9 +215,14 @@ def unskip(test):
 
 
 def wanted_by(test):
-    """Which fixtures a docstring's examples mention, as a set of str."""
+    """Which fixtures a docstring's examples mention, as a set of str.
+
+    Whole names only. A plain substring test would see "assembly" and
+    "drawing" inside "assembly_drawing" and build three documents where one
+    was asked for.
+    """
     source = "".join(example.source for example in test.examples)
-    return {name for name in FIXTURES if name in source}
+    return {name for name in FIXTURES if re.search(rf"\b{name}\b", source)}
 
 
 def globs_for(test, scratch):
@@ -231,6 +253,8 @@ def globs_for(test, scratch):
         globs["assembly"] = scratch.assembly()
     if "drawing" in wanted:
         globs["drawing"] = scratch.drawing()
+    if "assembly_drawing" in wanted:
+        globs["assembly_drawing"] = scratch.assembly_drawing()
     return globs
 
 

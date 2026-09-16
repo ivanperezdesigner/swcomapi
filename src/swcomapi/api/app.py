@@ -349,10 +349,15 @@ class SolidWorks:
     def documents(self):
         """Every open document, as a list of `Document` subclasses.
 
-        Example:
+        Example, picking one out by name:
 
-            >>> sorted(set(d.kind for d in app.documents))  # doctest: +SKIP
+            >>> [d.kind for d in app.documents                    # doctest: +SKIP
+            ...  if d.name == part.name]
             ['part']
+
+        This is everything open in that SOLIDWORKS, not everything this
+        script opened. A session somebody is also working in answers with
+        their documents too, which is why the example matches on a name.
         """
         from .document import wrap
 
