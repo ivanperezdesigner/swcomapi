@@ -85,6 +85,8 @@ been bitten by and fixed:
 | `InsertRefPlane` with both references on mark 0 | no plane, for any constraint pair there is |
 | a fillet radius that cannot possibly fit | no error: it makes the feature and eats the body |
 | `CreateDetailViewAt4` with no scale | refused outright; there is no falling back to the parent |
+| `InsertModelAnnotations3` asked for `swInsertDimensions` | no dimensions on the sheet, and the same `None` it answers when it works |
+| `InsertBomTable6` on a view of a part | a bare `None`; the view has to be of an assembly |
 | `SetSuppression2` | returns True for a change it did not make |
 | `GetMassProperties(0.0)` | a density of 1, so mass equals volume |
 | `swThisConfiguration` with a name list | reads the active one and ignores the names |

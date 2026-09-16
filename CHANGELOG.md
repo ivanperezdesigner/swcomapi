@@ -69,8 +69,8 @@ And underneath all of it, the new `swcomapi.api.selection`:
 
 ### Fixed, before anyone saw it
 
-All six found by running the new code against SOLIDWORKS 2026 SP3 rather than
-by reading the documentation, which says none of it.
+All of them found by running the new code against SOLIDWORKS 2026 SP3 rather
+than by reading the documentation, which says none of it.
 
 - `AddDimension2` obeys Tools > Options > General > "Input dimension value",
   which is on by default. With it on, the call opens the Modify box and waits
@@ -97,6 +97,15 @@ by reading the documentation, which says none of it.
   the feature, reports success, and lets it eat the model — 200 mm on one
   edge of a 60 by 40 by 10 plate leaves a 2,156 mm3 sliver with five faces.
   The docstring promised the opposite; now it says what happens.
+- `InsertModelAnnotations3` asked for `swInsertDimensions` puts no dimension
+  on the sheet at all. It does not fail: it answers `None`, exactly as it does
+  when it works, and leaves the view empty. The flag that brings dimensions in
+  is `swInsertDimensionsMarkedForDrawing`, so `view.insert_dimensions` passes
+  both. Only dimensions marked for drawing arrive, which is what the Model
+  Items dialog does too — a sketch dimension is marked when it is made, the
+  `D1` of an extrude is not.
+- `InsertBomTable6` needs a view of an assembly. The docstring said a view of
+  a part gives a one-row table; it gives a bare `None`.
 
 ### Changed
 - `Document.select` takes a pick point, so a face can be selected where the

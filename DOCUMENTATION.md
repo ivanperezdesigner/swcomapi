@@ -864,12 +864,33 @@ Then the annotations:
 front.insert_dimensions()           # the model's own dimensions
 front.add_note("BREAK ALL EDGES 0.5", at=(20, 20))
 front.add_balloons()                # assemblies only
-front.add_bom(at=(280, 240), kind="top level")
+front.add_bom(at=(280, 240), kind="top level")   # assemblies only
 ```
 
 `insert_dimensions` brings across the dimensions the model already has — the
 same ones `part.dimensions` drives. A dimension changed on the sheet changes
 the model.
+
+Two things about it are worth knowing before you go looking for a bug.
+
+**Only dimensions marked for drawing arrive**, which is what Model Items does
+in the interface too. A sketch dimension is marked when it is made; the `D1`
+of an extrude is not. So a part whose sketches were drawn without dimensions —
+which is every part this package builds unless you call `sketch.dimension` —
+brings nothing onto the sheet, and says nothing about it:
+
+```python
+front.insert_dimensions()
+front.dimension_count                # 0
+
+# dimension the sketch when you draw it, and they arrive
+with part.sketch_on("Front Plane", add_to_db=True) as sketch:
+    lines = sketch.rectangle((0, 0), (60, 40))
+    sketch.dimension(lines[0], at=(30, -15), value=60, name="width")
+```
+
+**`add_bom` needs a view of an assembly.** A view of a part does not give a
+one-row table; the call answers nothing and `add_bom` raises.
 
 
 ---
