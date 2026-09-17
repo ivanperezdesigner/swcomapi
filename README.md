@@ -5,7 +5,9 @@ gave you, the `[out]` parameters handled, and a pythonic layer over the calls
 you actually make.
 
 > **Status: 0.2.0.** Generated against SOLIDWORKS 2026 SP3 and tested against
-> it. Every worked example in the documentation is one of those tests.
+> it: 511 tests that need no SOLIDWORKS, plus 170 that do - 37 feature tests
+> and 129 docstrings executed against a live session. Every worked example in
+> the documentation is one of those tests.
 
 ```bash
 pip install swcomapi
@@ -219,6 +221,12 @@ cleans up after itself:
 set SWCOMAPI_LIVE=1
 .venv\Scripts\python -m pytest tests -q
 ```
+
+Expect it to take a while, and expect to restart SOLIDWORKS partway through a
+long run. It does not give memory back when a document closes: a fresh session
+starts around 190 MB and is several GB after a hundred test parts, at which
+point every COM call slows to a crawl. Run the live suite in batches, with a
+restart between them, rather than waiting on one invocation.
 
 That includes the documentation. Every worked example in a docstring is run
 against a real SOLIDWORKS, on a document built for it, by
